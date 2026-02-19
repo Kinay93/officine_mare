@@ -15,249 +15,304 @@
 
   <style>
     :root{
-      --navy:#071a2b;
-      --navy-2:#0b2a45;
+      /* Palette soft */
+      --navy: #0b2236;
+      --navy-2:#11314f;
+      --sand: #f5efe4;
+      --sand-2:#fbf7f0;
       --white:#ffffff;
-      --sand:#f6f8fb;
-      --gold:#f2c84b; /* striscia gialla */
-      --border: rgba(7,26,43,.16);
+      --gold: #f2c84b;
+
+      --border: rgba(11,34,54,.12);
+      --shadow: 0 18px 50px rgba(11,34,54,.10);
+      --shadow-soft: 0 10px 26px rgba(11,34,54,.08);
+
       --max: 980px;
-      color-scheme: light; /* blocca dark per coerenza colori */
+      --radius-xl: 26px;
+      --radius-lg: 22px;
+      --radius-md: 18px;
+
+      color-scheme: light;
     }
 
     *{ box-sizing:border-box; }
-    html, body { height: 100%; }
+    html, body{ height:100%; }
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      line-height: 1.5;
-      background: linear-gradient(180deg, var(--sand), #ffffff 60%);
+      line-height: 1.55;
       color: var(--navy);
+
+      /* Effetto spiaggia: sabbia che “sale” verso blu in alto, molto leggero */
+      background:
+        radial-gradient(1200px 520px at 50% -120px, rgba(17,49,79,.22), transparent 60%),
+        linear-gradient(180deg, rgba(17,49,79,.10) 0%, rgba(17,49,79,.03) 22%, var(--sand-2) 55%, var(--sand) 100%);
     }
 
     a{ color: inherit; text-decoration: none; }
     a:hover{ text-decoration: underline; }
 
-    .container{ max-width: var(--max); margin: 0 auto; padding: 0 20px; }
+    .container{ max-width: var(--max); margin: 0 auto; padding: 0 18px; }
 
-    /* Header */
+    /* Header con immagine */
     header{
       position: sticky;
       top: 0;
-      z-index: 10;
-      background: rgba(255,255,255,.92);
+      z-index: 20;
+      background: rgba(251,247,240,.78);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border);
     }
+
+    .hero-band{
+      position: relative;
+      height: 170px;
+      border-bottom: 1px solid rgba(11,34,54,.08);
+      overflow: hidden;
+      background: #dfeaf5;
+    }
+
+    /* Foto: metti qui la tua (coralli / mare) */
+    .hero-band img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display:block;
+      filter: saturate(1.02) contrast(1.02);
+    }
+
+    /* overlay leggero per dare armonia e non “sparare” i colori */
+    .hero-band::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(180deg, rgba(11,34,54,.12), rgba(11,34,54,.00) 55%, rgba(245,239,228,.65) 100%);
+      pointer-events:none;
+    }
+
     .topbar{
       display:flex;
       align-items:center;
       gap: 14px;
-      padding: 14px 0;
+      padding: 12px 0;
     }
+
     .brand{
       display:flex;
       align-items:center;
       gap: 10px;
-      font-weight: 800;
+      font-weight: 900;
       letter-spacing: .2px;
     }
+
     .brand-mark{
-      width: 34px; height: 34px;
-      border-radius: 10px;
-      background: radial-gradient(circle at 30% 30%, var(--gold), #ffd977 35%, var(--navy-2) 36%);
-      box-shadow: 0 6px 16px rgba(7,26,43,.12);
-      border: 1px solid rgba(7,26,43,.08);
+      width: 38px; height: 38px;
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(242,200,75,.95), rgba(242,200,75,.45) 38%, rgba(17,49,79,.28) 39%),
+        linear-gradient(135deg, rgba(17,49,79,.18), rgba(245,239,228,.6));
+      border: 1px solid rgba(11,34,54,.10);
+      box-shadow: 0 10px 22px rgba(11,34,54,.10);
     }
+
     nav{
       margin-left:auto;
       display:flex;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
       align-items:center;
-      font-weight: 600;
+      font-weight: 650;
     }
+
     .navlink{
-      padding: 8px 10px;
-      border-radius: 10px;
+      padding: 9px 12px;
+      border-radius: 999px; /* pill */
     }
     .navlink:hover{
-      background: rgba(7,26,43,.06);
+      background: rgba(17,49,79,.06);
       text-decoration: none;
     }
 
-    /* Striscia gialla accent */
-    .accent{
-      height: 5px;
-      background: linear-gradient(90deg, var(--gold), #ffe07a, var(--gold));
-    }
+    /* Contenuto */
+    main{ padding: 18px 0 34px; }
 
-    /* Hero */
     .hero{
-      padding: 26px 0 10px;
+      margin-top: 14px;
     }
     .hero-card{
-      background: var(--white);
+      background: rgba(255,255,255,.82);
       border: 1px solid var(--border);
-      border-radius: 18px;
+      border-radius: var(--radius-xl);
       padding: 18px;
-      box-shadow: 0 10px 30px rgba(7,26,43,.08);
-      overflow: hidden;
-      position: relative;
+      box-shadow: var(--shadow);
     }
-    .hero-card::before{
-      content:"";
-      position:absolute;
-      inset: 0 0 auto 0;
-      height: 6px;
-      background: var(--gold);
-    }
+
     .hero-row{
       display:flex;
-      gap: 18px;
+      gap: 16px;
       align-items:center;
       flex-wrap: wrap;
     }
-    .hero h1{
-      margin: 0;
-      font-size: clamp(28px, 4vw, 40px);
-      line-height: 1.15;
-      letter-spacing: .2px;
-    }
-    .subtitle{
-      margin: 8px 0 0;
-      color: rgba(7,26,43,.75);
-    }
-    .hero-img{
-      width: 120px;
-      height: 120px;
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      background: linear-gradient(135deg, rgba(11,42,69,.12), rgba(242,200,75,.18));
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight: 700;
-      color: rgba(7,26,43,.65);
+
+    .logo-box{
+      width: 92px; height: 92px;
+      border-radius: 26px;
+      border: 1px solid rgba(11,34,54,.10);
+      background: linear-gradient(135deg, rgba(17,49,79,.12), rgba(242,200,75,.14));
+      display:flex; align-items:center; justify-content:center;
+      font-weight: 800;
+      color: rgba(11,34,54,.72);
     }
 
-    /* Layout sections */
-    main{ padding: 18px 0 34px; }
+    h1{
+      margin: 0;
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1.12;
+    }
+
+    .subtitle{
+      margin: 8px 0 0;
+      color: rgba(11,34,54,.72);
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(11,34,54,.10);
+      background: rgba(255,255,255,.72);
+      font-weight: 750;
+      color: rgba(11,34,54,.75);
+    }
+    .dot{
+      width: 9px; height: 9px; border-radius: 999px;
+      background: var(--gold);
+      box-shadow: 0 0 0 4px rgba(242,200,75,.20);
+    }
+
     .grid{
       display:grid;
-      grid-template-columns: 1.2fr .8fr;
+      grid-template-columns: 1.15fr .85fr;
       gap: 16px;
-      margin-top: 14px;
+      margin-top: 16px;
     }
     @media (max-width: 860px){
       .grid{ grid-template-columns: 1fr; }
     }
 
     .card{
-      background: var(--white);
+      background: rgba(255,255,255,.85);
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: var(--radius-lg);
       padding: 16px;
-      box-shadow: 0 10px 24px rgba(7,26,43,.06);
+      box-shadow: var(--shadow-soft);
     }
     .card h2{
-      margin: 0 0 8px;
+      margin: 0 0 10px;
       font-size: 18px;
     }
-    .hint{ color: rgba(7,26,43,.72); margin: 0 0 10px; }
+    .hint{
+      margin: 0 0 12px;
+      color: rgba(11,34,54,.72);
+    }
 
-    /* Menu photo placeholder */
     .menu-box{
-      border-radius: 14px;
-      border: 1px dashed rgba(7,26,43,.28);
-      background: linear-gradient(180deg, rgba(11,42,69,.06), rgba(242,200,75,.10));
+      border-radius: 22px;
+      border: 1px dashed rgba(11,34,54,.22);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.68), rgba(245,239,228,.55));
       padding: 14px;
-      min-height: 220px;
+      min-height: 230px;
       display:flex;
       align-items:center;
       justify-content:center;
       text-align:center;
-      color: rgba(7,26,43,.7);
+      color: rgba(11,34,54,.7);
     }
     .menu-box img{
       max-width:100%;
       height:auto;
-      border-radius: 12px;
+      border-radius: 18px;
       display:block;
+      box-shadow: 0 12px 28px rgba(11,34,54,.10);
     }
 
     /* Form */
-    label{ display:block; font-weight: 600; margin: 10px 0 6px; }
+    label{ display:block; font-weight: 700; margin: 10px 0 6px; color: rgba(11,34,54,.85); }
     input, select, textarea{
       width: 100%;
       padding: 11px 12px;
-      border-radius: 12px;
-      border: 1px solid rgba(7,26,43,.22);
-      background: #fff;
+      border-radius: 18px;
+      border: 1px solid rgba(11,34,54,.18);
+      background: rgba(255,255,255,.92);
       color: var(--navy);
       outline: none;
     }
     input:focus, select:focus, textarea:focus{
-      border-color: rgba(11,42,69,.55);
-      box-shadow: 0 0 0 4px rgba(242,200,75,.25);
+      border-color: rgba(17,49,79,.45);
+      box-shadow: 0 0 0 5px rgba(242,200,75,.22);
     }
+
     .row{
       display:flex;
       gap: 10px;
       flex-wrap: wrap;
       align-items:center;
     }
-    .row > *{ flex: 1; min-width: 180px; }
+    .row > *{ flex:1; min-width: 180px; }
 
     button{
       padding: 11px 14px;
-      border-radius: 12px;
-      border: 1px solid rgba(7,26,43,.28);
+      border-radius: 999px; /* più morbido */
+      border: 1px solid rgba(11,34,54,.18);
       cursor:pointer;
-      font-weight: 800;
+      font-weight: 850;
+      transition: transform .05s ease, filter .15s ease, background .15s ease;
     }
+    button:active{ transform: translateY(1px); }
+
     .btn-primary{
-      background: var(--navy-2);
+      background: linear-gradient(180deg, rgba(17,49,79,.92), rgba(11,34,54,.96));
       color: white;
-      border-color: rgba(7,26,43,.12);
+      border-color: rgba(11,34,54,.10);
+      box-shadow: 0 10px 18px rgba(11,34,54,.12);
     }
     .btn-primary:hover{ filter: brightness(1.05); }
+
     .btn-ghost{
-      background: transparent;
+      background: rgba(255,255,255,.55);
       color: var(--navy-2);
     }
-    .btn-ghost:hover{ background: rgba(7,26,43,.06); }
+    .btn-ghost:hover{ background: rgba(17,49,79,.06); }
 
-    /* Footer */
     footer{
-      border-top: 1px solid var(--border);
+      border-top: 1px solid rgba(11,34,54,.10);
       padding: 18px 0;
-      color: rgba(7,26,43,.75);
+      color: rgba(11,34,54,.72);
     }
-
     .small{ font-size: 13px; }
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      gap: 8px;
-      padding: 6px 10px;
+
+    /* Piccolo dettaglio “spiaggia” */
+    .wave{
+      height: 10px;
       border-radius: 999px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.9);
-      font-weight: 700;
-      color: rgba(7,26,43,.8);
-    }
-    .dot{
-      width: 8px; height: 8px;
-      border-radius: 999px;
-      background: var(--gold);
+      background: linear-gradient(90deg, rgba(242,200,75,.00), rgba(242,200,75,.55), rgba(242,200,75,.00));
+      opacity: .75;
+      margin: 12px 0 0;
     }
   </style>
 </head>
 
 <body>
   <header>
-    <div class="accent"></div>
+    <!-- FOTO in testata: sostituisci il file -->
+    <div class="hero-band" aria-hidden="true">
+      <img src="header-coral.jpg" alt="">
+    </div>
+
     <div class="container topbar" role="banner">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"></div>
@@ -276,19 +331,17 @@
     <section class="hero">
       <div class="hero-card">
         <div class="hero-row">
-          <!-- Sostituisci con il tuo logo: <img src="logo.png" class="hero-img" alt="Logo Officina Mare"> -->
-          <div class="hero-img" aria-hidden="true">LOGO</div>
+          <!-- Logo: puoi sostituire questo box con <img src="logo.png" ...> -->
+          <div class="logo-box">LOGO</div>
 
           <div style="flex:1; min-width: 240px;">
             <h1>Officina Mare</h1>
-            <p class="subtitle">Ristorante di pesce — freschezza, semplicità, mare.</p>
-            <div style="margin-top:10px;" class="row">
-              <span class="badge"><span class="dot"></span> Oggi: Menù del giorno disponibile</span>
+            <p class="subtitle">Cucina di mare, atmosfera accogliente, sapori freschi.</p>
+            <div class="wave" aria-hidden="true"></div>
+            <div style="margin-top:12px;">
+              <span class="badge"><span class="dot"></span> Menù del giorno disponibile</span>
             </div>
           </div>
-
-          <!-- Sostituisci con una foto: <img src="hero.jpg" class="hero-img" alt="Piatto di pesce"> -->
-          <div class="hero-img" aria-hidden="true">FOTO</div>
         </div>
       </div>
     </section>
@@ -297,29 +350,27 @@
       <!-- MENÙ -->
       <div class="card" id="menu" aria-labelledby="menu-title">
         <h2 id="menu-title">Menù del giorno</h2>
-        <p class="hint">Qui puoi mettere una foto del menù oppure scriverlo a testo.</p>
+        <p class="hint">Puoi inserire una foto del menù oppure scriverlo qui.</p>
 
         <div class="menu-box">
-          <!-- Opzione A: foto menù -->
+          <!-- Se vuoi la foto, scommenta: -->
           <!-- <img src="menu-oggi.jpg" alt="Menù del giorno di Officina Mare"> -->
-
-          <!-- Opzione B: placeholder -->
           <div>
-            <strong>Carica qui la foto del menù</strong><br/>
-            <span class="small">Esempio: <code>menu-oggi.jpg</code></span>
+            <strong>Spazio foto menù</strong><br/>
+            <span class="small">Esempio file: <code>menu-oggi.jpg</code></span>
           </div>
         </div>
 
         <div style="margin-top:12px" class="row">
           <button class="btn-ghost" type="button" id="btnHello">Info</button>
-          <span id="msg" aria-live="polite"></span>
+          <span id="msg" aria-live="polite" class="small"></span>
         </div>
       </div>
 
       <!-- PRENOTA -->
       <div class="card" id="prenota" aria-labelledby="prenota-title">
         <h2 id="prenota-title">Prenota un tavolo</h2>
-        <p class="hint">Compila i dati e ti ricontattiamo per confermare.</p>
+        <p class="hint">Invia la richiesta: ti ricontattiamo per conferma.</p>
 
         <form id="contactForm">
           <label for="nome">Nome</label>
@@ -376,7 +427,7 @@
         Orari: <strong>...</strong>
       </p>
       <p class="small" style="margin-top:8px;">
-        Suggerimento: qui puoi mettere anche una mappa (Google Maps iframe) o link WhatsApp.
+        Qui puoi aggiungere link WhatsApp / Instagram o una mappa.
       </p>
     </section>
   </main>
@@ -391,10 +442,10 @@
     document.getElementById("year").textContent = new Date().getFullYear();
 
     document.getElementById("btnHello").addEventListener("click", () => {
-      document.getElementById("msg").textContent = "Pesce fresco, vino buono, vista mare 😄";
+      document.getElementById("msg").textContent = "Consiglio: aggiungi foto di piatti e del locale per dare più atmosfera 🙂";
     });
 
-    // Demo: per ora NON invia al server, mostra solo un messaggio
+    // Demo: non invia al server, mostra solo un messaggio
     document.getElementById("contactForm").addEventListener("submit", (e) => {
       e.preventDefault();
       const data = new FormData(e.target);
