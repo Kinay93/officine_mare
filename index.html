@@ -4,116 +4,405 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <title>Starter Page</title>
-  <meta name="description" content="Pagina HTML di partenza." />
+  <title>Officina Mare</title>
+  <meta name="description" content="Ristorante di pesce - Officina Mare. Menù del giorno e prenotazioni." />
 
-  <!-- Open Graph (per condivisioni) -->
-  <meta property="og:title" content="Starter Page" />
-  <meta property="og:description" content="Pagina HTML di partenza." />
+  <meta property="og:title" content="Officina Mare" />
+  <meta property="og:description" content="Ristorante di pesce - Menù del giorno e prenotazioni." />
   <meta property="og:type" content="website" />
 
-  <!-- Favicon (metti il tuo file) -->
   <link rel="icon" href="favicon.ico" />
 
   <style>
-    :root {
-      color-scheme: light dark;
+    :root{
+      --navy:#071a2b;
+      --navy-2:#0b2a45;
+      --white:#ffffff;
+      --sand:#f6f8fb;
+      --gold:#f2c84b; /* striscia gialla */
+      --border: rgba(7,26,43,.16);
       --max: 980px;
+      color-scheme: light; /* blocca dark per coerenza colori */
     }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
+
+    *{ box-sizing:border-box; }
+    html, body { height: 100%; }
+    body{
+      margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       line-height: 1.5;
+      background: linear-gradient(180deg, var(--sand), #ffffff 60%);
+      color: var(--navy);
     }
-    header, main, footer { padding: 24px; }
-    .container { max-width: var(--max); margin: 0 auto; }
-    header { border-bottom: 1px solid rgba(127,127,127,.25); }
-    footer { border-top: 1px solid rgba(127,127,127,.25); opacity: .8; }
-    .card {
-      padding: 16px;
-      border: 1px solid rgba(127,127,127,.25);
-      border-radius: 12px;
+
+    a{ color: inherit; text-decoration: none; }
+    a:hover{ text-decoration: underline; }
+
+    .container{ max-width: var(--max); margin: 0 auto; padding: 0 20px; }
+
+    /* Header */
+    header{
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
     }
-    button {
-      padding: 10px 14px;
+    .topbar{
+      display:flex;
+      align-items:center;
+      gap: 14px;
+      padding: 14px 0;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+    .brand-mark{
+      width: 34px; height: 34px;
       border-radius: 10px;
-      border: 1px solid rgba(127,127,127,.35);
-      background: transparent;
-      cursor: pointer;
+      background: radial-gradient(circle at 30% 30%, var(--gold), #ffd977 35%, var(--navy-2) 36%);
+      box-shadow: 0 6px 16px rgba(7,26,43,.12);
+      border: 1px solid rgba(7,26,43,.08);
     }
-    button:hover { filter: brightness(0.95); }
-    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-    .spacer { height: 12px; }
-    a { color: inherit; }
+    nav{
+      margin-left:auto;
+      display:flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items:center;
+      font-weight: 600;
+    }
+    .navlink{
+      padding: 8px 10px;
+      border-radius: 10px;
+    }
+    .navlink:hover{
+      background: rgba(7,26,43,.06);
+      text-decoration: none;
+    }
+
+    /* Striscia gialla accent */
+    .accent{
+      height: 5px;
+      background: linear-gradient(90deg, var(--gold), #ffe07a, var(--gold));
+    }
+
+    /* Hero */
+    .hero{
+      padding: 26px 0 10px;
+    }
+    .hero-card{
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(7,26,43,.08);
+      overflow: hidden;
+      position: relative;
+    }
+    .hero-card::before{
+      content:"";
+      position:absolute;
+      inset: 0 0 auto 0;
+      height: 6px;
+      background: var(--gold);
+    }
+    .hero-row{
+      display:flex;
+      gap: 18px;
+      align-items:center;
+      flex-wrap: wrap;
+    }
+    .hero h1{
+      margin: 0;
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1.15;
+      letter-spacing: .2px;
+    }
+    .subtitle{
+      margin: 8px 0 0;
+      color: rgba(7,26,43,.75);
+    }
+    .hero-img{
+      width: 120px;
+      height: 120px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, rgba(11,42,69,.12), rgba(242,200,75,.18));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 700;
+      color: rgba(7,26,43,.65);
+    }
+
+    /* Layout sections */
+    main{ padding: 18px 0 34px; }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 16px;
+      margin-top: 14px;
+    }
+    @media (max-width: 860px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 24px rgba(7,26,43,.06);
+    }
+    .card h2{
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+    .hint{ color: rgba(7,26,43,.72); margin: 0 0 10px; }
+
+    /* Menu photo placeholder */
+    .menu-box{
+      border-radius: 14px;
+      border: 1px dashed rgba(7,26,43,.28);
+      background: linear-gradient(180deg, rgba(11,42,69,.06), rgba(242,200,75,.10));
+      padding: 14px;
+      min-height: 220px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      color: rgba(7,26,43,.7);
+    }
+    .menu-box img{
+      max-width:100%;
+      height:auto;
+      border-radius: 12px;
+      display:block;
+    }
+
+    /* Form */
+    label{ display:block; font-weight: 600; margin: 10px 0 6px; }
+    input, select, textarea{
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(7,26,43,.22);
+      background: #fff;
+      color: var(--navy);
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus{
+      border-color: rgba(11,42,69,.55);
+      box-shadow: 0 0 0 4px rgba(242,200,75,.25);
+    }
+    .row{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
+    }
+    .row > *{ flex: 1; min-width: 180px; }
+
+    button{
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(7,26,43,.28);
+      cursor:pointer;
+      font-weight: 800;
+    }
+    .btn-primary{
+      background: var(--navy-2);
+      color: white;
+      border-color: rgba(7,26,43,.12);
+    }
+    .btn-primary:hover{ filter: brightness(1.05); }
+    .btn-ghost{
+      background: transparent;
+      color: var(--navy-2);
+    }
+    .btn-ghost:hover{ background: rgba(7,26,43,.06); }
+
+    /* Footer */
+    footer{
+      border-top: 1px solid var(--border);
+      padding: 18px 0;
+      color: rgba(7,26,43,.75);
+    }
+
+    .small{ font-size: 13px; }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.9);
+      font-weight: 700;
+      color: rgba(7,26,43,.8);
+    }
+    .dot{
+      width: 8px; height: 8px;
+      border-radius: 999px;
+      background: var(--gold);
+    }
   </style>
 </head>
 
 <body>
   <header>
-    <div class="container row" role="banner">
-      <strong>Starter Page</strong>
-      <nav aria-label="Navigazione principale" style="margin-left:auto" class="row">
-        <a href="#home">Home</a>
-        <a href="#about">Info</a>
-        <a href="#contact">Contatti</a>
+    <div class="accent"></div>
+    <div class="container topbar" role="banner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <span>Officina Mare</span>
+      </div>
+
+      <nav aria-label="Navigazione principale">
+        <a class="navlink" href="#menu">Menù</a>
+        <a class="navlink" href="#prenota">Prenota</a>
+        <a class="navlink" href="#contatti">Contatti</a>
       </nav>
     </div>
   </header>
 
   <main class="container" id="home" role="main">
-    <h1>Benvenuto 👋</h1>
-    <p>Questa è una pagina HTML di partenza: semplice, pulita, pronta da estendere.</p>
+    <section class="hero">
+      <div class="hero-card">
+        <div class="hero-row">
+          <!-- Sostituisci con il tuo logo: <img src="logo.png" class="hero-img" alt="Logo Officina Mare"> -->
+          <div class="hero-img" aria-hidden="true">LOGO</div>
 
-    <div class="spacer"></div>
+          <div style="flex:1; min-width: 240px;">
+            <h1>Officina Mare</h1>
+            <p class="subtitle">Ristorante di pesce — freschezza, semplicità, mare.</p>
+            <div style="margin-top:10px;" class="row">
+              <span class="badge"><span class="dot"></span> Oggi: Menù del giorno disponibile</span>
+            </div>
+          </div>
 
-    <section class="card" id="about" aria-labelledby="about-title">
-      <h2 id="about-title">Sezione esempio</h2>
-      <p>Qui puoi mettere contenuto, form, tabelle, ecc.</p>
-
-      <div class="row">
-        <button id="btnHello" type="button">Click</button>
-        <span id="msg" aria-live="polite"></span>
+          <!-- Sostituisci con una foto: <img src="hero.jpg" class="hero-img" alt="Piatto di pesce"> -->
+          <div class="hero-img" aria-hidden="true">FOTO</div>
+        </div>
       </div>
     </section>
 
-    <div class="spacer"></div>
+    <section class="grid">
+      <!-- MENÙ -->
+      <div class="card" id="menu" aria-labelledby="menu-title">
+        <h2 id="menu-title">Menù del giorno</h2>
+        <p class="hint">Qui puoi mettere una foto del menù oppure scriverlo a testo.</p>
 
-    <section class="card" id="contact" aria-labelledby="contact-title">
-      <h2 id="contact-title">Contatti</h2>
-      <form id="contactForm">
-        <label>
-          Email
-          <input name="email" type="email" required placeholder="nome@dominio.tld"
-                 style="display:block;width:min(420px,100%);padding:10px;border-radius:10px;border:1px solid rgba(127,127,127,.35);background:transparent;">
-        </label>
-        <div class="spacer"></div>
-        <button type="submit">Invia</button>
-      </form>
-      <p id="formStatus" aria-live="polite"></p>
+        <div class="menu-box">
+          <!-- Opzione A: foto menù -->
+          <!-- <img src="menu-oggi.jpg" alt="Menù del giorno di Officina Mare"> -->
+
+          <!-- Opzione B: placeholder -->
+          <div>
+            <strong>Carica qui la foto del menù</strong><br/>
+            <span class="small">Esempio: <code>menu-oggi.jpg</code></span>
+          </div>
+        </div>
+
+        <div style="margin-top:12px" class="row">
+          <button class="btn-ghost" type="button" id="btnHello">Info</button>
+          <span id="msg" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <!-- PRENOTA -->
+      <div class="card" id="prenota" aria-labelledby="prenota-title">
+        <h2 id="prenota-title">Prenota un tavolo</h2>
+        <p class="hint">Compila i dati e ti ricontattiamo per confermare.</p>
+
+        <form id="contactForm">
+          <label for="nome">Nome</label>
+          <input id="nome" name="nome" required placeholder="Mario Rossi" />
+
+          <label for="telefono">Telefono</label>
+          <input id="telefono" name="telefono" inputmode="tel" placeholder="+39 ..." />
+
+          <div class="row">
+            <div>
+              <label for="data">Data</label>
+              <input id="data" name="data" type="date" required />
+            </div>
+            <div>
+              <label for="ora">Ora</label>
+              <input id="ora" name="ora" type="time" required />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="persone">Persone</label>
+              <select id="persone" name="persone" required>
+                <option value="">Seleziona</option>
+                <option>1</option><option>2</option><option>3</option><option>4</option>
+                <option>5</option><option>6</option><option>7</option><option>8+</option>
+              </select>
+            </div>
+            <div>
+              <label for="email">Email (opzionale)</label>
+              <input id="email" name="email" type="email" placeholder="nome@dominio.tld" />
+            </div>
+          </div>
+
+          <label for="note">Note (allergie / preferenze)</label>
+          <textarea id="note" name="note" rows="3" placeholder="Es. allergia ai crostacei..."></textarea>
+
+          <div style="margin-top:12px" class="row">
+            <button class="btn-primary" type="submit">Invia richiesta</button>
+            <button class="btn-ghost" type="reset">Pulisci</button>
+          </div>
+
+          <p id="formStatus" aria-live="polite" class="small" style="margin-top:10px;"></p>
+        </form>
+      </div>
+    </section>
+
+    <!-- CONTATTI -->
+    <section class="card" id="contatti" style="margin-top:16px;">
+      <h2>Contatti</h2>
+      <p class="hint" style="margin-bottom:0;">
+        Indirizzo: <strong>...</strong> ·
+        Telefono: <strong>...</strong> ·
+        Orari: <strong>...</strong>
+      </p>
+      <p class="small" style="margin-top:8px;">
+        Suggerimento: qui puoi mettere anche una mappa (Google Maps iframe) o link WhatsApp.
+      </p>
     </section>
   </main>
 
   <footer>
-    <div class="container">
-      <small>© <span id="year"></span> — Starter Page</small>
+    <div class="container small">
+      © <span id="year"></span> — Officina Mare
     </div>
   </footer>
 
   <script>
-    // anno automatico
     document.getElementById("year").textContent = new Date().getFullYear();
 
-    // demo click
     document.getElementById("btnHello").addEventListener("click", () => {
-      document.getElementById("msg").textContent = "Ciao! ✅";
+      document.getElementById("msg").textContent = "Pesce fresco, vino buono, vista mare 😄";
     });
 
-    // demo submit (non invia davvero)
+    // Demo: per ora NON invia al server, mostra solo un messaggio
     document.getElementById("contactForm").addEventListener("submit", (e) => {
       e.preventDefault();
-      const email = new FormData(e.target).get("email");
-      document.getElementById("formStatus").textContent = `Ok, ricevuto: ${email}`;
+      const data = new FormData(e.target);
+      const nome = data.get("nome");
+      const quando = `${data.get("data")} ${data.get("ora")}`;
+      const persone = data.get("persone");
+      document.getElementById("formStatus").textContent =
+        `Richiesta inviata ✅ (${nome}, ${persone} persone, ${quando}). Ti ricontattiamo per conferma.`;
       e.target.reset();
     });
   </script>
