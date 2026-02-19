@@ -1,620 +1,495 @@
 <!doctype html>
 <html lang="it">
 <head>
-
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Officina Mare</title>
-
-<style>
-
-:root{
-
---bg1:#245b7c;
---bg2:#1b4968;
---bg3:#163e5a;
-
---paper: rgba(255,255,255,.96);
-
---text:#0b2236;
-
---muted: rgba(11,34,54,.65);
-
---max:1600px;
-
---radius:28px;
-
---headerH:82px;
-
-}
-
-/* RESET */
-
-*{
-box-sizing:border-box;
-}
-
-body{
-
-margin:0;
-
-font-family: system-ui, -apple-system, Segoe UI, Roboto;
-
-color:white;
-
-background:
-linear-gradient(
-180deg,
-var(--bg1),
-var(--bg2),
-var(--bg3)
-);
-
-overflow-x:hidden;
-
-}
-
-/* ===== BACKGROUND SYSTEM (IMG + OVERLAY COME PROGETTO MATRIMONIO) ===== */
-
-.bg-layer{
-
-position:fixed;
-
-top:0;
-left:0;
-
-width:100%;
-height:100%;
-
-z-index:0;
-
-pointer-events:none;
-
-}
-
-.bg-img{
-
-position:absolute;
-
-top:0;
-left:0;
-
-width:100%;
-height:100%;
-
-background-image:url("mare.jpg");
-
-background-size:cover;
-
-background-position:center;
-
-background-repeat:no-repeat;
-
-opacity:.55;
-
-filter:
-saturate(1.08)
-contrast(1.05)
-blur(.4px);
-
-}
-
-.bg-overlay{
-
-position:absolute;
-
-top:0;
-left:0;
-
-width:100%;
-height:100%;
-
-background:
-
-linear-gradient(
-to bottom,
-rgba(22,62,90,.55),
-rgba(22,62,90,.78)
-);
-
-}
-
-/* ===== CONTAINER ===== */
-
-.container{
-
-max-width:var(--max);
-
-margin:auto;
-
-padding:0 24px;
-
-position:relative;
-
-z-index:2;
-
-}
-
-/* ===== HEADER ===== */
-
-header{
-
-position:fixed;
-
-top:0;
-left:0;
-right:0;
-
-height:var(--headerH);
-
-background:rgba(22,62,90,.75);
-
-backdrop-filter:blur(12px);
-
-display:flex;
-
-align-items:center;
-
-justify-content:center;
-
-z-index:1000;
-
-border-bottom:1px solid rgba(255,255,255,.2);
-
-}
-
-.header-inner{
-
-display:flex;
-
-align-items:center;
-
-gap:20px;
-
-}
-
-/* foto laterali */
-
-.side-photo{
-
-width:300px;
-
-height:60px;
-
-border-radius:20px;
-
-overflow:hidden;
-
-box-shadow:0 6px 20px rgba(0,0,0,.3);
-
-}
-
-.side-photo img{
-
-width:100%;
-height:100%;
-
-object-fit:cover;
-
-}
-
-/* brand */
-
-.brand{
-
-font-size:32px;
-
-font-weight:900;
-
-padding:10px 26px;
-
-background:rgba(255,255,255,.12);
-
-border-radius:999px;
-
-}
-
-/* curva */
-
-.header-curve{
-
-position:fixed;
-
-top:var(--headerH);
-
-left:0;
-right:0;
-
-height:20px;
-
-z-index:999;
-
-}
-
-.header-curve::before{
-
-content:"";
-
-position:absolute;
-
-left:50%;
-
-transform:translateX(-50%);
-
-width:1200px;
-
-height:60px;
-
-top:-40px;
-
-border-radius:0 0 999px 999px;
-
-background:
-
-radial-gradient(
-ellipse at center top,
-rgba(255,255,255,.3),
-transparent 70%
-);
-
-}
-
-/* ===== MAIN ===== */
-
-main{
-
-padding-top:120px;
-
-padding-bottom:60px;
-
-}
-
-/* HERO */
-
-.hero{
-
-margin-bottom:30px;
-
-}
-
-.hero h1{
-
-margin:0;
-
-font-size:42px;
-
-}
-
-.hero p{
-
-margin-top:10px;
-
-opacity:.9;
-
-}
-
-/* CHIP */
-
-.chip{
-
-display:inline-flex;
-
-align-items:center;
-
-gap:8px;
-
-padding:10px 16px;
-
-border-radius:999px;
-
-background:rgba(255,255,255,.15);
-
-margin-right:10px;
-
-margin-top:10px;
-
-}
-
-/* GRID */
-
-.grid{
-
-display:grid;
-
-grid-template-columns:1.2fr .8fr;
-
-gap:24px;
-
-}
-
-/* CARD */
-
-.card{
-
-background:var(--paper);
-
-color:var(--text);
-
-padding:24px;
-
-border-radius:var(--radius);
-
-box-shadow:0 20px 60px rgba(0,0,0,.3);
-
-}
-
-/* MENU BOX */
-
-.menu-box{
-
-height:320px;
-
-border-radius:20px;
-
-border:2px dashed rgba(0,0,0,.2);
-
-display:flex;
-
-align-items:center;
-
-justify-content:center:;
-
-opacity:.7;
-
-}
-
-/* FORM */
-
-input,select,textarea{
-
-width:100%;
-
-padding:12px;
-
-margin-top:6px;
-
-margin-bottom:14px;
-
-border-radius:14px;
-
-border:1px solid rgba(0,0,0,.2);
-
-font-size:15px;
-
-}
-
-button{
-
-padding:12px 20px;
-
-border-radius:999px;
-
-border:none;
-
-background:#245b7c;
-
-color:white;
-
-font-weight:bold;
-
-cursor:pointer;
-
-}
-
-button:hover{
-
-background:#1b4968;
-
-}
-
-/* FOOTER */
-
-footer{
-
-margin-top:30px;
-
-opacity:.8;
-
-}
-
-/* MOBILE */
-
-@media(max-width:900px){
-
-.grid{
-
-grid-template-columns:1fr;
-
-}
-
-.side-photo{
-
-display:none;
-
-}
-
-}
-
-</style>
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Officina Mare</title>
+  <meta name="description" content="Ristorante di pesce - Officina Mare. Menù del giorno e prenotazioni." />
+  <link rel="icon" href="favicon.ico" />
+
+  <style>
+    :root{
+      --bgTop:#245b7c;
+      --bgMid:#1b4968;
+      --bgBot:#163e5a;
+
+      --paper: rgba(255,255,255,.95);
+      --text:#0b2236;
+      --muted: rgba(11,34,54,.68);
+
+      --borderD: rgba(11,34,54,.10);
+      --shadow: 0 22px 70px rgba(0,0,0,.22);
+
+      --max: 1900px;
+      --radiusXL: 30px;
+
+      --headerH: 82px;
+      --curveH: 20px;
+
+      color-scheme: light;
+    }
+
+    *{ box-sizing:border-box; }
+
+    html{
+      scroll-padding-top: calc(var(--headerH) + 26px);
+    }
+
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      line-height:1.55;
+      color:#fff;
+      overflow-x:hidden;
+
+      /* fondo base navy */
+      background:
+        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.18), transparent 60%),
+        radial-gradient(800px 420px at 12% 8%, rgba(255,255,255,.10), transparent 55%),
+        radial-gradient(900px 520px at 88% 14%, rgba(255,255,255,.08), transparent 55%),
+        linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 42%, var(--bgBot) 100%);
+    }
+
+    /* ===== IMMAGINE + OVERLAY “BLINDATO” =====
+       Se non carica mare.jpg, l'overlay si vede comunque (per test). */
+    body::before{
+      content:"";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events:none;
+
+      background-image: url("mare.jpg");
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: cover;
+
+      opacity: .55;
+      filter: saturate(1.08) contrast(1.05) blur(.45px);
+    }
+    body::after{
+      content:"";
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events:none;
+
+      /* overlay vero (sempre presente) */
+      background: linear-gradient(to bottom,
+        rgba(22,62,90,.50),
+        rgba(22,62,90,.78)
+      );
+    }
+
+    a{ color:inherit; text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+
+    .container{
+      width: min(96vw, var(--max));
+      margin:0 auto;
+      padding:0 clamp(12px, 1.8vw, 28px);
+      position: relative;
+      z-index: 2; /* sopra overlay */
+    }
+
+    /* ===== HEADER ===== */
+    header{
+      position: fixed;
+      top:0; left:0; right:0;
+      height: var(--headerH);
+      z-index: 1000;
+
+      background: rgba(22,62,90,.78);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,.18);
+    }
+
+    .header-inner{
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 18px;
+    }
+
+    .side-photo{
+      width: clamp(200px, 18vw, 420px);
+      height: 60px;
+      border-radius: 20px;
+      overflow:hidden;
+      box-shadow: 0 10px 26px rgba(0,0,0,.28);
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      flex: 0 0 auto;
+    }
+    .side-photo img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      display:block;
+    }
+
+    .brand{
+      font-weight: 950;
+      letter-spacing: .5px;
+      font-size: clamp(24px, 2.4vw, 40px);
+      padding: 10px 26px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 10px 22px rgba(0,0,0,.18);
+      white-space: nowrap;
+    }
+
+    .header-curve{
+      position: fixed;
+      top: var(--headerH);
+      left:0; right:0;
+      height: var(--curveH);
+      z-index: 999;
+      pointer-events: none;
+    }
+    .header-curve::before{
+      content:"";
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      width: min(1400px, 94vw);
+      height:64px;
+      top:-44px;
+      border-radius: 0 0 999px 999px;
+      background: radial-gradient(82% 120% at 50% 0%,
+        rgba(255,255,255,.22),
+        rgba(255,255,255,.06) 55%,
+        rgba(255,255,255,0) 74%);
+      opacity:.92;
+    }
+
+    /* ===== MAIN ===== */
+    main{
+      padding-top: calc(var(--headerH) + var(--curveH) + 42px);
+      padding-bottom: 60px;
+    }
+
+    section, #menu, #prenota, #contatti{
+      scroll-margin-top: calc(var(--headerH) + 26px);
+    }
+
+    .hero{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 18px;
+      align-items:end;
+      margin-bottom: 22px;
+    }
+
+    .hero-left h1{
+      margin:0 0 8px;
+      font-size: clamp(28px, 3.2vw, 46px);
+    }
+    .hero-left p{
+      margin:0;
+      color: rgba(255,255,255,.92);
+      max-width: 78ch;
+    }
+
+    .wave-line{
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.18), rgba(255,255,255,0));
+      opacity: .85;
+      margin: 10px 0 18px;
+    }
+
+    .hero-right{
+      display:flex;
+      justify-content:flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:flex-end;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: 0 14px 26px rgba(0,0,0,.14);
+      color: rgba(255,255,255,.92);
+      font-weight: 750;
+      backdrop-filter: blur(8px);
+      white-space: nowrap;
+    }
+    .chip .dot{
+      width: 10px; height: 10px;
+      border-radius: 999px;
+      background: rgba(255,180,90,.95);
+      box-shadow: 0 0 0 5px rgba(255,180,90,.18);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .card{
+      background: var(--paper);
+      color: var(--text);
+      border-radius: var(--radiusXL);
+      border: 1px solid var(--borderD);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      display:flex;
+      flex-direction: column;
+      height:100%;
+      position: relative;
+      overflow:hidden;
+    }
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(900px 240px at 20% 0%, rgba(255,255,255,.55), rgba(255,255,255,0) 55%),
+        radial-gradient(700px 220px at 90% 20%, rgba(255,255,255,.35), rgba(255,255,255,0) 60%);
+      opacity:.35;
+      pointer-events:none;
+    }
+    .card > *{ position: relative; }
+
+    .card h2{ margin:0 0 10px; font-size: 19px; }
+    .hint{ margin:0 0 14px; color: var(--muted); }
+
+    .menu-box{
+      border-radius: 24px;
+      border: 1px dashed rgba(11,34,54,.25);
+      background: linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.55));
+      min-height: 340px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      color: rgba(11,34,54,.70);
+      padding: 16px;
+      flex: 1;
+      box-shadow: 0 10px 22px rgba(0,0,0,.10) inset;
+    }
+
+    .btn-row{
+      display:flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      align-items:center;
+    }
+    button{
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(11,34,54,.16);
+      cursor:pointer;
+      font-weight: 900;
+      min-width: 160px;
+    }
+    .btn-primary{
+      color:#fff;
+      border-color: rgba(0,0,0,.10);
+      background: linear-gradient(180deg, rgba(36,91,124,.96), rgba(22,62,90,.98));
+      box-shadow: 0 16px 28px rgba(0,0,0,.16);
+    }
+    .btn-soft{
+      background: rgba(36,91,124,.10);
+      color: rgba(11,34,54,.92);
+    }
+
+    form{ margin-top: 2px; }
+    label{
+      display:block;
+      font-weight: 850;
+      margin: 12px 0 6px;
+      color: rgba(11,34,54,.92);
+    }
+    input, select, textarea{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(11,34,54,.18);
+      background: rgba(255,255,255,.98);
+      color: var(--text);
+      outline:none;
+    }
+    .row{
+      display:flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items:center;
+    }
+    .row > *{ flex:1; min-width: 190px; }
+
+    .status{
+      margin-top: 10px;
+      font-size: 13px;
+      color: rgba(11,34,54,.72);
+    }
+
+    .contacts{ margin-top: 18px; }
+
+    footer{
+      margin-top: 22px;
+      padding: 18px 0 0;
+      border-top: 1px solid rgba(255,255,255,.16);
+      color: rgba(255,255,255,.82);
+    }
+    .small{ font-size: 13px; opacity:.95; }
+
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+      .hero{ grid-template-columns: 1fr; }
+      .hero-right{ justify-content:flex-start; }
+      .menu-box{ min-height: 300px; }
+      body::before{ opacity: .48; }
+    }
+
+    @media (max-width: 560px){
+      .side-photo{ display:none; }
+      :root{ --headerH: 74px; --curveH: 16px; }
+      .brand{ padding: 10px 18px; }
+      button{ width: 100%; min-width: unset; }
+      body::before{ opacity: .42; }
+    }
+  </style>
 </head>
 
 <body>
-
-<!-- BACKGROUND SYSTEM -->
-<div class="bg-layer">
-
-<div class="bg-img"></div>
-
-<div class="bg-overlay"></div>
-
-</div>
-
-<!-- HEADER -->
-
-<header>
-
-<div class="header-inner">
-
-<div class="side-photo">
-<img src="barriera_corallina.jpg">
-</div>
-
-<div class="brand">
-Officina Mare
-</div>
-
-<div class="side-photo">
-<img src="spaghetti_vongole.jpg">
-</div>
-
-</div>
-
-</header>
-
-<div class="header-curve"></div>
-
-<!-- MAIN -->
-
-<main class="container">
-
-<div class="hero">
-
-<h1>Ristorante di pesce</h1>
-
-<p>
-
-Fresco come il vento all’alba, semplice come una rotta tracciata a vista,
-profondo come il mare che chiama chi sa ascoltarlo.
-
-</p>
-
-<div>
-
-<span class="chip">
-Oggi: menù disponibile
-</span>
-
-<span class="chip">
-Contatti in fondo
-</span>
-
-</div>
-
-</div>
-
-<div class="grid">
-
-<!-- MENU -->
-
-<div class="card">
-
-<h2>Menù del giorno</h2>
-
-<p class="muted">
-Inserisci una foto del menù oppure scrivilo a testo.
-</p>
-
-<div class="menu-box">
-
-Spazio foto menù
-
-</div>
-
-<br>
-
-<button id="btnInfo">
-
-Info
-
-</button>
-
-<span id="msg"></span>
-
-</div>
-
-<!-- PRENOTA -->
-
-<div class="card">
-
-<h2>Prenota un tavolo</h2>
-
-<p>
-Invia la richiesta: ti ricontattiamo per conferma.
-</p>
-
-<form id="contactForm">
-
-Nome
-<input name="nome" required placeholder="Mario Rossi">
-
-Telefono
-<input name="telefono" placeholder="+39">
-
-Data
-<input type="date" name="data">
-
-Ora
-<input type="time" name="ora">
-
-Persone
-<select name="persone">
-<option>1</option>
-<option>2</option>
-<option>3</option>
-<option>4</option>
-<option>5</option>
-</select>
-
-Email
-<input name="email" placeholder="nome@email.com">
-
-Note
-<textarea name="note"></textarea>
-
-<button type="submit">
-Invia richiesta
-</button>
-
-</form>
-
-<p id="formStatus"></p>
-
-</div>
-
-</div>
-
-<footer>
-
-© <span id="year"></span> Officina Mare
-
-</footer>
-
-</main>
-
-<script>
-
-document.getElementById("year").textContent =
-new Date().getFullYear();
-
-document.getElementById("btnInfo").onclick = function(){
-
-document.getElementById("msg").innerText =
-"Oggi consigliamo crudi e grigliata di mare";
-
-};
-
-document.getElementById("contactForm").onsubmit = function(e){
-
-e.preventDefault();
-
-document.getElementById("formStatus").innerText =
-"Richiesta inviata. Ti contatteremo presto.";
-
-};
-
-</script>
-
+  <!-- HEADER -->
+  <header>
+    <div class="container header-inner">
+      <div class="side-photo" aria-hidden="true"><img src="left.jpg" alt=""></div>
+      <div class="brand"><span>Officina Mare</span></div>
+      <div class="side-photo" aria-hidden="true"><img src="right.jpg" alt=""></div>
+    </div>
+  </header>
+  <div class="header-curve" aria-hidden="true"></div>
+
+  <!-- MAIN -->
+  <main class="container" id="home" role="main">
+    <section class="hero">
+      <div class="hero-left">
+        <h1>Ristorante di pesce</h1>
+        <p>Fresco come il vento all’alba, semplice come una rotta tracciata a vista, profondo come il mare che chiama chi sa ascoltarlo.</p>
+        <div class="wave-line" aria-hidden="true"></div>
+      </div>
+      <div class="hero-right">
+        <div class="chip"><span class="dot"></span><span>Oggi: menù del giorno disponibile</span></div>
+        <div class="chip"><span>📍</span><span><a href="#contatti">Contatti in fondo</a></span></div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <section class="card" id="menu" aria-labelledby="menu-title">
+        <h2 id="menu-title">Menù del giorno</h2>
+        <p class="hint">Inserisci una foto del menù oppure scrivilo a testo.</p>
+
+        <div class="menu-box">
+          <!-- <img src="menu-oggi.jpg" alt="Menù del giorno di Officina Mare"> -->
+          <div>
+            <strong>Spazio foto menù</strong><br>
+            <span style="font-size:13px; opacity:.9;">Esempio: <code>menu-oggi.jpg</code></span>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-soft" type="button" id="btnInfo">Info</button>
+          <span id="msg" style="font-size:13px; color: rgba(11,34,54,.72);" aria-live="polite"></span>
+        </div>
+      </section>
+
+      <section class="card" id="prenota" aria-labelledby="prenota-title">
+        <h2 id="prenota-title">Prenota un tavolo</h2>
+        <p class="hint">Invia la richiesta: ti ricontattiamo per conferma.</p>
+
+        <form id="contactForm">
+          <label for="nome">Nome</label>
+          <input id="nome" name="nome" required placeholder="Mario Rossi" />
+
+          <label for="telefono">Telefono</label>
+          <input id="telefono" name="telefono" inputmode="tel" placeholder="+39 ..." />
+
+          <div class="row">
+            <div>
+              <label for="data">Data</label>
+              <input id="data" name="data" type="date" required />
+            </div>
+            <div>
+              <label for="ora">Ora</label>
+              <input id="ora" name="ora" type="time" required />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="persone">Persone</label>
+              <select id="persone" name="persone" required>
+                <option value="">Seleziona</option>
+                <option>1</option><option>2</option><option>3</option><option>4</option>
+                <option>5</option><option>6</option><option>7</option><option>8+</option>
+              </select>
+            </div>
+            <div>
+              <label for="email">Email (opzionale)</label>
+              <input id="email" name="email" type="email" placeholder="nome@dominio.tld" />
+            </div>
+          </div>
+
+          <label for="note">Note (allergie / preferenze)</label>
+          <textarea id="note" name="note" rows="3" placeholder="Es. allergia ai crostacei..."></textarea>
+
+          <div class="btn-row">
+            <button class="btn-primary" type="submit">Invia richiesta</button>
+            <button class="btn-soft" type="reset">Pulisci</button>
+          </div>
+
+          <p id="formStatus" class="status" aria-live="polite"></p>
+        </form>
+      </section>
+    </section>
+
+    <section class="card contacts" id="contatti" aria-labelledby="contatti-title">
+      <h2 id="contatti-title">Contatti</h2>
+      <p class="hint" style="margin-bottom:0;">
+        Indirizzo: <strong>...</strong> · Telefono: <strong>...</strong> · Orari: <strong>...</strong>
+      </p>
+      <p class="status" style="margin-top:8px;">
+        Suggerimento: qui puoi aggiungere link WhatsApp/Instagram o una mappa.
+      </p>
+    </section>
+
+    <footer>
+      <div class="small">© <span id="year"></span> — Officina Mare</div>
+    </footer>
+  </main>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    document.getElementById("btnInfo").addEventListener("click", () => {
+      document.getElementById("msg").textContent = "Oggi consigliamo crudi e grigliata di mare 🦞";
+    });
+
+    document.getElementById("contactForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const data = new FormData(e.target);
+      const nome = data.get("nome");
+      const quando = `${data.get("data")} ${data.get("ora")}`;
+      const persone = data.get("persone");
+      document.getElementById("formStatus").textContent =
+        `Richiesta inviata ✅ (${nome}, ${persone} persone, ${quando}). Ti ricontattiamo per conferma.`;
+      e.target.reset();
+    });
+  </script>
 </body>
 </html>
