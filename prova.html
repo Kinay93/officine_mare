@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Starter Page</title>
+  <meta name="description" content="Pagina HTML di partenza." />
+
+  <!-- Open Graph (per condivisioni) -->
+  <meta property="og:title" content="Starter Page" />
+  <meta property="og:description" content="Pagina HTML di partenza." />
+  <meta property="og:type" content="website" />
+
+  <!-- Favicon (metti il tuo file) -->
+  <link rel="icon" href="favicon.ico" />
+
+  <style>
+    :root {
+      color-scheme: light dark;
+      --max: 980px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      line-height: 1.5;
+    }
+    header, main, footer { padding: 24px; }
+    .container { max-width: var(--max); margin: 0 auto; }
+    header { border-bottom: 1px solid rgba(127,127,127,.25); }
+    footer { border-top: 1px solid rgba(127,127,127,.25); opacity: .8; }
+    .card {
+      padding: 16px;
+      border: 1px solid rgba(127,127,127,.25);
+      border-radius: 12px;
+    }
+    button {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(127,127,127,.35);
+      background: transparent;
+      cursor: pointer;
+    }
+    button:hover { filter: brightness(0.95); }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .spacer { height: 12px; }
+    a { color: inherit; }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container row" role="banner">
+      <strong>Starter Page</strong>
+      <nav aria-label="Navigazione principale" style="margin-left:auto" class="row">
+        <a href="#home">Home</a>
+        <a href="#about">Info</a>
+        <a href="#contact">Contatti</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container" id="home" role="main">
+    <h1>Benvenuto 👋</h1>
+    <p>Questa è una pagina HTML di partenza: semplice, pulita, pronta da estendere.</p>
+
+    <div class="spacer"></div>
+
+    <section class="card" id="about" aria-labelledby="about-title">
+      <h2 id="about-title">Sezione esempio</h2>
+      <p>Qui puoi mettere contenuto, form, tabelle, ecc.</p>
+
+      <div class="row">
+        <button id="btnHello" type="button">Click</button>
+        <span id="msg" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <div class="spacer"></div>
+
+    <section class="card" id="contact" aria-labelledby="contact-title">
+      <h2 id="contact-title">Contatti</h2>
+      <form id="contactForm">
+        <label>
+          Email
+          <input name="email" type="email" required placeholder="nome@dominio.tld"
+                 style="display:block;width:min(420px,100%);padding:10px;border-radius:10px;border:1px solid rgba(127,127,127,.35);background:transparent;">
+        </label>
+        <div class="spacer"></div>
+        <button type="submit">Invia</button>
+      </form>
+      <p id="formStatus" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <small>© <span id="year"></span> — Starter Page</small>
+    </div>
+  </footer>
+
+  <script>
+    // anno automatico
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // demo click
+    document.getElementById("btnHello").addEventListener("click", () => {
+      document.getElementById("msg").textContent = "Ciao! ✅";
+    });
+
+    // demo submit (non invia davvero)
+    document.getElementById("contactForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const email = new FormData(e.target).get("email");
+      document.getElementById("formStatus").textContent = `Ok, ricevuto: ${email}`;
+      e.target.reset();
+    });
+  </script>
+</body>
+</html>
