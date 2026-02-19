@@ -25,14 +25,12 @@
 
       --headerH: 82px;
       --curveH: 20px;
-
-      color-scheme: light;
     }
 
     *{ box-sizing:border-box; }
 
     html{
-      scroll-padding-top: calc(var(--headerH) + 26px);
+      scroll-padding-top: calc(var(--headerH) + 28px);
     }
 
     body{
@@ -42,54 +40,53 @@
       color:#fff;
       overflow-x:hidden;
 
-      /* fondo base navy */
-      background:
-        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.18), transparent 60%),
-        radial-gradient(800px 420px at 12% 8%, rgba(255,255,255,.10), transparent 55%),
-        radial-gradient(900px 520px at 88% 14%, rgba(255,255,255,.08), transparent 55%),
-        linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 42%, var(--bgBot) 100%);
+      /* Base navy sempre presente */
+      background: linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 45%, var(--bgBot) 100%);
     }
 
-    /* ===== IMMAGINE + OVERLAY “BLINDATO” =====
-       Se non carica mare.jpg, l'overlay si vede comunque (per test). */
-    body::before{
-      content:"";
+    /* ===== SFONDO (DIV REALI) ===== */
+    #bg{
       position: fixed;
       inset: 0;
       z-index: 0;
-      pointer-events:none;
+      pointer-events: none;
 
       background-image: url("mare.jpg");
       background-repeat: no-repeat;
       background-position: center center;
       background-size: cover;
 
-      opacity: .55;
-      filter: saturate(1.08) contrast(1.05) blur(.45px);
+      opacity: .75; /* quanto “foto” vuoi */
+      filter: saturate(1.08) contrast(1.05) blur(.4px);
     }
-    body::after{
-      content:"";
+
+    #overlay{
       position: fixed;
       inset: 0;
       z-index: 1;
-      pointer-events:none;
+      pointer-events: none;
 
-      /* overlay vero (sempre presente) */
-      background: linear-gradient(to bottom,
-        rgba(22,62,90,.50),
-        rgba(22,62,90,.78)
-      );
+      /* Overlay VISIBILE (questo è quello che ti manca) */
+      background:
+        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.12), transparent 60%),
+        linear-gradient(to bottom, rgba(22,62,90,.35), rgba(22,62,90,.78));
+    }
+
+    /* Wrapper sopra sfondo */
+    #app{
+      position: relative;
+      z-index: 2;
+      min-height: 100vh;
     }
 
     a{ color:inherit; text-decoration:none; }
     a:hover{ text-decoration:underline; }
 
+    /* Container più “wide” (non schiaccia al centro) */
     .container{
       width: min(96vw, var(--max));
-      margin:0 auto;
-      padding:0 clamp(12px, 1.8vw, 28px);
-      position: relative;
-      z-index: 2; /* sopra overlay */
+      margin: 0 auto;
+      padding: 0 clamp(12px, 1.8vw, 28px);
     }
 
     /* ===== HEADER ===== */
@@ -141,6 +138,7 @@
       white-space: nowrap;
     }
 
+    /* curva concava */
     .header-curve{
       position: fixed;
       top: var(--headerH);
@@ -167,12 +165,12 @@
 
     /* ===== MAIN ===== */
     main{
-      padding-top: calc(var(--headerH) + var(--curveH) + 42px);
+      padding-top: calc(var(--headerH) + var(--curveH) + 44px);
       padding-bottom: 60px;
     }
 
     section, #menu, #prenota, #contatti{
-      scroll-margin-top: calc(var(--headerH) + 26px);
+      scroll-margin-top: calc(var(--headerH) + 28px);
     }
 
     .hero{
@@ -187,6 +185,7 @@
       margin:0 0 8px;
       font-size: clamp(28px, 3.2vw, 46px);
     }
+
     .hero-left p{
       margin:0;
       color: rgba(255,255,255,.92);
@@ -250,6 +249,7 @@
       position: relative;
       overflow:hidden;
     }
+
     .card::before{
       content:"";
       position:absolute;
@@ -287,6 +287,7 @@
       margin-top: 14px;
       align-items:center;
     }
+
     button{
       padding: 12px 16px;
       border-radius: 999px;
@@ -295,24 +296,28 @@
       font-weight: 900;
       min-width: 160px;
     }
+
     .btn-primary{
       color:#fff;
       border-color: rgba(0,0,0,.10);
       background: linear-gradient(180deg, rgba(36,91,124,.96), rgba(22,62,90,.98));
       box-shadow: 0 16px 28px rgba(0,0,0,.16);
     }
+
     .btn-soft{
       background: rgba(36,91,124,.10);
       color: rgba(11,34,54,.92);
     }
 
     form{ margin-top: 2px; }
+
     label{
       display:block;
       font-weight: 850;
       margin: 12px 0 6px;
       color: rgba(11,34,54,.92);
     }
+
     input, select, textarea{
       width:100%;
       padding: 12px 12px;
@@ -322,6 +327,7 @@
       color: var(--text);
       outline:none;
     }
+
     .row{
       display:flex;
       gap: 12px;
@@ -344,6 +350,7 @@
       border-top: 1px solid rgba(255,255,255,.16);
       color: rgba(255,255,255,.82);
     }
+
     .small{ font-size: 13px; opacity:.95; }
 
     @media (max-width: 980px){
@@ -351,7 +358,7 @@
       .hero{ grid-template-columns: 1fr; }
       .hero-right{ justify-content:flex-start; }
       .menu-box{ min-height: 300px; }
-      body::before{ opacity: .48; }
+      #bg{ opacity: .62; }
     }
 
     @media (max-width: 560px){
@@ -359,119 +366,123 @@
       :root{ --headerH: 74px; --curveH: 16px; }
       .brand{ padding: 10px 18px; }
       button{ width: 100%; min-width: unset; }
-      body::before{ opacity: .42; }
+      #bg{ opacity: .58; }
     }
   </style>
 </head>
 
 <body>
-  <!-- HEADER -->
-  <header>
-    <div class="container header-inner">
-      <div class="side-photo" aria-hidden="true"><img src="left.jpg" alt=""></div>
-      <div class="brand"><span>Officina Mare</span></div>
-      <div class="side-photo" aria-hidden="true"><img src="right.jpg" alt=""></div>
-    </div>
-  </header>
-  <div class="header-curve" aria-hidden="true"></div>
+  <!-- sfondo -->
+  <div id="bg" aria-hidden="true"></div>
+  <div id="overlay" aria-hidden="true"></div>
 
-  <!-- MAIN -->
-  <main class="container" id="home" role="main">
-    <section class="hero">
-      <div class="hero-left">
-        <h1>Ristorante di pesce</h1>
-        <p>Fresco come il vento all’alba, semplice come una rotta tracciata a vista, profondo come il mare che chiama chi sa ascoltarlo.</p>
-        <div class="wave-line" aria-hidden="true"></div>
+  <div id="app">
+    <header>
+      <div class="container header-inner">
+        <div class="side-photo" aria-hidden="true"><img src="left.jpg" alt=""></div>
+        <div class="brand">Officina Mare</div>
+        <div class="side-photo" aria-hidden="true"><img src="right.jpg" alt=""></div>
       </div>
-      <div class="hero-right">
-        <div class="chip"><span class="dot"></span><span>Oggi: menù del giorno disponibile</span></div>
-        <div class="chip"><span>📍</span><span><a href="#contatti">Contatti in fondo</a></span></div>
-      </div>
-    </section>
+    </header>
+    <div class="header-curve" aria-hidden="true"></div>
 
-    <section class="grid">
-      <section class="card" id="menu" aria-labelledby="menu-title">
-        <h2 id="menu-title">Menù del giorno</h2>
-        <p class="hint">Inserisci una foto del menù oppure scrivilo a testo.</p>
-
-        <div class="menu-box">
-          <!-- <img src="menu-oggi.jpg" alt="Menù del giorno di Officina Mare"> -->
-          <div>
-            <strong>Spazio foto menù</strong><br>
-            <span style="font-size:13px; opacity:.9;">Esempio: <code>menu-oggi.jpg</code></span>
-          </div>
+    <main class="container" id="home" role="main">
+      <section class="hero">
+        <div class="hero-left">
+          <h1>Ristorante di pesce</h1>
+          <p>Fresco come il vento all’alba, semplice come una rotta tracciata a vista, profondo come il mare che chiama chi sa ascoltarlo.</p>
+          <div class="wave-line" aria-hidden="true"></div>
         </div>
 
-        <div class="btn-row">
-          <button class="btn-soft" type="button" id="btnInfo">Info</button>
-          <span id="msg" style="font-size:13px; color: rgba(11,34,54,.72);" aria-live="polite"></span>
+        <div class="hero-right">
+          <div class="chip"><span class="dot"></span><span>Oggi: menù del giorno disponibile</span></div>
+          <div class="chip"><span>📍</span><span><a href="#contatti">Contatti in fondo</a></span></div>
         </div>
       </section>
 
-      <section class="card" id="prenota" aria-labelledby="prenota-title">
-        <h2 id="prenota-title">Prenota un tavolo</h2>
-        <p class="hint">Invia la richiesta: ti ricontattiamo per conferma.</p>
+      <section class="grid">
+        <section class="card" id="menu" aria-labelledby="menu-title">
+          <h2 id="menu-title">Menù del giorno</h2>
+          <p class="hint">Inserisci una foto del menù oppure scrivilo a testo.</p>
 
-        <form id="contactForm">
-          <label for="nome">Nome</label>
-          <input id="nome" name="nome" required placeholder="Mario Rossi" />
-
-          <label for="telefono">Telefono</label>
-          <input id="telefono" name="telefono" inputmode="tel" placeholder="+39 ..." />
-
-          <div class="row">
+          <div class="menu-box">
             <div>
-              <label for="data">Data</label>
-              <input id="data" name="data" type="date" required />
-            </div>
-            <div>
-              <label for="ora">Ora</label>
-              <input id="ora" name="ora" type="time" required />
+              <strong>Spazio foto menù</strong><br>
+              <span style="font-size:13px; opacity:.9;">Esempio: <code>menu-oggi.jpg</code></span>
             </div>
           </div>
-
-          <div class="row">
-            <div>
-              <label for="persone">Persone</label>
-              <select id="persone" name="persone" required>
-                <option value="">Seleziona</option>
-                <option>1</option><option>2</option><option>3</option><option>4</option>
-                <option>5</option><option>6</option><option>7</option><option>8+</option>
-              </select>
-            </div>
-            <div>
-              <label for="email">Email (opzionale)</label>
-              <input id="email" name="email" type="email" placeholder="nome@dominio.tld" />
-            </div>
-          </div>
-
-          <label for="note">Note (allergie / preferenze)</label>
-          <textarea id="note" name="note" rows="3" placeholder="Es. allergia ai crostacei..."></textarea>
 
           <div class="btn-row">
-            <button class="btn-primary" type="submit">Invia richiesta</button>
-            <button class="btn-soft" type="reset">Pulisci</button>
+            <button class="btn-soft" type="button" id="btnInfo">Info</button>
+            <span id="msg" style="font-size:13px; color: rgba(11,34,54,.72);" aria-live="polite"></span>
           </div>
+        </section>
 
-          <p id="formStatus" class="status" aria-live="polite"></p>
-        </form>
+        <section class="card" id="prenota" aria-labelledby="prenota-title">
+          <h2 id="prenota-title">Prenota un tavolo</h2>
+          <p class="hint">Invia la richiesta: ti ricontattiamo per conferma.</p>
+
+          <form id="contactForm">
+            <label for="nome">Nome</label>
+            <input id="nome" name="nome" required placeholder="Mario Rossi" />
+
+            <label for="telefono">Telefono</label>
+            <input id="telefono" name="telefono" inputmode="tel" placeholder="+39 ..." />
+
+            <div class="row">
+              <div>
+                <label for="data">Data</label>
+                <input id="data" name="data" type="date" required />
+              </div>
+              <div>
+                <label for="ora">Ora</label>
+                <input id="ora" name="ora" type="time" required />
+              </div>
+            </div>
+
+            <div class="row">
+              <div>
+                <label for="persone">Persone</label>
+                <select id="persone" name="persone" required>
+                  <option value="">Seleziona</option>
+                  <option>1</option><option>2</option><option>3</option><option>4</option>
+                  <option>5</option><option>6</option><option>7</option><option>8+</option>
+                </select>
+              </div>
+              <div>
+                <label for="email">Email (opzionale)</label>
+                <input id="email" name="email" type="email" placeholder="nome@dominio.tld" />
+              </div>
+            </div>
+
+            <label for="note">Note (allergie / preferenze)</label>
+            <textarea id="note" name="note" rows="3" placeholder="Es. allergia ai crostacei..."></textarea>
+
+            <div class="btn-row">
+              <button class="btn-primary" type="submit">Invia richiesta</button>
+              <button class="btn-soft" type="reset">Pulisci</button>
+            </div>
+
+            <p id="formStatus" class="status" aria-live="polite"></p>
+          </form>
+        </section>
       </section>
-    </section>
 
-    <section class="card contacts" id="contatti" aria-labelledby="contatti-title">
-      <h2 id="contatti-title">Contatti</h2>
-      <p class="hint" style="margin-bottom:0;">
-        Indirizzo: <strong>...</strong> · Telefono: <strong>...</strong> · Orari: <strong>...</strong>
-      </p>
-      <p class="status" style="margin-top:8px;">
-        Suggerimento: qui puoi aggiungere link WhatsApp/Instagram o una mappa.
-      </p>
-    </section>
+      <section class="card contacts" id="contatti" aria-labelledby="contatti-title">
+        <h2 id="contatti-title">Contatti</h2>
+        <p class="hint" style="margin-bottom:0;">
+          Indirizzo: <strong>...</strong> · Telefono: <strong>...</strong> · Orari: <strong>...</strong>
+        </p>
+        <p class="status" style="margin-top:8px;">
+          Suggerimento: qui puoi aggiungere link WhatsApp/Instagram o una mappa.
+        </p>
+      </section>
 
-    <footer>
-      <div class="small">© <span id="year"></span> — Officina Mare</div>
-    </footer>
-  </main>
+      <footer>
+        <div class="small">© <span id="year"></span> — Officina Mare</div>
+      </footer>
+    </main>
+  </div>
 
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
