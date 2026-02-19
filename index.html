@@ -19,10 +19,11 @@
       --muted: rgba(11,34,54,.68);
 
       --borderD: rgba(11,34,54,.10);
+
       --shadow: 0 22px 70px rgba(0,0,0,.22);
 
-      --accent: #ff845c;     /* corallo soft */
-      --accent2:#f6c35b;     /* oro sabbia */
+      --accent: #ff845c;           /* corallo soft */
+      --accent2:#f6c35b;           /* oro sabbia */
 
       --max: 1680px;
       --radiusXL: 30px;
@@ -54,17 +55,22 @@
     a{ color:inherit; text-decoration:none; }
     a:hover{ text-decoration:underline; }
 
-    /* ===== SFONDO FISSO “PRO” (PESCI IN SVG) ===== */
-    .bg-fixed{
+    /* ===== IMMAGINE JPG IN TRASPARENZA (FISSA) ===== */
+    .bg-jpg{
       position: fixed;
       inset: 0;
       z-index: 0;
       pointer-events: none;
-      overflow: hidden;
+      background-image: url("images/fish-bg.jpg"); /* <-- metti qui il tuo file */
+      background-repeat: no-repeat;
+      background-position: center 26%;
+      background-size: min(1100px, 86vw);
+      opacity: 0.08;              /* regola qui: 0.05 - 0.12 */
+      mix-blend-mode: overlay;    /* mantiene il tono navy, effetto pro */
+      filter: blur(.2px);
     }
-
-    /* velo leggero per uniformare (non cambia colore) */
-    .bg-fixed::after{
+    /* leggero velo per uniformare */
+    .bg-jpg::after{
       content:"";
       position:absolute;
       inset:0;
@@ -72,24 +78,6 @@
         radial-gradient(900px 520px at 20% 18%, rgba(255,255,255,.06), transparent 60%),
         radial-gradient(900px 520px at 85% 30%, rgba(255,255,255,.05), transparent 60%);
       opacity: .9;
-    }
-
-    .fish{
-      position:absolute;
-      width: 360px;
-      height: 180px;
-      opacity: .10;              /* molto leggero */
-      mix-blend-mode: overlay;   /* resta “dentro” al navy */
-      filter: blur(.2px);
-    }
-    .fish.f1{ top: 14%; left: 6%;  width: 420px; height: 210px; opacity:.09; transform: rotate(-6deg); }
-    .fish.f2{ top: 44%; right: 8%; width: 320px; height: 160px; opacity:.08; transform: rotate(8deg) scaleX(-1); }
-    .fish.f3{ bottom: 8%; left: 18%; width: 520px; height: 260px; opacity:.06; transform: rotate(-2deg); }
-
-    /* on mobile riduci ancora per non “sporcare” */
-    @media (max-width: 560px){
-      .fish{ opacity: .06; }
-      .fish.f3{ opacity: .04; }
     }
 
     /* container sopra allo sfondo */
@@ -120,7 +108,7 @@
       gap: 16px;
     }
 
-    /* banner foto laterali: grandi, “da copertina” */
+    /* banner foto laterali */
     .side-photo{
       width: clamp(160px, 20vw, 420px);
       height: 60px;
@@ -212,7 +200,7 @@
       padding-bottom: 48px;
     }
 
-    /* HERO premium */
+    /* HERO */
     .hero{
       padding: 18px 2px 18px;
       display: grid;
@@ -410,10 +398,8 @@
       color: rgba(11,34,54,.72);
     }
 
-    /* CONTATTI */
     .contacts{ margin-top: 18px; }
 
-    /* FOOTER */
     footer{
       margin-top: 22px;
       padding: 18px 0 0;
@@ -428,7 +414,12 @@
       .hero{ grid-template-columns: 1fr; }
       .hero-right{ justify-content:flex-start; }
       .menu-box{ min-height: 300px; }
+      .bg-jpg{
+        background-size: 120vw;
+        opacity: 0.06;
+      }
     }
+
     @media (max-width: 560px){
       .side-photo{ display:none; }
       :root{ --headerH: 74px; --curveH: 16px; }
@@ -436,66 +427,29 @@
       .brand::before{ left: 14px; }
       .hero{ padding-top: 14px; }
       button{ width: 100%; min-width: unset; }
+      .bg-jpg{
+        background-position: center 18%;
+        opacity: 0.05;
+      }
     }
   </style>
 </head>
 
 <body>
-  <!-- SFONDO FISSO (pesci) -->
-  <div class="bg-fixed" aria-hidden="true">
-    <!-- Pesce 1 -->
-    <svg class="fish f1" viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="white" stop-opacity=".9"/>
-          <stop offset="1" stop-color="white" stop-opacity=".2"/>
-        </linearGradient>
-      </defs>
-      <path d="M210 75c0 34-40 58-92 58S18 109 18 75 58 17 118 17s92 24 92 58z" fill="url(#g1)"/>
-      <path d="M18 75c-16-16-24-26-34-30 10 22 10 38 0 60 10-4 18-14 34-30z" fill="white" fill-opacity=".55"/>
-      <circle cx="178" cy="58" r="5" fill="white" fill-opacity=".8"/>
-      <path d="M150 92c12 6 26 6 40 0" stroke="white" stroke-opacity=".35" stroke-width="6" stroke-linecap="round"/>
-    </svg>
-
-    <!-- Pesce 2 -->
-    <svg class="fish f2" viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="g2" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="white" stop-opacity=".8"/>
-          <stop offset="1" stop-color="white" stop-opacity=".2"/>
-        </linearGradient>
-      </defs>
-      <path d="M220 75c0 28-38 48-84 48S32 103 32 75s34-48 84-48 84 20 84 48z" fill="url(#g2)"/>
-      <path d="M32 75c-18-14-28-22-40-24 12 18 12 30 0 48 12-2 22-10 40-24z" fill="white" fill-opacity=".52"/>
-      <circle cx="185" cy="60" r="4.5" fill="white" fill-opacity=".8"/>
-    </svg>
-
-    <!-- Pesce 3 (più grande e leggero) -->
-    <svg class="fish f3" viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="g3" x1="0" y1="1" x2="1" y2="0">
-          <stop offset="0" stop-color="white" stop-opacity=".65"/>
-          <stop offset="1" stop-color="white" stop-opacity=".18"/>
-        </linearGradient>
-      </defs>
-      <path d="M230 75c0 36-44 62-102 62S26 111 26 75 70 13 128 13s102 26 102 62z" fill="url(#g3)"/>
-      <path d="M26 75c-22-18-34-30-50-34 16 26 16 42 0 68 16-4 28-16 50-34z" fill="white" fill-opacity=".45"/>
-      <circle cx="190" cy="57" r="5" fill="white" fill-opacity=".75"/>
-      <path d="M160 98c14 7 30 7 46 0" stroke="white" stroke-opacity=".28" stroke-width="7" stroke-linecap="round"/>
-    </svg>
-  </div>
+  <!-- JPG fisso in trasparenza -->
+  <div class="bg-jpg" aria-hidden="true"></div>
 
   <!-- HEADER -->
   <header>
     <div class="container header-inner">
       <div class="side-photo" aria-hidden="true">
-        <img src="barriera_corallina.jpg" alt="">
+        <img src="left.jpg" alt="">
       </div>
 
       <div class="brand"><span>Officina Mare</span></div>
 
       <div class="side-photo" aria-hidden="true">
-        <img src="spaghetti_vongole.jpg" alt="">
+        <img src="right.jpg" alt="">
       </div>
     </div>
   </header>
@@ -505,7 +459,7 @@
   <main class="container" id="home" role="main">
     <section class="hero">
       <div class="hero-left">
-        <p> </p>
+        <h1>Ristorante di pesce</h1>
         <p>Fresco come il vento all’alba, semplice come una rotta tracciata a vista, profondo come il mare che chiama chi sa ascoltarlo.</p>
         <div class="wave-line" aria-hidden="true"></div>
       </div>
