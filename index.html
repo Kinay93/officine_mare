@@ -57,18 +57,39 @@
 
     /* ===== IMMAGINE JPG IN TRASPARENZA (FISSA) ===== */
     .bg-jpg{
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      background-image: url("mare.jpg"); /* <-- metti qui il tuo file */
-      background-repeat: no-repeat;
-      background-position: center 26%;
-      background-size: min(1100px, 86vw);
-      opacity: 0.08;              /* regola qui: 0.05 - 0.12 */
-      mix-blend-mode: overlay;    /* mantiene il tono navy, effetto pro */
-      filter: blur(.2px);
-    }
+  position: fixed;
+
+  /* leggermente più grande dello schermo per evitare bordi */
+  top: -5%;
+  left: -5%;
+  width: 110%;
+  height: 110%;
+
+  z-index: 0;
+  pointer-events: none;
+
+  background-image: url("images/mare.jpg");
+
+  background-repeat: no-repeat;
+
+  background-position: center center;
+
+  background-size: cover;
+
+  /* trasparenza premium */
+  opacity: 0.18;
+
+  /* integra perfettamente col navy */
+  mix-blend-mode: soft-light;
+
+  /* effetto più elegante */
+  filter:
+    saturate(1.1)
+    contrast(1.05)
+    blur(.5px);
+
+}
+
     /* leggero velo per uniformare */
     .bg-jpg::after{
       content:"";
