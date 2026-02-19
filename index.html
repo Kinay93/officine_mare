@@ -1,586 +1,620 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Officina Mare</title>
-  <meta name="description" content="Ristorante di pesce - Officina Mare. Menù del giorno e prenotazioni." />
-  <link rel="icon" href="favicon.ico" />
 
-  <style>
-    :root{
-      /* carta da zucchero / navy premium */
-      --bgTop:#245b7c;
-      --bgMid:#1b4968;
-      --bgBot:#163e5a;
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-      --paper: rgba(255,255,255,.95);
-      --text:#0b2236;
-      --muted: rgba(11,34,54,.68);
+<title>Officina Mare</title>
 
-      --borderD: rgba(11,34,54,.10);
+<style>
 
-      --shadow: 0 22px 70px rgba(0,0,0,.22);
+:root{
 
-      --accent: #ff845c;           /* corallo soft */
-      --accent2:#f6c35b;           /* oro sabbia */
+--bg1:#245b7c;
+--bg2:#1b4968;
+--bg3:#163e5a;
 
-      --max: 1680px;
-      --radiusXL: 30px;
+--paper: rgba(255,255,255,.96);
 
-      --headerH: 82px;
-      --curveH: 20px;
+--text:#0b2236;
 
-      color-scheme: light;
-    }
+--muted: rgba(11,34,54,.65);
 
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
+--max:1600px;
 
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      line-height:1.55;
-      color:#fff;
+--radius:28px;
 
-      /* fondo premium base (resta anche senza immagine) */
-      background:
-        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.18), transparent 60%),
-        radial-gradient(800px 420px at 12% 8%, rgba(255,255,255,.10), transparent 55%),
-        radial-gradient(900px 520px at 88% 14%, rgba(255,255,255,.08), transparent 55%),
-        linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 42%, var(--bgBot) 100%);
-      overflow-x:hidden;
-    }
+--headerH:82px;
 
-    a{ color:inherit; text-decoration:none; }
-    a:hover{ text-decoration:underline; }
+}
 
-    /* ===== SFONDO JPG FULLSCREEN (trasparente) ===== */
-    .bg-jpg{
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
+/* RESET */
 
-      /* percorso immagine: cambia se serve */
-      background-image: url("mare.jpg");
-      background-repeat: no-repeat;
-      background-position: center center;
-      background-size: cover;
+*{
+box-sizing:border-box;
+}
 
-      /* visibilità */
-      opacity: 0.22;
+body{
 
-      /* integrazione col navy */
-      mix-blend-mode: soft-light;
+margin:0;
 
-      /* look premium */
-      filter: saturate(1.08) contrast(1.05) blur(.4px);
-    }
+font-family: system-ui, -apple-system, Segoe UI, Roboto;
 
-    /* overlay per fondere e tenere il navy dominante */
-    .bg-jpg::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:
-        linear-gradient(to bottom,
-          rgba(22,62,90,.45),
-          rgba(22,62,90,.70)
-        );
-    }
+color:white;
 
-    /* contenuto sopra allo sfondo */
-    .container{
-      max-width:var(--max);
-      margin:0 auto;
-      padding:0 clamp(12px, 2.2vw, 28px);
-      position: relative;
-      z-index: 2;
-    }
+background:
+linear-gradient(
+180deg,
+var(--bg1),
+var(--bg2),
+var(--bg3)
+);
 
-    /* ===== HEADER (sempre fisso, anche mobile) ===== */
-    header{
-      position: fixed;
-      top:0; left:0; right:0;
-      height: var(--headerH);
-      z-index: 1000;
-      background: rgba(22,62,90,.74);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255,255,255,.14);
-    }
+overflow-x:hidden;
 
-    .header-inner{
-      height:100%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap: 16px;
-    }
+}
 
-    /* banner foto laterali */
-    .side-photo{
-      width: clamp(160px, 20vw, 420px);
-      height: 60px;
-      border-radius: 22px;
-      overflow:hidden;
-      border: 1px solid rgba(255,255,255,.18);
-      box-shadow: 0 14px 26px rgba(0,0,0,.22);
-      background: rgba(255,255,255,.06);
-      position: relative;
-      flex: 0 0 auto;
-    }
+/* ===== BACKGROUND SYSTEM (IMG + OVERLAY COME PROGETTO MATRIMONIO) ===== */
 
-    .side-photo img{
-      width:100%;
-      height:100%;
-      object-fit: cover;
-      display:block;
-      filter: saturate(1.08) contrast(1.05);
-      transform: scale(1.02);
-    }
+.bg-layer{
 
-    .side-photo::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,0) 55%, rgba(0,0,0,.12));
-      pointer-events:none;
-    }
+position:fixed;
 
-    .brand{
-      font-weight: 950;
-      letter-spacing: .5px;
-      font-size: clamp(22px, 2.4vw, 38px);
-      padding: 12px 26px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.10);
-      border: 1px solid rgba(255,255,255,.18);
-      box-shadow: 0 16px 30px rgba(0,0,0,.18);
-      line-height:1;
-      text-align:center;
-      white-space:nowrap;
-      position: relative;
-    }
+top:0;
+left:0;
 
-    .brand::before{
-      content:"";
-      position:absolute;
-      left: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: radial-gradient(circle at 30% 30%, var(--accent2), var(--accent));
-      box-shadow: 0 0 0 5px rgba(255,132,92,.16);
-      opacity: .95;
-    }
-    .brand span{ padding-left: 14px; display:inline-block; }
+width:100%;
+height:100%;
 
-    /* curva concava sotto header */
-    .header-curve{
-      position: fixed;
-      top: var(--headerH);
-      left:0; right:0;
-      height: var(--curveH);
-      z-index: 999;
-      pointer-events:none;
-    }
-    .header-curve::before{
-      content:"";
-      position:absolute;
-      left:50%;
-      transform:translateX(-50%);
-      width:min(1280px, 92vw);
-      height:64px;
-      top:-44px;
-      border-radius: 0 0 999px 999px;
-      background:
-        radial-gradient(82% 120% at 50% 0%,
-          rgba(255,255,255,.22),
-          rgba(255,255,255,.06) 55%,
-          rgba(255,255,255,0) 74%);
-      opacity:.92;
-    }
+z-index:0;
 
-    /* ===== MAIN ===== */
-    main{
-      padding-top: calc(var(--headerH) + var(--curveH) + 18px);
-      padding-bottom: 48px;
-    }
+pointer-events:none;
 
-    /* HERO */
-    .hero{
-      padding: 18px 2px 18px;
-      display: grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap: 18px;
-      align-items: end;
-    }
+}
 
-    .hero-left h1{
-      margin:0 0 8px;
-      font-size: clamp(28px, 3.2vw, 46px);
-      letter-spacing: .2px;
-    }
-    .hero-left p{
-      margin:0;
-      color: rgba(255,255,255,.88);
-      max-width: 78ch;
-    }
+.bg-img{
 
-    .hero-right{
-      display:flex;
-      justify-content:flex-end;
-      align-items:flex-end;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
+position:absolute;
 
-    .chip{
-      display:inline-flex;
-      align-items:center;
-      gap: 10px;
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.10);
-      border: 1px solid rgba(255,255,255,.16);
-      box-shadow: 0 14px 26px rgba(0,0,0,.14);
-      color: rgba(255,255,255,.92);
-      font-weight: 750;
-      backdrop-filter: blur(8px);
-    }
-    .chip .dot{
-      width: 10px; height: 10px;
-      border-radius: 999px;
-      background: radial-gradient(circle at 30% 30%, var(--accent2), var(--accent));
-      box-shadow: 0 0 0 5px rgba(255,132,92,.16);
-    }
-    .chip small{ font-weight: 700; opacity: .92; }
+top:0;
+left:0;
 
-    .wave-line{
-      height: 10px;
-      border-radius: 999px;
-      background: linear-gradient(90deg,
-        rgba(255,255,255,0),
-        rgba(255,255,255,.18),
-        rgba(255,255,255,0));
-      opacity: .85;
-      margin: 10px 0 18px;
-    }
+width:100%;
+height:100%;
 
-    /* ===== GRID + CARD (stessa altezza) ===== */
-    .grid{
-      display:grid;
-      grid-template-columns: 1.2fr .8fr;
-      gap: 22px;
-      align-items: stretch;
-    }
+background-image:url("mare.jpg");
 
-    .card{
-      background: var(--paper);
-      color: var(--text);
-      border-radius: var(--radiusXL);
-      border: 1px solid var(--borderD);
-      box-shadow: var(--shadow);
-      padding: 22px;
-      display:flex;
-      flex-direction: column;
-      height:100%;
-      position: relative;
-      overflow: hidden;
-    }
+background-size:cover;
 
-    .card::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:
-        radial-gradient(900px 240px at 20% 0%, rgba(255,255,255,.55), rgba(255,255,255,0) 55%),
-        radial-gradient(700px 220px at 90% 20%, rgba(255,255,255,.35), rgba(255,255,255,0) 60%);
-      opacity:.35;
-      pointer-events:none;
-    }
-    .card > *{ position: relative; }
+background-position:center;
 
-    .card h2{
-      margin:0 0 10px;
-      font-size: 19px;
-      letter-spacing: .1px;
-    }
+background-repeat:no-repeat;
 
-    .hint{
-      margin:0 0 14px;
-      color: var(--muted);
-    }
+opacity:.55;
 
-    .menu-box{
-      border-radius: 24px;
-      border: 1px dashed rgba(11,34,54,.25);
-      background: linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.55));
-      min-height: 340px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      color: rgba(11,34,54,.70);
-      padding: 16px;
-      flex: 1;
-      box-shadow: 0 10px 22px rgba(0,0,0,.10) inset;
-    }
+filter:
+saturate(1.08)
+contrast(1.05)
+blur(.4px);
 
-    .menu-box img{
-      width:100%;
-      max-width: 100%;
-      height:auto;
-      border-radius: 18px;
-      display:block;
-      box-shadow: 0 16px 30px rgba(0,0,0,.16);
-    }
+}
 
-    .btn-row{
-      display:flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 14px;
-      align-items:center;
-    }
-    button{
-      padding: 12px 16px;
-      border-radius: 999px;
-      border: 1px solid rgba(11,34,54,.16);
-      cursor:pointer;
-      font-weight: 900;
-      transition: transform .06s ease, filter .18s ease, box-shadow .18s ease;
-      min-width: 160px;
-    }
-    button:active{ transform: translateY(1px); }
+.bg-overlay{
 
-    .btn-primary{
-      color:#fff;
-      border-color: rgba(0,0,0,.10);
-      background: linear-gradient(180deg, rgba(36,91,124,.96), rgba(22,62,90,.98));
-      box-shadow: 0 16px 28px rgba(0,0,0,.16);
-    }
-    .btn-primary:hover{ filter: brightness(1.05); }
+position:absolute;
 
-    .btn-soft{
-      background: rgba(36,91,124,.10);
-      color: rgba(11,34,54,.92);
-    }
-    .btn-soft:hover{ filter: brightness(1.03); }
+top:0;
+left:0;
 
-    /* ===== FORM ===== */
-    form{ margin-top: 2px; }
-    label{
-      display:block;
-      font-weight: 850;
-      margin: 12px 0 6px;
-      color: rgba(11,34,54,.92);
-    }
-    input, select, textarea{
-      width:100%;
-      padding: 12px 12px;
-      border-radius: 18px;
-      border: 1px solid rgba(11,34,54,.18);
-      background: rgba(255,255,255,.98);
-      color: var(--text);
-      outline:none;
-      transition: box-shadow .16s ease, border-color .16s ease;
-    }
-    input:focus, select:focus, textarea:focus{
-      border-color: rgba(36,91,124,.45);
-      box-shadow: 0 0 0 5px rgba(36,91,124,.16);
-    }
+width:100%;
+height:100%;
 
-    .row{
-      display:flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      align-items:center;
-    }
-    .row > *{ flex:1; min-width: 190px; }
+background:
 
-    .status{
-      margin-top: 10px;
-      font-size: 13px;
-      color: rgba(11,34,54,.72);
-    }
+linear-gradient(
+to bottom,
+rgba(22,62,90,.55),
+rgba(22,62,90,.78)
+);
 
-    .contacts{ margin-top: 18px; }
+}
 
-    footer{
-      margin-top: 22px;
-      padding: 18px 0 0;
-      border-top: 1px solid rgba(255,255,255,.16);
-      color: rgba(255,255,255,.82);
-    }
-    .small{ font-size: 13px; opacity:.95; }
+/* ===== CONTAINER ===== */
 
-    /* RESPONSIVE */
-    @media (max-width: 980px){
-      .grid{ grid-template-columns: 1fr; }
-      .hero{ grid-template-columns: 1fr; }
-      .hero-right{ justify-content:flex-start; }
-      .menu-box{ min-height: 300px; }
-      .bg-jpg{ opacity: 0.18; }
-    }
+.container{
 
-    @media (max-width: 560px){
-      .side-photo{ display:none; }
-      :root{ --headerH: 74px; --curveH: 16px; }
-      .brand{ padding: 10px 18px; }
-      .brand::before{ left: 14px; }
-      .hero{ padding-top: 14px; }
-      button{ width: 100%; min-width: unset; }
-      .bg-jpg{ opacity: 0.16; }
-    }
-  </style>
+max-width:var(--max);
+
+margin:auto;
+
+padding:0 24px;
+
+position:relative;
+
+z-index:2;
+
+}
+
+/* ===== HEADER ===== */
+
+header{
+
+position:fixed;
+
+top:0;
+left:0;
+right:0;
+
+height:var(--headerH);
+
+background:rgba(22,62,90,.75);
+
+backdrop-filter:blur(12px);
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+z-index:1000;
+
+border-bottom:1px solid rgba(255,255,255,.2);
+
+}
+
+.header-inner{
+
+display:flex;
+
+align-items:center;
+
+gap:20px;
+
+}
+
+/* foto laterali */
+
+.side-photo{
+
+width:300px;
+
+height:60px;
+
+border-radius:20px;
+
+overflow:hidden;
+
+box-shadow:0 6px 20px rgba(0,0,0,.3);
+
+}
+
+.side-photo img{
+
+width:100%;
+height:100%;
+
+object-fit:cover;
+
+}
+
+/* brand */
+
+.brand{
+
+font-size:32px;
+
+font-weight:900;
+
+padding:10px 26px;
+
+background:rgba(255,255,255,.12);
+
+border-radius:999px;
+
+}
+
+/* curva */
+
+.header-curve{
+
+position:fixed;
+
+top:var(--headerH);
+
+left:0;
+right:0;
+
+height:20px;
+
+z-index:999;
+
+}
+
+.header-curve::before{
+
+content:"";
+
+position:absolute;
+
+left:50%;
+
+transform:translateX(-50%);
+
+width:1200px;
+
+height:60px;
+
+top:-40px;
+
+border-radius:0 0 999px 999px;
+
+background:
+
+radial-gradient(
+ellipse at center top,
+rgba(255,255,255,.3),
+transparent 70%
+);
+
+}
+
+/* ===== MAIN ===== */
+
+main{
+
+padding-top:120px;
+
+padding-bottom:60px;
+
+}
+
+/* HERO */
+
+.hero{
+
+margin-bottom:30px;
+
+}
+
+.hero h1{
+
+margin:0;
+
+font-size:42px;
+
+}
+
+.hero p{
+
+margin-top:10px;
+
+opacity:.9;
+
+}
+
+/* CHIP */
+
+.chip{
+
+display:inline-flex;
+
+align-items:center;
+
+gap:8px;
+
+padding:10px 16px;
+
+border-radius:999px;
+
+background:rgba(255,255,255,.15);
+
+margin-right:10px;
+
+margin-top:10px;
+
+}
+
+/* GRID */
+
+.grid{
+
+display:grid;
+
+grid-template-columns:1.2fr .8fr;
+
+gap:24px;
+
+}
+
+/* CARD */
+
+.card{
+
+background:var(--paper);
+
+color:var(--text);
+
+padding:24px;
+
+border-radius:var(--radius);
+
+box-shadow:0 20px 60px rgba(0,0,0,.3);
+
+}
+
+/* MENU BOX */
+
+.menu-box{
+
+height:320px;
+
+border-radius:20px;
+
+border:2px dashed rgba(0,0,0,.2);
+
+display:flex;
+
+align-items:center;
+
+justify-content:center:;
+
+opacity:.7;
+
+}
+
+/* FORM */
+
+input,select,textarea{
+
+width:100%;
+
+padding:12px;
+
+margin-top:6px;
+
+margin-bottom:14px;
+
+border-radius:14px;
+
+border:1px solid rgba(0,0,0,.2);
+
+font-size:15px;
+
+}
+
+button{
+
+padding:12px 20px;
+
+border-radius:999px;
+
+border:none;
+
+background:#245b7c;
+
+color:white;
+
+font-weight:bold;
+
+cursor:pointer;
+
+}
+
+button:hover{
+
+background:#1b4968;
+
+}
+
+/* FOOTER */
+
+footer{
+
+margin-top:30px;
+
+opacity:.8;
+
+}
+
+/* MOBILE */
+
+@media(max-width:900px){
+
+.grid{
+
+grid-template-columns:1fr;
+
+}
+
+.side-photo{
+
+display:none;
+
+}
+
+}
+
+</style>
+
 </head>
 
 <body>
-  <!-- Sfondo JPG -->
-  <div class="bg-jpg" aria-hidden="true"></div>
 
-  <!-- HEADER -->
-  <header>
-    <div class="container header-inner">
-      <div class="side-photo" aria-hidden="true">
-        <img src="barriera_corallina.jpg" alt="">
-      </div>
+<!-- BACKGROUND SYSTEM -->
+<div class="bg-layer">
 
-      <div class="brand"><span>Officina Mare</span></div>
+<div class="bg-img"></div>
 
-      <div class="side-photo" aria-hidden="true">
-        <img src="spaghetti_vongole.jpg" alt="">
-      </div>
-    </div>
-  </header>
-  <div class="header-curve" aria-hidden="true"></div>
+<div class="bg-overlay"></div>
 
-  <!-- MAIN -->
-  <main class="container" id="home" role="main">
-    <section class="hero">
-      <div class="hero-left">
-        <h1>Ristorante di pesce</h1>
-        <p>Fresco come il vento all’alba, semplice come una rotta tracciata a vista, profondo come il mare che chiama chi sa ascoltarlo.</p>
-        <div class="wave-line" aria-hidden="true"></div>
-      </div>
+</div>
 
-      <div class="hero-right">
-        <div class="chip"><span class="dot"></span> <span>Oggi: menù del giorno disponibile</span></div>
-        <div class="chip"><small>📍</small><span>Contatti in fondo</span></div>
-      </div>
-    </section>
+<!-- HEADER -->
 
-    <section class="grid">
-      <!-- MENÙ -->
-      <section class="card" id="menu" aria-labelledby="menu-title">
-        <h2 id="menu-title">Menù del giorno</h2>
-        <p class="hint">Inserisci una foto del menù oppure scrivilo a testo.</p>
+<header>
 
-        <div class="menu-box">
-          <!-- Opzione foto (scommenta) -->
-          <!-- <img src="menu-oggi.jpg" alt="Menù del giorno di Officina Mare"> -->
-          <div>
-            <strong>Spazio foto menù</strong><br>
-            <span style="font-size:13px; opacity:.9;">Esempio: <code>menu-oggi.jpg</code></span>
-          </div>
-        </div>
+<div class="header-inner">
 
-        <div class="btn-row">
-          <button class="btn-soft" type="button" id="btnInfo">Info</button>
-          <span id="msg" style="font-size:13px; color: rgba(11,34,54,.72);" aria-live="polite"></span>
-        </div>
-      </section>
+<div class="side-photo">
+<img src="barriera_corallina.jpg">
+</div>
 
-      <!-- PRENOTA -->
-      <section class="card" id="prenota" aria-labelledby="prenota-title">
-        <h2 id="prenota-title">Prenota un tavolo</h2>
-        <p class="hint">Invia la richiesta: ti ricontattiamo per conferma.</p>
+<div class="brand">
+Officina Mare
+</div>
 
-        <form id="contactForm">
-          <label for="nome">Nome</label>
-          <input id="nome" name="nome" required placeholder="Mario Rossi" />
+<div class="side-photo">
+<img src="spaghetti_vongole.jpg">
+</div>
 
-          <label for="telefono">Telefono</label>
-          <input id="telefono" name="telefono" inputmode="tel" placeholder="+39 ..." />
+</div>
 
-          <div class="row">
-            <div>
-              <label for="data">Data</label>
-              <input id="data" name="data" type="date" required />
-            </div>
-            <div>
-              <label for="ora">Ora</label>
-              <input id="ora" name="ora" type="time" required />
-            </div>
-          </div>
+</header>
 
-          <div class="row">
-            <div>
-              <label for="persone">Persone</label>
-              <select id="persone" name="persone" required>
-                <option value="">Seleziona</option>
-                <option>1</option><option>2</option><option>3</option><option>4</option>
-                <option>5</option><option>6</option><option>7</option><option>8+</option>
-              </select>
-            </div>
-            <div>
-              <label for="email">Email (opzionale)</label>
-              <input id="email" name="email" type="email" placeholder="nome@dominio.tld" />
-            </div>
-          </div>
+<div class="header-curve"></div>
 
-          <label for="note">Note (allergie / preferenze)</label>
-          <textarea id="note" name="note" rows="3" placeholder="Es. allergia ai crostacei..."></textarea>
+<!-- MAIN -->
 
-          <div class="btn-row">
-            <button class="btn-primary" type="submit">Invia richiesta</button>
-            <button class="btn-soft" type="reset">Pulisci</button>
-          </div>
+<main class="container">
 
-          <p id="formStatus" class="status" aria-live="polite"></p>
-        </form>
-      </section>
-    </section>
+<div class="hero">
 
-    <!-- CONTATTI -->
-    <section class="card contacts" id="contatti" aria-labelledby="contatti-title">
-      <h2 id="contatti-title">Contatti</h2>
-      <p class="hint" style="margin-bottom:0;">
-        Indirizzo: <strong>...</strong> ·
-        Telefono: <strong>...</strong> ·
-        Orari: <strong>...</strong>
-      </p>
-      <p class="status" style="margin-top:8px;">
-        Suggerimento: qui puoi aggiungere link WhatsApp/Instagram o una mappa.
-      </p>
-    </section>
+<h1>Ristorante di pesce</h1>
 
-    <footer>
-      <div class="small">© <span id="year"></span> — Officina Mare</div>
-    </footer>
-  </main>
+<p>
 
-  <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
+Fresco come il vento all’alba, semplice come una rotta tracciata a vista,
+profondo come il mare che chiama chi sa ascoltarlo.
 
-    document.getElementById("btnInfo").addEventListener("click", () => {
-      document.getElementById("msg").textContent = "Oggi consigliamo crudi e grigliata di mare 🦞";
-    });
+</p>
 
-    document.getElementById("contactForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const data = new FormData(e.target);
-      const nome = data.get("nome");
-      const quando = `${data.get("data")} ${data.get("ora")}`;
-      const persone = data.get("persone");
-      document.getElementById("formStatus").textContent =
-        `Richiesta inviata ✅ (${nome}, ${persone} persone, ${quando}). Ti ricontattiamo per conferma.`;
-      e.target.reset();
-    });
-  </script>
+<div>
+
+<span class="chip">
+Oggi: menù disponibile
+</span>
+
+<span class="chip">
+Contatti in fondo
+</span>
+
+</div>
+
+</div>
+
+<div class="grid">
+
+<!-- MENU -->
+
+<div class="card">
+
+<h2>Menù del giorno</h2>
+
+<p class="muted">
+Inserisci una foto del menù oppure scrivilo a testo.
+</p>
+
+<div class="menu-box">
+
+Spazio foto menù
+
+</div>
+
+<br>
+
+<button id="btnInfo">
+
+Info
+
+</button>
+
+<span id="msg"></span>
+
+</div>
+
+<!-- PRENOTA -->
+
+<div class="card">
+
+<h2>Prenota un tavolo</h2>
+
+<p>
+Invia la richiesta: ti ricontattiamo per conferma.
+</p>
+
+<form id="contactForm">
+
+Nome
+<input name="nome" required placeholder="Mario Rossi">
+
+Telefono
+<input name="telefono" placeholder="+39">
+
+Data
+<input type="date" name="data">
+
+Ora
+<input type="time" name="ora">
+
+Persone
+<select name="persone">
+<option>1</option>
+<option>2</option>
+<option>3</option>
+<option>4</option>
+<option>5</option>
+</select>
+
+Email
+<input name="email" placeholder="nome@email.com">
+
+Note
+<textarea name="note"></textarea>
+
+<button type="submit">
+Invia richiesta
+</button>
+
+</form>
+
+<p id="formStatus"></p>
+
+</div>
+
+</div>
+
+<footer>
+
+© <span id="year"></span> Officina Mare
+
+</footer>
+
+</main>
+
+<script>
+
+document.getElementById("year").textContent =
+new Date().getFullYear();
+
+document.getElementById("btnInfo").onclick = function(){
+
+document.getElementById("msg").innerText =
+"Oggi consigliamo crudi e grigliata di mare";
+
+};
+
+document.getElementById("contactForm").onsubmit = function(e){
+
+e.preventDefault();
+
+document.getElementById("formStatus").innerText =
+"Richiesta inviata. Ti contatteremo presto.";
+
+};
+
+</script>
+
 </body>
 </html>
