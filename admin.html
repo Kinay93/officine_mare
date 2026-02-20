@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Officine Mare — Admin</title>
-  <meta name="description" content="Dashboard ristoratore: prenotazioni, tavoli, menu, comande." />
+  <meta name="description" content="Admin: prenotazioni, tavoli e comande." />
   <link rel="icon" href="favicon.ico" />
 
   <style>
@@ -13,8 +13,8 @@
       --paper: rgba(255,255,255,.95);
       --text:#0b2236; --muted: rgba(11,34,54,.68);
       --borderD: rgba(11,34,54,.10);
-      --shadow: 0 22px 70px rgba(0,0,0,.20);
-      --max: 1900px; --radiusXL: 26px;
+      --shadow: 0 22px 70px rgba(0,0,0,.18);
+      --max: 1700px; --radiusXL: 26px;
       --headerH: 72px;
       --safeTop: env(safe-area-inset-top, 0px);
     }
@@ -31,22 +31,9 @@
         linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 45%, var(--bgBot) 100%);
       overflow-x:hidden;
     }
-    body::before{
-      content:"";
-      position:fixed; inset:0;
-      pointer-events:none; z-index:0;
-      opacity:.08;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
-      background-size:160px 160px;
-      mix-blend-mode: overlay;
-    }
-    body::after{
-      content:"";
-      position:fixed; inset:0;
-      pointer-events:none; z-index:0;
-      background: linear-gradient(180deg, rgba(0,0,0,.00), rgba(0,0,0,.08));
-      opacity: .9;
-    }
+
+    /* ✅ NO “righe”: rimosso noise overlay */
+    /* (volendo si può rimettere molto più soft, ma ora è pulito) */
 
     .container{
       width: min(96vw, var(--max));
@@ -64,11 +51,12 @@
       border-bottom: 1px solid rgba(255,255,255,.16);
     }
     .header-inner{
-      height: var(--headerH);
+      min-height: var(--headerH);
       display:flex;
       align-items:center;
       gap: 12px;
       padding: 10px 0;
+      flex-wrap: wrap;
     }
     .brand{
       font-weight: 950;
@@ -80,29 +68,13 @@
       gap:10px;
     }
     .tabbar{
-      display:flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-left: 12px;
-    }
-    .tabbtn{
-      padding: 10px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.12);
-      border: 1px solid rgba(255,255,255,.16);
-      color: rgba(255,255,255,.92);
-      font-weight: 900;
-      cursor: pointer;
-    }
-    .tabbtn.active{ background: rgba(255,255,255,.20); }
-
-    .pill{
-      margin-left:auto;
-      display:flex;
-      gap: 10px;
+      display:flex; gap: 10px; flex-wrap: nowrap;
       align-items:center;
-      flex-wrap: wrap;
+      overflow-x:auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
     }
+    .tabbar::-webkit-scrollbar{ display:none; }
     .ghost{
       padding: 10px 12px;
       border-radius: 999px;
@@ -115,14 +87,23 @@
       display:inline-flex;
       align-items:center;
       gap: 8px;
+      white-space: nowrap;
+    }
+
+    .actions{
+      margin-left:auto;
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
     }
 
     main{ padding: 18px 0 60px; }
 
     .grid{
       display:grid;
-      grid-template-columns: 1.25fr .75fr;
-      gap: 18px;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 14px;
       align-items:start;
     }
     @media (max-width: 980px){
@@ -135,11 +116,12 @@
       border-radius: var(--radiusXL);
       border: 1px solid var(--borderD);
       box-shadow: var(--shadow);
-      padding: 18px;
+      padding: 16px;
       position: relative;
       overflow:hidden;
     }
-    .card h2{ margin:0 0 10px; font-size: 18px; }
+
+    .title{ font-weight: 950; font-size: 18px; margin:0; }
     .muted{ color: var(--muted); font-size: 13px; }
 
     .row{ display:flex; gap: 10px; flex-wrap: wrap; align-items:center; }
@@ -151,12 +133,15 @@
       color: var(--text);
       outline:none;
     }
+    input{ flex: 1; min-width: 240px; }
+
     button{
       padding: 10px 12px;
       border-radius: 999px;
       border: 1px solid rgba(11,34,54,.16);
       cursor:pointer;
       font-weight: 950;
+      white-space: nowrap;
     }
     .primary{
       color:#fff;
@@ -173,22 +158,7 @@
       color: rgba(140,20,30,.95);
       border-color: rgba(140,20,30,.18);
     }
-
-    .table{
-      width:100%;
-      border-collapse: collapse;
-      overflow:hidden;
-      border-radius: 16px;
-      border: 1px solid rgba(11,34,54,.10);
-      background: rgba(255,255,255,.98);
-    }
-    .table th, .table td{
-      padding: 10px 10px;
-      border-bottom: 1px solid rgba(11,34,54,.08);
-      text-align:left;
-      font-size: 13px;
-      vertical-align: top;
-    }
+    .mini{ padding: 8px 10px; font-size: 12px; }
 
     .badge{
       display:inline-flex;
@@ -203,126 +173,116 @@
       color: rgba(11,34,54,.92);
       white-space: nowrap;
     }
-    .badge.pending{ background: rgba(255,180,90,.18); }
-    .badge.confirmed{ background: rgba(40,140,80,.16); }
-    .badge.cancelled{ background: rgba(180,30,40,.12); }
-    .badge.arrived{ background: rgba(60,120,200,.14); }
+    .b-pending{ background: rgba(255,180,90,.20); }
+    .b-ok{ background: rgba(40,140,80,.16); }
+    .b-cancel{ background: rgba(180,30,40,.12); }
 
-    .tablesGrid{
-      display:grid;
-      grid-template-columns: repeat(5, minmax(120px, 1fr));
-      gap: 12px;
-    }
-    @media (max-width: 980px){ .tablesGrid{ grid-template-columns: repeat(3, minmax(110px, 1fr)); } }
-    @media (max-width: 520px){ .tablesGrid{ grid-template-columns: repeat(2, minmax(110px, 1fr)); } }
-
-    .tableCard{
-      border-radius: 20px;
-      border: 1px solid rgba(11,34,54,.12);
+    .table{
+      width:100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 18px;
+      border: 1px solid rgba(11,34,54,.10);
       background: rgba(255,255,255,.98);
-      padding: 12px;
-      cursor: pointer;
-      box-shadow: 0 12px 22px rgba(0,0,0,.10);
-      transition: transform .12s ease, filter .12s ease;
-      min-height: 92px;
     }
-    .tableCard:hover{ transform: translateY(-1px); filter: brightness(1.01); }
-    .tTitle{ font-weight: 950; font-size: 14px; margin-bottom: 6px; }
-    .tMeta{ font-size: 12px; color: rgba(11,34,54,.72); }
-    .tState{
-      margin-top: 8px;
-      display:inline-flex;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 950;
-      border: 1px solid rgba(11,34,54,.12);
-      background: rgba(36,91,124,.08);
-      color: rgba(11,34,54,.92);
+    .table th, .table td{
+      padding: 10px;
+      border-bottom: 1px solid rgba(11,34,54,.08);
+      text-align:left;
+      vertical-align: top;
+      font-size: 13px;
     }
-    .tState.open{ background: rgba(40,140,80,.16); }
-    .tState.booked{ background: rgba(255,180,90,.18); }
+    .table th{ font-size: 12px; letter-spacing:.3px; color: rgba(11,34,54,.70); }
 
-    .drawerTitle{ margin:0 0 8px; font-size: 16px; }
-    .divider{ height:1px; background: rgba(11,34,54,.10); margin: 12px 0; }
+    .cellSmall{ font-size: 12px; color: rgba(11,34,54,.70); }
 
-    .menuList{ display:grid; grid-template-columns: 1fr; gap: 10px; }
+    .panelBox{ display:grid; gap: 10px; }
+    .divider{ height:1px; background: rgba(11,34,54,.10); margin: 6px 0; }
+
+    .menuList{ display:grid; gap: 8px; }
     .menuItem{
       border-radius: 16px;
       border: 1px solid rgba(11,34,54,.10);
-      padding: 10px;
       background: rgba(255,255,255,.98);
-      display:flex; align-items:center; gap: 10px;
-      justify-content: space-between;
+      padding: 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
     }
-    .miLeft{ min-width: 0; }
-    .miName{ font-weight: 950; font-size: 13px; }
-    .miCat{ font-size: 12px; color: rgba(11,34,54,.68); }
-    .miRight{ display:flex; gap: 8px; align-items:center; flex-wrap: wrap; justify-content:flex-end; }
-    .qty{
-      display:inline-flex; align-items:center; gap: 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(11,34,54,.14);
-      background: rgba(36,91,124,.06);
+    .qtyCtrl{ display:flex; gap: 8px; align-items:center; }
+    .qtyPill{
+      min-width: 40px;
+      text-align:center;
       padding: 6px 10px;
-      font-weight: 950;
-    }
-    .qty button{ min-width: 34px; padding: 6px 10px; border-radius: 999px; }
-
-    .loginWrap{ max-width: 520px; margin: 40px auto; }
-    .loginWrap .card{ box-shadow: 0 22px 70px rgba(0,0,0,.30); }
-    .note{ font-size: 12px; color: rgba(11,34,54,.70); }
-    .hide{ display:none !important; }
-
-    .tableAssign{
-      display:flex; gap: 8px; align-items:center; flex-wrap: wrap;
-    }
-    .tableAssign select{
-      min-width: 120px;
-      padding: 8px 10px;
       border-radius: 999px;
-    }
-    .miniBtn{ padding: 8px 10px; border-radius: 999px; font-size: 12px; }
-
-    /* Stato piatti nel tavolo (Servito in sala) */
-    .servedChip{
-      display:inline-flex; align-items:center; gap:8px;
-      padding: 6px 10px; border-radius: 999px;
       border: 1px solid rgba(11,34,54,.12);
       background: rgba(36,91,124,.06);
       font-weight: 950;
-      font-size: 12px;
     }
-    .servedChip.served{
-      background: rgba(40,140,80,.16);
-      border-color: rgba(40,140,80,.25);
+
+    /* ===== LOGIN OVERLAY ===== */
+    #authOverlay{
+      position:fixed; inset:0; z-index:2000;
+      display:none; align-items:center; justify-content:center;
+      background: rgba(0,0,0,.35); backdrop-filter: blur(8px);
     }
-    .reorderBang{
-      display:inline-flex;
-      width: 18px; height: 18px;
-      border-radius: 999px;
-      align-items:center; justify-content:center;
-      font-size: 12px;
-      font-weight: 950;
-      background: rgba(200,120,20,.18);
-      border: 1px solid rgba(200,120,20,.28);
-      color: rgba(140,70,0,.95);
+    #authBox{
+      width:min(560px, 92vw);
+      background: rgba(255,255,255,.95);
+      border-radius: 22px;
+      padding: 18px;
+      border: 1px solid rgba(11,34,54,.12);
+      box-shadow: 0 22px 70px rgba(0,0,0,.30);
+      color: #0b2236;
+    }
+
+    /* ===== MOBILE FIX ===== */
+    :root{ --safeTop: env(safe-area-inset-top, 0px); }
+    html, body{ width:100%; overflow-x:hidden; }
+    section, [id]{ scroll-margin-top: calc(var(--headerH) + var(--safeTop) + 12px); }
+    @media (max-width: 720px){
+      input{ min-width: 180px; }
+      .card{ border-radius: 22px; padding: 14px; }
+      .table{ display:block; overflow-x:auto; white-space:nowrap; }
     }
   </style>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "INCOLLA_PROJECT_URL";
+    const SUPABASE_ANON_KEY = "INCOLLA_ANON_KEY";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
 </head>
 
 <body>
+  <!-- LOGIN -->
+  <div id="authOverlay">
+    <div id="authBox">
+      <h2 style="margin:0 0 6px;">Accesso Admin</h2>
+      <p style="margin:0 0 12px; opacity:.75;">Accedi con l’utenza admin (anche email fittizia, non invia email).</p>
+      <div class="row">
+        <input id="authEmail" type="email" placeholder="admin@officinemare.local">
+        <input id="authPass" type="password" placeholder="Password">
+        <button class="primary" id="authBtn">Entra</button>
+      </div>
+      <div id="authMsg" style="margin-top:10px; font-weight:900;"></div>
+    </div>
+  </div>
+
   <header>
     <div class="container header-inner">
       <div class="brand">⚓ Officine Mare — Admin</div>
 
-      <div class="tabbar" id="tabbar">
-        <button class="tabbtn active" data-tab="prenotazioni">Prenotazioni</button>
-        <button class="tabbtn" data-tab="tavoli">Tavoli</button>
-        <button class="tabbtn" data-tab="menu">Menu</button>
+      <div class="tabbar">
+        <a class="ghost" href="#prenotazioni">Prenotazioni</a>
+        <a class="ghost" href="#tavoli">Tavoli</a>
+        <a class="ghost" href="#menu">Menu</a>
       </div>
 
-      <div class="pill">
+      <div class="actions">
         <a class="ghost" href="kitchen.html">🍳 Cucina</a>
         <button class="ghost" id="logoutBtn">Esci</button>
       </div>
@@ -330,724 +290,456 @@
   </header>
 
   <main class="container">
-    <div class="loginWrap" id="loginView">
-      <div class="card">
-        <h2>Accesso Admin</h2>
-        <p class="muted">Bozza: PIN locale. Poi lo sostituiamo con login vero + HTTPS + DB.</p>
-        <div class="row">
-          <input id="pin" type="password" placeholder="PIN (es. 1234)" style="flex:1; min-width: 240px;">
-          <button class="primary" id="loginBtn">Entra</button>
-        </div>
-        <p class="note">Suggerimento: PIN demo = <strong>1234</strong></p>
-      </div>
-    </div>
-
-    <div id="appView" class="hide">
-      <div class="grid">
-        <div>
-          <section class="card" id="tab-prenotazioni">
-            <h2>Prenotazioni</h2>
-            <div class="row" style="margin-bottom:10px;">
-              <input type="date" id="filterDate">
-              <select id="filterStatus">
-                <option value="">Tutti gli stati</option>
-                <option value="pending">In attesa</option>
-                <option value="confirmed">Confermata</option>
-                <option value="arrived">Arrivato</option>
-                <option value="cancelled">Annullata</option>
-              </select>
-              <input id="filterText" placeholder="Cerca nome/telefono..." style="flex:1; min-width:220px;">
-              <button class="soft" id="seedBtn">Demo dati</button>
-            </div>
-
-            <table class="table" id="resTable">
-              <thead>
-                <tr>
-                  <th>Quando</th>
-                  <th>Cliente</th>
-                  <th>Pers.</th>
-                  <th>Stato</th>
-                  <th>Tavolo</th>
-                  <th>Azioni</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-
-            <p class="note" style="margin-top:10px;">
-              Tavolo assegnabile dalla prenotazione. “Conferma + SMS” prepara il messaggio.
-            </p>
-          </section>
-
-          <section class="card hide" id="tab-tavoli">
-            <h2>Tavoli (15)</h2>
-            <p class="muted">Clicca un tavolo per vedere storico + spunte “Servito” e aggiungere nuove comande.</p>
-            <div class="tablesGrid" id="tablesGrid"></div>
-          </section>
-
-          <section class="card hide" id="tab-menu">
-            <h2>Menu</h2>
-            <div class="row" style="margin-bottom:10px;">
-              <input id="miName" placeholder="Nome piatto" style="flex:1; min-width:220px;">
-              <input id="miCat" placeholder="Categoria (Primi...)" style="flex:1; min-width:200px;">
-              <input id="miPrice" type="number" step="0.50" min="0" placeholder="Prezzo" style="width:120px;">
-              <button class="primary" id="addMenuItemBtn">Aggiungi</button>
-            </div>
-            <div class="menuList" id="menuList"></div>
-            <p class="note">Poi lo salviamo su DB e lo usi anche per la comanda.</p>
-          </section>
-        </div>
-
-        <aside class="card" id="drawer">
-          <h2 class="drawerTitle">Pannello</h2>
-          <p class="muted" id="drawerHint">Seleziona un tavolo o una prenotazione.</p>
-
-          <div id="drawerBody" class="hide">
-            <div class="row" style="justify-content:space-between;">
-              <div>
-                <div class="badge" id="drawerTableBadge">Tavolo</div>
-                <div class="muted" id="drawerTableMeta"></div>
-              </div>
-              <div class="row">
-                <button class="soft" id="clearDraftBtn">Svuota bozza</button>
-                <button class="primary" id="sendKitchenBtn">Invia in cucina</button>
-              </div>
-            </div>
-
-            <div class="divider"></div>
-
-            <h3 style="margin:0 0 8px; font-size:14px;">Storico tavolo</h3>
-            <div id="servedList" class="menuList"></div>
-
-            <div class="divider"></div>
-
-            <h3 style="margin:0 0 8px; font-size:14px;">Nuova comanda (bozza)</h3>
-            <div id="draftList" class="menuList"></div>
-
-            <div class="divider"></div>
-
-            <div class="row" style="justify-content:space-between;">
-              <div>
-                <div class="muted">Totale stimato (bozza)</div>
-                <div style="font-weight:950; font-size:18px;" id="draftTotal">€ 0,00</div>
-              </div>
-              <button class="danger" id="closeTableBtn">Chiudi tavolo</button>
-            </div>
+    <div class="grid">
+      <!-- PRENOTAZIONI -->
+      <section class="card" id="prenotazioni">
+        <div class="row" style="justify-content:space-between;">
+          <div>
+            <h2 class="title" style="margin:0;">Prenotazioni</h2>
+            <div class="muted">Assegna tavolo, conferma, arrivato, annulla. Realtime attivo.</div>
           </div>
-        </aside>
-      </div>
+          <button class="soft" id="refreshBtn">Aggiorna</button>
+        </div>
+
+        <div class="row" style="margin-top:12px;">
+          <input id="datePick" type="date">
+          <select id="statusPick">
+            <option value="all">Tutti gli stati</option>
+            <option value="pending">In attesa</option>
+            <option value="confirmed">Confermata</option>
+            <option value="arrived">Arrivato</option>
+            <option value="cancelled">Annullata</option>
+          </select>
+          <input id="searchBox" placeholder="Cerca nome/telefono...">
+        </div>
+
+        <div style="margin-top:12px;">
+          <table class="table" id="resTable">
+            <thead>
+              <tr>
+                <th>Quando</th>
+                <th>Cliente</th>
+                <th>Pers.</th>
+                <th>Stato</th>
+                <th>Tavolo</th>
+                <th>Azioni</th>
+              </tr>
+            </thead>
+            <tbody id="resBody"></tbody>
+          </table>
+        </div>
+
+        <div class="muted" id="resMsg" style="margin-top:10px;"></div>
+      </section>
+
+      <!-- PANNELLO -->
+      <aside class="card" id="tavoli">
+        <h2 class="title" style="margin:0;">Pannello</h2>
+        <div class="muted">Seleziona una prenotazione o un tavolo per inviare comande alla cucina.</div>
+
+        <div class="divider"></div>
+
+        <div class="panelBox">
+          <div class="row">
+            <select id="tablePick">
+              <option value="">Seleziona tavolo…</option>
+            </select>
+            <button class="soft" id="fillTablesBtn">15 tavoli</button>
+          </div>
+
+          <div class="muted">
+            Tavoli consigliati: <strong>T01…T15</strong> (circa 40 coperti).
+          </div>
+
+          <div class="divider"></div>
+
+          <h3 class="title" style="font-size:16px;">Comanda (demo menu)</h3>
+          <div class="muted">Clicca +/−, poi “Invia in cucina”.</div>
+
+          <div class="menuList" id="menuList"></div>
+
+          <div class="row" style="justify-content:flex-end;">
+            <button class="soft" id="resetOrderBtn">Pulisci</button>
+            <button class="primary" id="sendKitchenBtn">Invia in cucina</button>
+          </div>
+
+          <div id="panelMsg" class="muted"></div>
+        </div>
+      </aside>
     </div>
+
+    <section class="card" id="menu" style="margin-top:14px;">
+      <h2 class="title" style="margin:0;">Menu (bozza)</h2>
+      <p class="muted" style="margin-top:6px;">
+        In seguito lo carichiamo da DB (tabella <code>menu_items</code>). Per ora è demo, ma l’invio comande funziona.
+      </p>
+    </section>
   </main>
 
   <script>
-    const K = {
-      admin: "om_admin_ok",
-      menu: "om_menu",
-      tables: "om_tables",
-      reservations: "om_reservations",
-      orders: "om_orders",                // comande inviate alla cucina (per-riga: line_status)
-      tableLedger: "om_table_ledger",     // storico per tavolo (Servito sala + reorder)
-      draftOrders: "om_draft_orders"      // bozze per tavolo
-    };
+    // ===== AUTH =====
+    const authOverlay = document.getElementById("authOverlay");
+    const authEmail = document.getElementById("authEmail");
+    const authPass = document.getElementById("authPass");
+    const authBtn = document.getElementById("authBtn");
+    const authMsg = document.getElementById("authMsg");
 
-    const euro = (n) => new Intl.NumberFormat("it-IT", { style:"currency", currency:"EUR" }).format(n || 0);
-
-    // -------- auth demo --------
-    const loginView = document.getElementById("loginView");
-    const appView = document.getElementById("appView");
-    const loginBtn = document.getElementById("loginBtn");
-    const pinEl = document.getElementById("pin");
-    const logoutBtn = document.getElementById("logoutBtn");
-
-    function setLoggedIn(v){
-      localStorage.setItem(K.admin, v ? "1" : "0");
-      syncAuthUI();
+    function showAuth(msg=""){
+      authMsg.textContent = msg;
+      authOverlay.style.display = "flex";
     }
-    function isLoggedIn(){ return localStorage.getItem(K.admin) === "1"; }
-    function syncAuthUI(){
-      if(isLoggedIn()){
-        loginView.classList.add("hide");
-        appView.classList.remove("hide");
-      }else{
-        loginView.classList.remove("hide");
-        appView.classList.add("hide");
+    function hideAuth(){
+      authOverlay.style.display = "none";
+    }
+
+    async function requireRole(role){
+      const { data: sess } = await supabase.auth.getSession();
+      if(!sess.session){
+        showAuth("");
+        return null;
       }
+      const { data: r, error } = await supabase
+        .from("staff_users")
+        .select("role")
+        .eq("user_id", sess.session.user.id)
+        .single();
+
+      if(error || !r){
+        await supabase.auth.signOut();
+        showAuth("Utente non abilitato.");
+        return null;
+      }
+      if(r.role !== role){
+        await supabase.auth.signOut();
+        showAuth("Ruolo errato. Serve: " + role.toUpperCase());
+        return null;
+      }
+      hideAuth();
+      return sess.session;
     }
-    loginBtn.addEventListener("click", () => {
-      if(pinEl.value.trim() === "1234") setLoggedIn(true);
-      else alert("PIN errato (demo: 1234)");
+
+    authBtn.addEventListener("click", async () => {
+      try{
+        authMsg.textContent = "Accesso...";
+        const { error } = await supabase.auth.signInWithPassword({
+          email: authEmail.value.trim(),
+          password: authPass.value
+        });
+        if(error) throw error;
+        await requireRole("admin");
+        authMsg.textContent = "";
+        await refreshReservations();
+      }catch(e){
+        authMsg.textContent = "Login fallito: " + (e?.message || "errore");
+      }
     });
-    logoutBtn.addEventListener("click", () => setLoggedIn(false));
-    syncAuthUI();
 
-    // -------- tabs --------
-    const tabButtons = [...document.querySelectorAll(".tabbtn")];
-    const tabs = {
-      prenotazioni: document.getElementById("tab-prenotazioni"),
-      tavoli: document.getElementById("tab-tavoli"),
-      menu: document.getElementById("tab-menu")
-    };
-    function showTab(name){
-      tabButtons.forEach(b => b.classList.toggle("active", b.dataset.tab === name));
-      Object.entries(tabs).forEach(([k,el]) => el.classList.toggle("hide", k !== name));
-    }
-    tabButtons.forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+    document.getElementById("logoutBtn").addEventListener("click", async ()=>{
+      await supabase.auth.signOut();
+      showAuth("Sei uscito.");
+    });
 
-    // -------- storage helpers --------
-    function loadJSON(key, fallback){
-      try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
-      catch{ return fallback; }
-    }
-    function saveJSON(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+    // ===== UI refs =====
+    const datePick = document.getElementById("datePick");
+    const statusPick = document.getElementById("statusPick");
+    const searchBox = document.getElementById("searchBox");
+    const resBody = document.getElementById("resBody");
+    const resMsg = document.getElementById("resMsg");
+    const refreshBtn = document.getElementById("refreshBtn");
 
-    // -------- demo seed --------
-    function seed(){
-      const tables = Array.from({length:15}, (_,i) => {
-        const n = i+1;
-        const code = "T" + String(n).padStart(2,"0");
-        const seats = (n<=6) ? 2 : (n<=13 ? 3 : 4);
-        return { id: "tbl_"+code, code, seats, open:false };
-      });
-      saveJSON(K.tables, tables);
-
-      const menu = [
-        { id:"mi1", name:"Spaghetti alle vongole", category:"Primi", price: 14.0, active:true },
-        { id:"mi2", name:"Frittura di calamari", category:"Secondi", price: 16.0, active:true },
-        { id:"mi3", name:"Crudo di mare (mix)", category:"Antipasti", price: 22.0, active:true },
-        { id:"mi4", name:"Acqua", category:"Bevande", price: 2.5, active:true },
-        { id:"mi5", name:"Vino bianco calice", category:"Bevande", price: 5.0, active:true },
-        { id:"mi6", name:"Dessert del giorno", category:"Dolci", price: 6.0, active:true },
-      ];
-      saveJSON(K.menu, menu);
-
+    // default date: oggi
+    (function setToday(){
       const d = new Date();
-      const pad = (x)=>String(x).padStart(2,"0");
-      const date = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-      const res = [
-        { id:"r1", date, time:"12:30", name:"Rossi", phone:"333111222", people:2, status:"pending", tableCode:"" },
-        { id:"r2", date, time:"13:10", name:"Bianchi", phone:"333444555", people:4, status:"confirmed", tableCode:"T07" },
-        { id:"r3", date, time:"20:10", name:"Verdi", phone:"333777888", people:3, status:"confirmed", tableCode:"" }
-      ];
-      saveJSON(K.reservations, res);
+      const pad = x => String(x).padStart(2,"0");
+      datePick.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    })();
 
-      saveJSON(K.orders, []);
-      saveJSON(K.tableLedger, {});
-      saveJSON(K.draftOrders, {});
-      alert("Dati demo caricati ✅");
-      refreshAll();
-    }
-    document.getElementById("seedBtn").addEventListener("click", seed);
-
-    // -------- reservations table --------
-    const resTableBody = document.querySelector("#resTable tbody");
-    const filterDate = document.getElementById("filterDate");
-    const filterStatus = document.getElementById("filterStatus");
-    const filterText = document.getElementById("filterText");
-
-    function badgeHTML(status){
-      const map = {
-        pending: { label:"In attesa", cls:"pending" },
-        confirmed: { label:"Confermata", cls:"confirmed" },
-        arrived: { label:"Arrivato", cls:"arrived" },
-        cancelled: { label:"Annullata", cls:"cancelled" }
-      };
-      const m = map[status] || { label: status, cls:"" };
-      return `<span class="badge ${m.cls}">${m.label}</span>`;
-    }
-
-    function normalizePhone(p){
-      if(!p) return "";
-      let s = String(p).trim().replace(/[^\d+]/g,"");
-      if(s && !s.startsWith("+")){
-        if(s.startsWith("39")) s = "+" + s;
-        else s = "+39" + s;
+    // ===== Tables =====
+    const tablePick = document.getElementById("tablePick");
+    const fillTablesBtn = document.getElementById("fillTablesBtn");
+    function fillTables(){
+      const cur = tablePick.value;
+      tablePick.innerHTML = `<option value="">Seleziona tavolo…</option>`;
+      for(let i=1;i<=15;i++){
+        const code = "T" + String(i).padStart(2,"0");
+        const opt = document.createElement("option");
+        opt.value = code;
+        opt.textContent = code;
+        tablePick.appendChild(opt);
       }
-      return s;
+      tablePick.value = cur;
     }
-    function buildSmsLink(phone, message){
-      const p = normalizePhone(phone);
-      const body = encodeURIComponent(message);
-      const isApple = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      return isApple ? `sms:${p}&body=${body}` : `sms:${p}?body=${body}`;
-    }
-    function smsTextForReservation(r){
-      const when = `${r.date} ${r.time}`;
-      const tavolo = r.tableCode ? ` Tavolo ${r.tableCode}.` : "";
-      return `Officine Mare: prenotazione confermata per ${r.name} (${r.people} pers.) il ${when}.${tavolo} A presto!`;
-    }
+    fillTables();
+    fillTablesBtn.addEventListener("click", fillTables);
 
-    function getAllTableCodes(){
-      const tables = loadJSON(K.tables, []);
-      if(tables.length) return tables.map(t => t.code);
-      return Array.from({length:15}, (_,i)=>"T"+String(i+1).padStart(2,"0"));
-    }
-
-    function renderReservations(){
-      const all = loadJSON(K.reservations, []);
-      const d = filterDate.value.trim();
-      const s = filterStatus.value.trim();
-      const q = filterText.value.trim().toLowerCase();
-
-      const rows = all.filter(r => {
-        if(d && r.date !== d) return false;
-        if(s && r.status !== s) return false;
-        if(q){
-          const blob = `${r.name} ${r.phone}`.toLowerCase();
-          if(!blob.includes(q)) return false;
-        }
-        return true;
-      }).sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
-
-      const tableCodes = getAllTableCodes();
-
-      resTableBody.innerHTML = "";
-      rows.forEach(r => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>
-            <div style="font-weight:950">${r.date}</div>
-            <div class="muted">${r.time}</div>
-          </td>
-          <td>
-            <div style="font-weight:950">${r.name}</div>
-            <div class="muted">${r.phone || ""}</div>
-          </td>
-          <td>${r.people}</td>
-          <td>${badgeHTML(r.status)}</td>
-          <td>
-            <div class="tableAssign">
-              <select data-act="tableSelect" data-id="${r.id}">
-                <option value="">—</option>
-                ${tableCodes.map(tc => `<option value="${tc}" ${r.tableCode===tc ? "selected":""}>${tc}</option>`).join("")}
-              </select>
-              <button class="soft miniBtn" data-act="assignTable" data-id="${r.id}">Assegna</button>
-            </div>
-            <div class="muted" style="margin-top:6px;">${r.tableCode ? `Assegnato: ${r.tableCode}` : "Non assegnato"}</div>
-          </td>
-          <td>
-            <div class="row">
-              <button class="soft miniBtn" data-act="confirm" data-id="${r.id}">Conferma</button>
-              <button class="primary miniBtn" data-act="confirmSms" data-id="${r.id}">Conferma + SMS</button>
-              <button class="soft miniBtn" data-act="arrived" data-id="${r.id}">Arrivato</button>
-              <button class="danger miniBtn" data-act="cancel" data-id="${r.id}">Annulla</button>
-            </div>
-          </td>
-        `;
-        resTableBody.appendChild(tr);
-      });
-
-      resTableBody.querySelectorAll("button, select").forEach(el => {
-        el.addEventListener("click", () => {
-          const act = el.dataset.act;
-          const id = el.dataset.id;
-          if(!act || !id) return;
-          const all = loadJSON(K.reservations, []);
-          const idx = all.findIndex(x => x.id === id);
-          if(idx < 0) return;
-
-          if(act === "assignTable"){
-            const sel = resTableBody.querySelector(`select[data-act="tableSelect"][data-id="${id}"]`);
-            all[idx].tableCode = sel ? sel.value : "";
-            saveJSON(K.reservations, all);
-            refreshAll();
-            return;
-          }
-
-          if(act === "confirm") all[idx].status = "confirmed";
-          if(act === "arrived") all[idx].status = "arrived";
-          if(act === "cancel") all[idx].status = "cancelled";
-
-          if(act === "confirmSms"){
-            all[idx].status = "confirmed";
-            saveJSON(K.reservations, all);
-            refreshAll();
-
-            const phone = all[idx].phone;
-            if(!phone){ alert("Manca il telefono: non posso preparare l’SMS."); return; }
-            const msg = smsTextForReservation(all[idx]);
-            window.location.href = buildSmsLink(phone, msg);
-            try{ navigator.clipboard?.writeText(msg); }catch{}
-            return;
-          }
-
-          saveJSON(K.reservations, all);
-          refreshAll();
-        });
-      });
-    }
-    [filterDate, filterStatus, filterText].forEach(el => el.addEventListener("input", renderReservations));
-
-    // -------- tavoli + drawer --------
-    const tablesGrid = document.getElementById("tablesGrid");
-    let selectedTableCode = null;
-
-    const drawerHint = document.getElementById("drawerHint");
-    const drawerBody = document.getElementById("drawerBody");
-    const drawerTableBadge = document.getElementById("drawerTableBadge");
-    const drawerTableMeta = document.getElementById("drawerTableMeta");
-
-    const servedList = document.getElementById("servedList");
-    const draftList = document.getElementById("draftList");
-    const draftTotal = document.getElementById("draftTotal");
-
-    const sendKitchenBtn = document.getElementById("sendKitchenBtn");
-    const clearDraftBtn = document.getElementById("clearDraftBtn");
-    const closeTableBtn = document.getElementById("closeTableBtn");
-
-    function getLedger(){ return loadJSON(K.tableLedger, {}); }
-    function setLedger(ledger){ saveJSON(K.tableLedger, ledger); }
-    function getDrafts(){ return loadJSON(K.draftOrders, {}); }
-    function setDrafts(d){ saveJSON(K.draftOrders, d); }
-
-    function renderTables(){
-      const tables = loadJSON(K.tables, []);
-      const reservations = loadJSON(K.reservations, []);
-      const today = filterDate.value || "";
-      const ledger = getLedger();
-
-      const booked = new Set(
-        reservations
-          .filter(r => (!today || r.date === today) && r.tableCode && r.status !== "cancelled")
-          .map(r => r.tableCode)
-      );
-
-      tablesGrid.innerHTML = "";
-      tables.forEach(t => {
-        const card = document.createElement("div");
-        card.className = "tableCard";
-
-        const hasLedger = !!ledger[t.code]?.items?.length;
-        const stateLabel = t.open ? "Occupato" : (booked.has(t.code) ? "Prenotato" : (hasLedger ? "Storico" : "Libero"));
-        const stateClass = t.open ? "open" : (booked.has(t.code) ? "booked" : "");
-
-        card.innerHTML = `
-          <div class="tTitle">${t.code} · ${t.seats} posti</div>
-          <div class="tMeta">${t.open ? "Tavolo aperto" : (booked.has(t.code) ? "Prenotazione assegnata" : (hasLedger ? "Ha ordini salvati" : "Disponibile"))}</div>
-          <div class="tState ${stateClass}">${stateLabel}</div>
-        `;
-        card.addEventListener("click", () => openTable(t.code));
-        tablesGrid.appendChild(card);
-      });
-    }
-
-    function openTable(code){
-      selectedTableCode = code;
-      drawerHint.classList.add("hide");
-      drawerBody.classList.remove("hide");
-
-      drawerTableBadge.textContent = `Tavolo ${code}`;
-      const tables = loadJSON(K.tables, []);
-      const t = tables.find(x => x.code === code);
-      drawerTableMeta.textContent = t ? `${t.seats} posti` : "";
-
-      renderTableDrawer();
-    }
-
-    function renderTableDrawer(){
-      const menu = loadJSON(K.menu, []).filter(x => x.active);
-      const ledger = getLedger();
-      const drafts = getDrafts();
-
-      const tbl = ledger[selectedTableCode] || { items: [] };
-      const draft = drafts[selectedTableCode] || { items: {} };
-
-      // --- Storico / Servito sala ---
-      servedList.innerHTML = "";
-      if(tbl.items.length === 0){
-        const empty = document.createElement("div");
-        empty.className = "muted";
-        empty.textContent = "Nessun ordine ancora.";
-        servedList.appendChild(empty);
-      }else{
-        tbl.items.forEach((it, idx) => {
-          const servedNow = Number(it.servedQty || 0);
-          const totalNow = Number(it.totalQty || 0);
-
-          const row = document.createElement("div");
-          row.className = "menuItem";
-          row.innerHTML = `
-            <div class="miLeft">
-              <div class="miName">${it.name}</div>
-              <div class="miCat">
-                Ordinati: <strong>${totalNow}</strong> · Serviti: <strong>${servedNow}</strong>
-                ${it.reorderFlag ? ` <span class="reorderBang" title="Riordinato dopo essere stato servito">!</span>` : ``}
-              </div>
-            </div>
-            <div class="miRight">
-              <label class="servedChip ${servedNow >= totalNow && totalNow>0 ? "served":""}">
-                <input type="checkbox" data-act="servedToggle" data-idx="${idx}" ${servedNow >= totalNow && totalNow>0 ? "checked":""} />
-                Servito
-              </label>
-            </div>
-          `;
-          servedList.appendChild(row);
-        });
-
-        servedList.querySelectorAll('input[data-act="servedToggle"]').forEach(chk => {
-          chk.addEventListener("change", () => {
-            const idx = Number(chk.dataset.idx);
-            const ledger = getLedger();
-            const tbl = ledger[selectedTableCode] || { items: [] };
-            const it = tbl.items[idx];
-            if(!it) return;
-
-            if(chk.checked){
-              it.servedQty = Number(it.totalQty || 0);
-              it.reorderFlag = false;
-            }else{
-              it.servedQty = 0;
-              it.reorderFlag = true;
-            }
-            tbl.items[idx] = it;
-            ledger[selectedTableCode] = tbl;
-            setLedger(ledger);
-            renderTableDrawer();
-            renderTables();
-          });
-        });
-      }
-
-      // --- Bozza nuova comanda ---
-      draftList.innerHTML = "";
-      let total = 0;
-
-      menu.forEach(mi => {
-        const qty = Number(draft.items[mi.id] || 0);
-        total += qty * mi.price;
-
-        const row = document.createElement("div");
-        row.className = "menuItem";
-        row.innerHTML = `
-          <div class="miLeft">
-            <div class="miName">${mi.name}</div>
-            <div class="miCat">${mi.category} · <strong>${euro(mi.price)}</strong></div>
-          </div>
-          <div class="miRight">
-            <div class="qty">
-              <button class="soft" data-mi="${mi.id}" data-d="-1" type="button">−</button>
-              <span>${qty}</span>
-              <button class="soft" data-mi="${mi.id}" data-d="1" type="button">+</button>
-            </div>
-          </div>
-        `;
-        draftList.appendChild(row);
-      });
-
-      draftTotal.textContent = euro(total);
-
-      draftList.querySelectorAll("button[data-mi]").forEach(b => {
-        b.addEventListener("click", () => {
-          const id = b.dataset.mi;
-          const delta = Number(b.dataset.d);
-          const drafts = getDrafts();
-          const draft = drafts[selectedTableCode] || { items: {} };
-          const curr = Number(draft.items[id] || 0);
-          const next = Math.max(0, curr + delta);
-          draft.items[id] = next;
-          drafts[selectedTableCode] = draft;
-          setDrafts(drafts);
-          renderTableDrawer();
-        });
-      });
-    }
-
-    clearDraftBtn.addEventListener("click", () => {
-      if(!selectedTableCode) return;
-      const drafts = getDrafts();
-      delete drafts[selectedTableCode];
-      setDrafts(drafts);
-      renderTableDrawer();
-    });
-
-    function ensureLedgerItem(tbl, mi, addQty){
-      let it = tbl.items.find(x => x.menu_item_id === mi.id);
-      if(!it){
-        it = {
-          menu_item_id: mi.id,
-          name: mi.name,
-          price: Number(mi.price || 0),
-          totalQty: 0,
-          servedQty: 0,
-          reorderFlag: false
-        };
-        tbl.items.push(it);
-      }
-      const prevTotal = Number(it.totalQty || 0);
-      const prevServed = Number(it.servedQty || 0);
-
-      it.totalQty = prevTotal + addQty;
-
-      // se prima era “tutto servito” e aggiungo, diventa riordino
-      if(prevTotal > 0 && prevServed >= prevTotal && addQty > 0){
-        it.reorderFlag = true;
-      }
-      return tbl;
-    }
-
-    // ---- helpers per line_id ----
-    function makeLineId(orderId, menuItemId, i){
-      return `${orderId}_${menuItemId}_${i}_${Math.random().toString(16).slice(2)}`;
-    }
-
-    sendKitchenBtn.addEventListener("click", () => {
-      if(!selectedTableCode) return;
-
-      const menu = loadJSON(K.menu, []);
-      const drafts = getDrafts();
-      const draft = drafts[selectedTableCode];
-      if(!draft) return alert("Comanda vuota.");
-
-      const rawItems = Object.entries(draft.items)
-        .filter(([,q]) => Number(q) > 0)
-        .map(([id,q]) => {
-          const mi = menu.find(x => x.id === id);
-          return { menu_item_id: id, name: mi?.name || "Item", qty: Number(q), price: Number(mi?.price || 0) };
-        });
-
-      if(rawItems.length === 0) return alert("Comanda vuota.");
-
-      // 1) Mark tavolo open
-      const tables = loadJSON(K.tables, []);
-      const tidx = tables.findIndex(x => x.code === selectedTableCode);
-      if(tidx >= 0) tables[tidx].open = true;
-      saveJSON(K.tables, tables);
-
-      // 2) Salva “ordine” per cucina (per-riga status)
-      const orders = loadJSON(K.orders, []);
-      const now = new Date();
-      const orderId = "o_" + now.getTime();
-
-      const items = rawItems.map((it, i) => ({
-        ...it,
-        line_id: makeLineId(orderId, it.menu_item_id, i),
-        line_status: "todo" // <-- cucina farà todo -> ready
-      }));
-
-      const order = {
-        id: orderId,
-        table: selectedTableCode,
-        status: "sent", // order: sent | archived
-        created_at: now.toISOString(),
-        items
-      };
-      orders.unshift(order);
-      saveJSON(K.orders, orders);
-
-      // 3) Aggiorna “ledger” tavolo (storico sala)
-      const ledger = getLedger();
-      const tbl = ledger[selectedTableCode] || { items: [] };
-      rawItems.forEach(it => {
-        const mi = menu.find(x => x.id === it.menu_item_id) || { id: it.menu_item_id, name: it.name, price: it.price };
-        ensureLedgerItem(tbl, mi, Number(it.qty));
-      });
-      ledger[selectedTableCode] = tbl;
-      setLedger(ledger);
-
-      // 4) clear draft
-      delete drafts[selectedTableCode];
-      setDrafts(drafts);
-
-      alert("Comanda inviata in cucina ✅");
-      renderTableDrawer();
-      renderTables();
-    });
-
-    closeTableBtn.addEventListener("click", () => {
-      if(!selectedTableCode) return;
-      const ok = confirm(`Chiudere ${selectedTableCode}? (non cancella storico, libera solo lo stato tavolo)`);
-      if(!ok) return;
-
-      const tables = loadJSON(K.tables, []);
-      const idx = tables.findIndex(x => x.code === selectedTableCode);
-      if(idx >= 0) tables[idx].open = false;
-      saveJSON(K.tables, tables);
-
-      selectedTableCode = null;
-      drawerBody.classList.add("hide");
-      drawerHint.classList.remove("hide");
-      drawerHint.textContent = "Seleziona un tavolo o una prenotazione.";
-
-      renderTables();
-    });
-
-    // -------- menu CRUD --------
+    // ===== Demo menu for orders =====
+    const MENU = [
+      { id:"mi1", name:"Spaghetti alle vongole", price:14 },
+      { id:"mi2", name:"Frittura di calamari", price:16 },
+      { id:"mi3", name:"Crudo di mare (mix)", price:22 },
+      { id:"mi4", name:"Insalata di mare", price:15 },
+      { id:"mi5", name:"Acqua", price:2 }
+    ];
     const menuList = document.getElementById("menuList");
-    const miName = document.getElementById("miName");
-    const miCat = document.getElementById("miCat");
-    const miPrice = document.getElementById("miPrice");
-    const addMenuItemBtn = document.getElementById("addMenuItemBtn");
+    const sendKitchenBtn = document.getElementById("sendKitchenBtn");
+    const resetOrderBtn = document.getElementById("resetOrderBtn");
+    const panelMsg = document.getElementById("panelMsg");
+
+    const orderState = new Map(); // menu_id -> qty
 
     function renderMenu(){
-      const menu = loadJSON(K.menu, []);
       menuList.innerHTML = "";
-      menu.forEach(mi => {
+      MENU.forEach(m=>{
+        const qty = orderState.get(m.id) || 0;
         const el = document.createElement("div");
         el.className = "menuItem";
         el.innerHTML = `
-          <div class="miLeft">
-            <div class="miName">${mi.name}</div>
-            <div class="miCat">${mi.category} · <strong>${euro(mi.price)}</strong></div>
+          <div>
+            <div style="font-weight:950; font-size:13px;">${m.name}</div>
+            <div class="muted">€ ${m.price}</div>
           </div>
-          <div class="miRight">
-            <span class="badge">${mi.active ? "Attivo" : "Disattivo"}</span>
-            <button class="soft" data-act="toggle" data-id="${mi.id}">${mi.active ? "Disattiva" : "Attiva"}</button>
-            <button class="danger" data-act="del" data-id="${mi.id}">Elimina</button>
+          <div class="qtyCtrl">
+            <button class="soft mini" data-act="minus" data-id="${m.id}">−</button>
+            <span class="qtyPill" id="q_${m.id}">${qty}</span>
+            <button class="primary mini" data-act="plus" data-id="${m.id}">+</button>
           </div>
         `;
+        el.querySelectorAll("button").forEach(b=>{
+          b.addEventListener("click", ()=>{
+            const id = b.dataset.id;
+            const act = b.dataset.act;
+            const cur = orderState.get(id) || 0;
+            const next = act === "plus" ? cur+1 : Math.max(0, cur-1);
+            orderState.set(id, next);
+            document.getElementById("q_"+id).textContent = String(next);
+          });
+        });
         menuList.appendChild(el);
       });
-
-      menuList.querySelectorAll("button").forEach(b => {
-        b.addEventListener("click", () => {
-          const act = b.dataset.act;
-          const id = b.dataset.id;
-          let menu = loadJSON(K.menu, []);
-          const idx = menu.findIndex(x => x.id === id);
-          if(idx < 0) return;
-
-          if(act === "toggle") menu[idx].active = !menu[idx].active;
-          if(act === "del"){
-            if(confirm("Eliminare il piatto?")) menu = menu.filter(x => x.id !== id);
-          }
-          saveJSON(K.menu, menu);
-          renderMenu();
-          if(selectedTableCode) renderTableDrawer();
-        });
-      });
     }
+    renderMenu();
 
-    addMenuItemBtn.addEventListener("click", () => {
-      const name = miName.value.trim();
-      const cat = miCat.value.trim() || "Altro";
-      const price = Number(miPrice.value);
-      if(!name) return alert("Inserisci il nome.");
-      if(!Number.isFinite(price) || price < 0) return alert("Inserisci un prezzo valido.");
-
-      const menu = loadJSON(K.menu, []);
-      menu.unshift({ id: "mi_" + Date.now(), name, category: cat, price, active:true });
-      saveJSON(K.menu, menu);
-
-      miName.value = ""; miCat.value = ""; miPrice.value = "";
+    resetOrderBtn.addEventListener("click", ()=>{
+      orderState.clear();
       renderMenu();
-      if(selectedTableCode) renderTableDrawer();
+      panelMsg.textContent = "";
     });
 
-    // -------- init --------
-    function refreshAll(){
-      renderReservations();
-      renderTables();
-      renderMenu();
-      if(selectedTableCode) renderTableDrawer();
+    // ===== Reservations CRUD =====
+    function badgeForStatus(s){
+      if(s==="confirmed") return `<span class="badge b-ok">Confermata</span>`;
+      if(s==="arrived") return `<span class="badge b-ok">Arrivato</span>`;
+      if(s==="cancelled") return `<span class="badge b-cancel">Annullata</span>`;
+      return `<span class="badge b-pending">In attesa</span>`;
     }
 
-    // default filter date = oggi
-    (function initDate(){
-      const d = new Date();
-      const pad = (x)=>String(x).padStart(2,"0");
-      filterDate.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    })();
+    function fmtWhen(r){
+      const d = r.reservation_date;
+      const t = (r.reservation_time || "").slice(0,5);
+      return `<div style="font-weight:950;">${d}</div><div class="cellSmall">${t}</div>`;
+    }
 
-    refreshAll();
+    function smsLink(phone, text){
+      const p = encodeURIComponent(phone);
+      const m = encodeURIComponent(text);
+      return `sms:${p}?&body=${m}`;
+    }
+
+    async function refreshReservations(){
+      resMsg.textContent = "Carico...";
+      const day = datePick.value;
+      const st = statusPick.value;
+      const q = (searchBox.value || "").trim().toLowerCase();
+
+      let query = supabase
+        .from("reservations")
+        .select("*")
+        .eq("reservation_date", day)
+        .order("reservation_time", { ascending: true });
+
+      if(st !== "all") query = query.eq("status", st);
+
+      const { data, error } = await query;
+      if(error){
+        resMsg.textContent = "Errore: " + error.message;
+        return;
+      }
+
+      let rows = data || [];
+      if(q){
+        rows = rows.filter(r =>
+          String(r.customer_name||"").toLowerCase().includes(q) ||
+          String(r.customer_phone||"").toLowerCase().includes(q)
+        );
+      }
+
+      resBody.innerHTML = "";
+      if(rows.length === 0){
+        resBody.innerHTML = `<tr><td colspan="6" class="muted">Nessuna prenotazione per questo filtro.</td></tr>`;
+        resMsg.textContent = "";
+        return;
+      }
+
+      rows.forEach(r=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${fmtWhen(r)}</td>
+          <td>
+            <div style="font-weight:950;">${r.customer_name || ""}</div>
+            <div class="cellSmall">${r.customer_phone || ""}</div>
+          </td>
+          <td>${r.people || ""}</td>
+          <td>${badgeForStatus(r.status)}</td>
+          <td>
+            <div class="row" style="gap:8px;">
+              <select data-assign="${r.id}">
+                <option value="">—</option>
+                ${Array.from({length:15}).map((_,i)=>{
+                  const code = "T"+String(i+1).padStart(2,"0");
+                  const sel = (r.table_code===code) ? "selected" : "";
+                  return `<option value="${code}" ${sel}>${code}</option>`;
+                }).join("")}
+              </select>
+              <button class="soft mini" data-act="setTable" data-id="${r.id}">Assegna</button>
+            </div>
+            <div class="cellSmall">${r.table_code ? ("Assegnato: "+r.table_code) : "Non assegnato"}</div>
+          </td>
+          <td>
+            <div class="row" style="gap:8px;">
+              <button class="soft mini" data-act="confirm" data-id="${r.id}">Conferma</button>
+              <a class="ghost" style="padding:8px 10px; font-size:12px;" data-act="sms" data-id="${r.id}">Conferma + SMS</a>
+              <button class="soft mini" data-act="arrived" data-id="${r.id}">Arrivato</button>
+              <button class="danger mini" data-act="cancel" data-id="${r.id}">Annulla</button>
+            </div>
+          </td>
+        `;
+        resBody.appendChild(tr);
+
+        // handlers
+        tr.querySelectorAll("button[data-act]").forEach(btn=>{
+          btn.addEventListener("click", async ()=>{
+            const act = btn.dataset.act;
+            const id = btn.dataset.id;
+
+            if(act === "setTable"){
+              const sel = tr.querySelector(`select[data-assign="${id}"]`);
+              const table = sel.value || null;
+              const { error } = await supabase.from("reservations").update({ table_code: table }).eq("id", id);
+              if(error) alert(error.message);
+              await refreshReservations();
+              return;
+            }
+
+            if(act === "confirm"){
+              const { error } = await supabase.from("reservations").update({ status:"confirmed" }).eq("id", id);
+              if(error) alert(error.message);
+              await refreshReservations();
+              return;
+            }
+
+            if(act === "arrived"){
+              const { error } = await supabase.from("reservations").update({ status:"arrived" }).eq("id", id);
+              if(error) alert(error.message);
+              await refreshReservations();
+              return;
+            }
+
+            if(act === "cancel"){
+              const ok = confirm("Annullare la prenotazione?");
+              if(!ok) return;
+              const { error } = await supabase.from("reservations").update({ status:"cancelled" }).eq("id", id);
+              if(error) alert(error.message);
+              await refreshReservations();
+              return;
+            }
+          });
+        });
+
+        tr.querySelectorAll("a[data-act='sms']").forEach(a=>{
+          a.addEventListener("click", async (e)=>{
+            e.preventDefault();
+            // carico riga per creare testo
+            const { data, error } = await supabase.from("reservations").select("*").eq("id", a.dataset.id).single();
+            if(error) return alert(error.message);
+
+            const t = (data.reservation_time || "").slice(0,5);
+            const msg = `Officine Mare: prenotazione confermata per ${data.customer_name} (${data.people} persone) il ${data.reservation_date} alle ${t}. A presto!`;
+            const url = smsLink(data.customer_phone || "", msg);
+            window.location.href = url; // apre app SMS
+          });
+        });
+      });
+
+      resMsg.textContent = "";
+    }
+
+    refreshBtn.addEventListener("click", refreshReservations);
+    datePick.addEventListener("change", refreshReservations);
+    statusPick.addEventListener("change", refreshReservations);
+    searchBox.addEventListener("input", ()=>{
+      clearTimeout(window.__t);
+      window.__t = setTimeout(refreshReservations, 180);
+    });
+
+    // ===== Send order to kitchen =====
+    async function sendToKitchen(){
+      const table = tablePick.value;
+      if(!table) return alert("Seleziona un tavolo.");
+      const lines = [];
+      MENU.forEach(m=>{
+        const qty = orderState.get(m.id) || 0;
+        if(qty>0) lines.push({ menu_item_id:m.id, name:m.name, qty, price:m.price });
+      });
+      if(lines.length === 0) return alert("Nessun piatto selezionato.");
+
+      panelMsg.textContent = "Invio in cucina...";
+
+      // 1) crea ordine
+      const { data: ord, error: e1 } = await supabase
+        .from("orders")
+        .insert([{ table_code: table, status:"sent" }])
+        .select("id")
+        .single();
+      if(e1){ panelMsg.textContent = "Errore: "+e1.message; return; }
+
+      // 2) crea righe comanda
+      const items = lines.map(l=>({
+        order_id: ord.id,
+        menu_item_id: l.menu_item_id,
+        name: l.name,
+        qty: l.qty,
+        price: l.price,
+        line_status: "todo"
+      }));
+      const { error: e2 } = await supabase.from("order_items").insert(items);
+      if(e2){ panelMsg.textContent = "Errore: "+e2.message; return; }
+
+      panelMsg.textContent = "✅ Inviato alla cucina.";
+      orderState.clear();
+      renderMenu();
+      setTimeout(()=>panelMsg.textContent="", 2200);
+    }
+
+    sendKitchenBtn.addEventListener("click", sendToKitchen);
+
+    // ===== REALTIME reservations =====
+    function vibrate(){ try{ navigator.vibrate?.([70,30,70]); }catch{} }
+
+    (async ()=>{
+      const s = await requireRole("admin");
+      if(!s) return;
+
+      await refreshReservations();
+
+      supabase
+        .channel("rt-reservations-admin")
+        .on("postgres_changes", { event:"INSERT", schema:"public", table:"reservations" }, async (payload)=>{
+          // notifica soft
+          vibrate();
+          await refreshReservations();
+        })
+        .subscribe();
+    })();
   </script>
 </body>
 </html>
