@@ -74,7 +74,7 @@
       font-weight: 950;
       letter-spacing: .8px;
       font-size: 22px;
-      white-space: see
+      white-space: nowrap;
       display:flex;
       align-items:center;
       gap:10px;
@@ -284,7 +284,7 @@
     }
     .miniBtn{ padding: 8px 10px; border-radius: 999px; font-size: 12px; }
 
-    /* Stato piatti nel tavolo */
+    /* Stato piatti nel tavolo (Servito in sala) */
     .servedChip{
       display:inline-flex; align-items:center; gap:8px;
       padding: 6px 10px; border-radius: 999px;
@@ -445,8 +445,8 @@
       menu: "om_menu",
       tables: "om_tables",
       reservations: "om_reservations",
-      orders: "om_orders",                // comande inviate alla cucina (stato: sent/ready/served)
-      tableLedger: "om_table_ledger",     // storico “per tavolo” con served + reorder marker
+      orders: "om_orders",                // comande inviate alla cucina (per-riga: line_status)
+      tableLedger: "om_table_ledger",     // storico per tavolo (Servito sala + reorder)
       draftOrders: "om_draft_orders"      // bozze per tavolo
     };
 
@@ -516,6 +516,7 @@
         { id:"mi3", name:"Crudo di mare (mix)", category:"Antipasti", price: 22.0, active:true },
         { id:"mi4", name:"Acqua", category:"Bevande", price: 2.5, active:true },
         { id:"mi5", name:"Vino bianco calice", category:"Bevande", price: 5.0, active:true },
+        { id:"mi6", name:"Dessert del giorno", category:"Dolci", price: 6.0, active:true },
       ];
       saveJSON(K.menu, menu);
 
@@ -693,18 +694,10 @@
     const clearDraftBtn = document.getElementById("clearDraftBtn");
     const closeTableBtn = document.getElementById("closeTableBtn");
 
-    function getLedger(){
-      return loadJSON(K.tableLedger, {});
-    }
-    function setLedger(ledger){
-      saveJSON(K.tableLedger, ledger);
-    }
-    function getDrafts(){
-      return loadJSON(K.draftOrders, {});
-    }
-    function setDrafts(d){
-      saveJSON(K.draftOrders, d);
-    }
+    function getLedger(){ return loadJSON(K.tableLedger, {}); }
+    function setLedger(ledger){ saveJSON(K.tableLedger, ledger); }
+    function getDrafts(){ return loadJSON(K.draftOrders, {}); }
+    function setDrafts(d){ saveJSON(K.draftOrders, d); }
 
     function renderTables(){
       const tables = loadJSON(K.tables, []);
@@ -755,11 +748,10 @@
       const ledger = getLedger();
       const drafts = getDrafts();
 
-      // Ledger per tavolo: items = [{menu_item_id,name,price,qty,totalQtyServed,servedQty,isServed,reorderFlag}]
       const tbl = ledger[selectedTableCode] || { items: [] };
       const draft = drafts[selectedTableCode] || { items: {} };
 
-      // --- Storico / Servito ---
+      // --- Storico / Servito sala ---
       servedList.innerHTML = "";
       if(tbl.items.length === 0){
         const empty = document.createElement("div");
@@ -799,14 +791,12 @@
             const it = tbl.items[idx];
             if(!it) return;
 
-            // Se spunta: set servedQty = totalQty e azzera reorderFlag
-            // Se despunta: set servedQty = 0 (torna da servire)
             if(chk.checked){
               it.servedQty = Number(it.totalQty || 0);
               it.reorderFlag = false;
             }else{
               it.servedQty = 0;
-              it.reorderFlag = true; // torna “da riportare”
+              it.reorderFlag = true;
             }
             tbl.items[idx] = it;
             ledger[selectedTableCode] = tbl;
@@ -870,7 +860,6 @@
     });
 
     function ensureLedgerItem(tbl, mi, addQty){
-      // se esiste item per menu_item_id, aumenta qty
       let it = tbl.items.find(x => x.menu_item_id === mi.id);
       if(!it){
         it = {
@@ -883,15 +872,21 @@
         };
         tbl.items.push(it);
       }
-      const beforeServed = Number(it.servedQty || 0);
-      it.totalQty = Number(it.totalQty || 0) + addQty;
+      const prevTotal = Number(it.totalQty || 0);
+      const prevServed = Number(it.servedQty || 0);
 
-      // Se era “tutto servito” e adesso aggiungo ancora, devo segnare riordino
-      if(beforeServed >= (Number(it.totalQty || 0) - addQty) && addQty > 0){
-        // prima era servito tutto, ora no -> reorder
+      it.totalQty = prevTotal + addQty;
+
+      // se prima era “tutto servito” e aggiungo, diventa riordino
+      if(prevTotal > 0 && prevServed >= prevTotal && addQty > 0){
         it.reorderFlag = true;
       }
       return tbl;
+    }
+
+    // ---- helpers per line_id ----
+    function makeLineId(orderId, menuItemId, i){
+      return `${orderId}_${menuItemId}_${i}_${Math.random().toString(16).slice(2)}`;
     }
 
     sendKitchenBtn.addEventListener("click", () => {
@@ -902,14 +897,14 @@
       const draft = drafts[selectedTableCode];
       if(!draft) return alert("Comanda vuota.");
 
-      const items = Object.entries(draft.items)
+      const rawItems = Object.entries(draft.items)
         .filter(([,q]) => Number(q) > 0)
         .map(([id,q]) => {
           const mi = menu.find(x => x.id === id);
           return { menu_item_id: id, name: mi?.name || "Item", qty: Number(q), price: Number(mi?.price || 0) };
         });
 
-      if(items.length === 0) return alert("Comanda vuota.");
+      if(rawItems.length === 0) return alert("Comanda vuota.");
 
       // 1) Mark tavolo open
       const tables = loadJSON(K.tables, []);
@@ -917,23 +912,31 @@
       if(tidx >= 0) tables[tidx].open = true;
       saveJSON(K.tables, tables);
 
-      // 2) Salva “ordine” per cucina
+      // 2) Salva “ordine” per cucina (per-riga status)
       const orders = loadJSON(K.orders, []);
       const now = new Date();
+      const orderId = "o_" + now.getTime();
+
+      const items = rawItems.map((it, i) => ({
+        ...it,
+        line_id: makeLineId(orderId, it.menu_item_id, i),
+        line_status: "todo" // <-- cucina farà todo -> ready
+      }));
+
       const order = {
-        id: "o_" + now.getTime(),
+        id: orderId,
         table: selectedTableCode,
-        status: "sent", // sent -> ready -> archived (kitchen lo archivia)
+        status: "sent", // order: sent | archived
         created_at: now.toISOString(),
         items
       };
       orders.unshift(order);
       saveJSON(K.orders, orders);
 
-      // 3) Aggiorna “ledger” tavolo (storico)
+      // 3) Aggiorna “ledger” tavolo (storico sala)
       const ledger = getLedger();
       const tbl = ledger[selectedTableCode] || { items: [] };
-      items.forEach(it => {
+      rawItems.forEach(it => {
         const mi = menu.find(x => x.id === it.menu_item_id) || { id: it.menu_item_id, name: it.name, price: it.price };
         ensureLedgerItem(tbl, mi, Number(it.qty));
       });
