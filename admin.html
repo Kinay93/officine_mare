@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Officine Mare — Admin</title>
+  <meta name="description" content="Dashboard ristoratore: prenotazioni, tavoli, menu, comande." />
+  <link rel="icon" href="favicon.ico" />
+
+  <style>
+    :root{
+      --bgTop:#245b7c; --bgMid:#1b4968; --bgBot:#163e5a;
+      --paper: rgba(255,255,255,.95);
+      --text:#0b2236; --muted: rgba(11,34,54,.68);
+      --borderD: rgba(11,34,54,.10);
+      --shadow: 0 22px 70px rgba(0,0,0,.22);
+      --max: 1900px; --radiusXL: 26px;
+      --headerH: 72px;
+      --safeTop: env(safe-area-inset-top, 0px);
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:#fff;
+      background:
+        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.18), transparent 60%),
+        linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 42%, var(--bgBot) 100%);
+    }
+    .container{ width: min(96vw, var(--max)); margin: 0 auto; padding: 0 clamp(12px, 1.8vw, 28px); }
+
+    header{
+      position: sticky; top:0; z-index: 50;
+      padding-top: var(--safeTop);
+      background: rgba(22,62,90,.86);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,.16);
+    }
+    .header-inner{
+      height: var(--headerH);
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      padding: 10px 0;
+    }
+    .brand{
+      font-weight: 950;
+      letter-spacing: 1px;
+      font-size: 22px;
+      white-space: nowrap;
+    }
+    .pill{
+      margin-left:auto;
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      flex-wrap: wrap;
+    }
+    .tabbar{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-left: 10px;
+    }
+    .tabbtn{
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.16);
+      color: rgba(255,255,255,.92);
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .tabbtn.active{ background: rgba(255,255,255,.20); }
+
+    .ghost{
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
+      color: rgba(255,255,255,.92);
+      font-weight: 900;
+      cursor: pointer;
+      text-decoration: none;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+    }
+
+    main{ padding: 18px 0 60px; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: var(--paper);
+      color: var(--text);
+      border-radius: var(--radiusXL);
+      border: 1px solid var(--borderD);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      position: relative;
+      overflow:hidden;
+    }
+    .card h2{ margin:0 0 10px; font-size: 18px; }
+    .muted{ color: var(--muted); font-size: 13px; }
+
+    .row{ display:flex; gap: 10px; flex-wrap: wrap; align-items:center; }
+    input, select{
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(11,34,54,.18);
+      background: rgba(255,255,255,.98);
+      color: var(--text);
+      outline:none;
+    }
+    button{
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(11,34,54,.16);
+      cursor:pointer;
+      font-weight: 950;
+    }
+    .primary{
+      color:#fff;
+      border-color: rgba(0,0,0,.10);
+      background: linear-gradient(180deg, rgba(36,91,124,.96), rgba(22,62,90,.98));
+      box-shadow: 0 16px 28px rgba(0,0,0,.12);
+    }
+    .soft{
+      background: rgba(36,91,124,.10);
+      color: rgba(11,34,54,.92);
+    }
+    .danger{
+      background: rgba(180,30,40,.10);
+      color: rgba(140,20,30,.95);
+      border-color: rgba(140,20,30,.18);
+    }
+
+    .table{
+      width:100%;
+      border-collapse: collapse;
+      overflow:hidden;
+      border-radius: 16px;
+      border: 1px solid rgba(11,34,54,.10);
+      background: rgba(255,255,255,.98);
+    }
+    .table th, .table td{
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(11,34,54,.08);
+      text-align:left;
+      font-size: 13px;
+      vertical-align: top;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 950;
+      font-size: 12px;
+      border: 1px solid rgba(11,34,54,.12);
+      background: rgba(36,91,124,.08);
+      color: rgba(11,34,54,.92);
+      white-space: nowrap;
+    }
+    .badge.pending{ background: rgba(255,180,90,.18); }
+    .badge.confirmed{ background: rgba(40,140,80,.16); }
+    .badge.cancelled{ background: rgba(180,30,40,.12); }
+    .badge.arrived{ background: rgba(60,120,200,.14); }
+
+    .tablesGrid{
+      display:grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 12px;
+    }
+    @media (max-width: 980px){
+      .tablesGrid{ grid-template-columns: repeat(3, minmax(110px, 1fr)); }
+    }
+    @media (max-width: 520px){
+      .tablesGrid{ grid-template-columns: repeat(2, minmax(110px, 1fr)); }
+    }
+
+    .tableCard{
+      border-radius: 20px;
+      border: 1px solid rgba(11,34,54,.12);
+      background: rgba(255,255,255,.98);
+      padding: 12px;
+      cursor: pointer;
+      box-shadow: 0 12px 22px rgba(0,0,0,.10);
+      transition: transform .12s ease, filter .12s ease;
+      min-height: 92px;
+    }
+    .tableCard:hover{ transform: translateY(-1px); filter: brightness(1.01); }
+    .tTitle{ font-weight: 950; font-size: 14px; margin-bottom: 6px; }
+    .tMeta{ font-size: 12px; color: rgba(11,34,54,.72); }
+    .tState{
+      margin-top: 8px;
+      display:inline-flex;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 950;
+      border: 1px solid rgba(11,34,54,.12);
+      background: rgba(36,91,124,.08);
+      color: rgba(11,34,54,.92);
+    }
+    .tState.busy{ background: rgba(255,180,90,.18); }
+    .tState.open{ background: rgba(40,140,80,.16); }
+
+    .drawerTitle{ margin:0 0 8px; font-size: 16px; }
+    .divider{ height:1px; background: rgba(11,34,54,.10); margin: 12px 0; }
+
+    .menuList{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .menuItem{
+      border-radius: 16px;
+      border: 1px solid rgba(11,34,54,.10);
+      padding: 10px;
+      background: rgba(255,255,255,.98);
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      justify-content: space-between;
+    }
+    .miLeft{ min-width: 0; }
+    .miName{ font-weight: 950; font-size: 13px; }
+    .miCat{ font-size: 12px; color: rgba(11,34,54,.68); }
+    .miRight{ display:flex; gap: 8px; align-items:center; flex-wrap: wrap; justify-content:flex-end; }
+    .qty{
+      display:inline-flex; align-items:center; gap: 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(11,34,54,.14);
+      background: rgba(36,91,124,.06);
+      padding: 6px 10px;
+      font-weight: 950;
+    }
+    .qty button{
+      min-width: 34px;
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+
+    .loginWrap{
+      max-width: 520px;
+      margin: 40px auto;
+    }
+    .loginWrap .card{ box-shadow: 0 22px 70px rgba(0,0,0,.30); }
+    .note{ font-size: 12px; color: rgba(11,34,54,.70); }
+    .hide{ display:none !important; }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container header-inner">
+      <div class="brand">⚓ Officine Mare — Admin</div>
+
+      <div class="tabbar" id="tabbar">
+        <button class="tabbtn active" data-tab="prenotazioni">Prenotazioni</button>
+        <button class="tabbtn" data-tab="tavoli">Tavoli</button>
+        <button class="tabbtn" data-tab="menu">Menu</button>
+      </div>
+
+      <div class="pill">
+        <a class="ghost" href="kitchen.html">🍳 Cucina</a>
+        <a class="ghost" href="index.html">👤 Cliente</a>
+        <button class="ghost" id="logoutBtn">Esci</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- LOGIN (bozza) -->
+    <div class="loginWrap" id="loginView">
+      <div class="card">
+        <h2>Accesso Admin</h2>
+        <p class="muted">Bozza: PIN locale. Poi lo sostituiamo con login vero (Supabase Auth / Google Cloud).</p>
+        <div class="row">
+          <input id="pin" type="password" placeholder="PIN (es. 1234)" style="flex:1; min-width: 240px;">
+          <button class="primary" id="loginBtn">Entra</button>
+        </div>
+        <p class="note">Suggerimento: PIN demo = <strong>1234</strong></p>
+      </div>
+    </div>
+
+    <!-- APP -->
+    <div id="appView" class="hide">
+      <div class="grid">
+        <!-- COL SX -->
+        <div>
+          <!-- PRENOTAZIONI -->
+          <section class="card" id="tab-prenotazioni">
+            <h2>Prenotazioni</h2>
+            <div class="row" style="margin-bottom:10px;">
+              <input type="date" id="filterDate">
+              <select id="filterStatus">
+                <option value="">Tutti gli stati</option>
+                <option value="pending">In attesa</option>
+                <option value="confirmed">Confermata</option>
+                <option value="arrived">Arrivato</option>
+                <option value="cancelled">Annullata</option>
+              </select>
+              <input id="filterText" placeholder="Cerca nome/telefono..." style="flex:1; min-width:220px;">
+              <button class="soft" id="seedBtn">Demo dati</button>
+            </div>
+
+            <table class="table" id="resTable">
+              <thead>
+                <tr>
+                  <th>Quando</th>
+                  <th>Cliente</th>
+                  <th>Pers.</th>
+                  <th>Stato</th>
+                  <th>Tavolo</th>
+                  <th>Azioni</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </section>
+
+          <!-- TAVOLI -->
+          <section class="card hide" id="tab-tavoli">
+            <h2>Tavoli (15)</h2>
+            <p class="muted">Clicca un tavolo per aprire la comanda. (Bozza: stato e comande in localStorage)</p>
+            <div class="tablesGrid" id="tablesGrid"></div>
+          </section>
+
+          <!-- MENU -->
+          <section class="card hide" id="tab-menu">
+            <h2>Menu</h2>
+            <div class="row" style="margin-bottom:10px;">
+              <input id="miName" placeholder="Nome piatto" style="flex:1; min-width:220px;">
+              <input id="miCat" placeholder="Categoria (Primi...)" style="flex:1; min-width:200px;">
+              <input id="miPrice" type="number" step="0.50" min="0" placeholder="Prezzo" style="width:120px;">
+              <button class="primary" id="addMenuItemBtn">Aggiungi</button>
+            </div>
+            <div class="menuList" id="menuList"></div>
+            <p class="note">Poi il menu lo salviamo su DB e lo usi anche per la comanda.</p>
+          </section>
+        </div>
+
+        <!-- COL DX: DRAWER -->
+        <aside class="card" id="drawer">
+          <h2 class="drawerTitle">Pannello</h2>
+          <p class="muted" id="drawerHint">Seleziona un tavolo o una prenotazione.</p>
+
+          <div id="drawerBody" class="hide">
+            <div class="row" style="justify-content:space-between;">
+              <div>
+                <div class="badge" id="drawerTableBadge">Tavolo</div>
+                <div class="muted" id="drawerTableMeta"></div>
+              </div>
+              <div class="row">
+                <button class="soft" id="clearOrderBtn">Svuota</button>
+                <button class="primary" id="sendKitchenBtn">Invia in cucina</button>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <h3 style="margin:0 0 8px; font-size:14px;">Comanda</h3>
+            <div id="orderList" class="menuList"></div>
+
+            <div class="divider"></div>
+
+            <div class="row" style="justify-content:space-between;">
+              <div>
+                <div class="muted">Totale stimato</div>
+                <div style="font-weight:950; font-size:18px;" id="orderTotal">€ 0,00</div>
+              </div>
+              <button class="danger" id="closeTableBtn">Chiudi tavolo</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ====== storage keys (bozza offline) ======
+    const K = {
+      admin: "om_admin_ok",
+      menu: "om_menu",
+      tables: "om_tables",
+      reservations: "om_reservations",
+      orders: "om_orders" // lista comande inviate
+    };
+
+    const euro = (n) => new Intl.NumberFormat("it-IT", { style:"currency", currency:"EUR" }).format(n || 0);
+
+    // ====== auth demo ======
+    const loginView = document.getElementById("loginView");
+    const appView = document.getElementById("appView");
+    const loginBtn = document.getElementById("loginBtn");
+    const pinEl = document.getElementById("pin");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    function setLoggedIn(v){
+      localStorage.setItem(K.admin, v ? "1" : "0");
+      syncAuthUI();
+    }
+    function isLoggedIn(){
+      return localStorage.getItem(K.admin) === "1";
+    }
+    function syncAuthUI(){
+      if(isLoggedIn()){
+        loginView.classList.add("hide");
+        appView.classList.remove("hide");
+      }else{
+        loginView.classList.remove("hide");
+        appView.classList.add("hide");
+      }
+    }
+    loginBtn.addEventListener("click", () => {
+      if(pinEl.value.trim() === "1234"){
+        setLoggedIn(true);
+      }else{
+        alert("PIN errato (demo: 1234)");
+      }
+    });
+    logoutBtn.addEventListener("click", () => setLoggedIn(false));
+    syncAuthUI();
+
+    // ====== tabs ======
+    const tabButtons = [...document.querySelectorAll(".tabbtn")];
+    const tabs = {
+      prenotazioni: document.getElementById("tab-prenotazioni"),
+      tavoli: document.getElementById("tab-tavoli"),
+      menu: document.getElementById("tab-menu")
+    };
+    function showTab(name){
+      tabButtons.forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+      Object.entries(tabs).forEach(([k,el]) => el.classList.toggle("hide", k !== name));
+      // drawer sempre visibile
+    }
+    tabButtons.forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+
+    // ====== data helpers ======
+    function loadJSON(key, fallback){
+      try{
+        const v = localStorage.getItem(key);
+        return v ? JSON.parse(v) : fallback;
+      }catch{ return fallback; }
+    }
+    function saveJSON(key, val){
+      localStorage.setItem(key, JSON.stringify(val));
+    }
+
+    // ====== seed demo ======
+    function seed(){
+      // tables
+      const tables = Array.from({length:15}, (_,i) => {
+        const n = i+1;
+        const code = "T" + String(n).padStart(2,"0");
+        // mix coperti ~41
+        const seats = (n<=6) ? 2 : (n<=13 ? 3 : 4);
+        return { id: "tbl_"+code, code, seats, open:false, note:"" };
+      });
+      saveJSON(K.tables, tables);
+
+      // menu
+      const menu = [
+        { id:"mi1", name:"Spaghetti alle vongole", category:"Primi", price: 14.0, active:true },
+        { id:"mi2", name:"Frittura di calamari", category:"Secondi", price: 16.0, active:true },
+        { id:"mi3", name:"Crudo di mare (mix)", category:"Antipasti", price: 22.0, active:true },
+        { id:"mi4", name:"Acqua", category:"Bevande", price: 2.5, active:true },
+        { id:"mi5", name:"Vino bianco calice", category:"Bevande", price: 5.0, active:true },
+      ];
+      saveJSON(K.menu, menu);
+
+      // reservations demo (oggi)
+      const d = new Date();
+      const pad = (x)=>String(x).padStart(2,"0");
+      const date = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+      const res = [
+        { id:"r1", date, time:"12:30", name:"Rossi", phone:"333111222", people:2, status:"pending", tableCode:"" },
+        { id:"r2", date, time:"13:10", name:"Bianchi", phone:"333444555", people:4, status:"confirmed", tableCode:"T07" },
+        { id:"r3", date, time:"20:10", name:"Verdi", phone:"333777888", people:3, status:"confirmed", tableCode:"" }
+      ];
+      saveJSON(K.reservations, res);
+
+      // orders empty
+      saveJSON(K.orders, []);
+      alert("Dati demo caricati ✅");
+      refreshAll();
+    }
+
+    document.getElementById("seedBtn").addEventListener("click", seed);
+
+    // ====== reservations table ======
+    const resTableBody = document.querySelector("#resTable tbody");
+    const filterDate = document.getElementById("filterDate");
+    const filterStatus = document.getElementById("filterStatus");
+    const filterText = document.getElementById("filterText");
+
+    function badgeHTML(status){
+      const map = {
+        pending: { label:"In attesa", cls:"pending" },
+        confirmed: { label:"Confermata", cls:"confirmed" },
+        arrived: { label:"Arrivato", cls:"arrived" },
+        cancelled: { label:"Annullata", cls:"cancelled" }
+      };
+      const m = map[status] || { label: status, cls:"" };
+      return `<span class="badge ${m.cls}">${m.label}</span>`;
+    }
+
+    function renderReservations(){
+      const all = loadJSON(K.reservations, []);
+      const d = filterDate.value.trim();
+      const s = filterStatus.value.trim();
+      const q = filterText.value.trim().toLowerCase();
+
+      const rows = all.filter(r => {
+        if(d && r.date !== d) return false;
+        if(s && r.status !== s) return false;
+        if(q){
+          const blob = `${r.name} ${r.phone}`.toLowerCase();
+          if(!blob.includes(q)) return false;
+        }
+        return true;
+      }).sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+
+      resTableBody.innerHTML = "";
+      rows.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><div style="font-weight:950">${r.date}</div><div class="muted">${r.time}</div></td>
+          <td><div style="font-weight:950">${r.name}</div><div class="muted">${r.phone}</div></td>
+          <td>${r.people}</td>
+          <td>${badgeHTML(r.status)}</td>
+          <td>${r.tableCode || "<span class='muted'>—</span>"}</td>
+          <td>
+            <div class="row">
+              <button class="soft" data-act="confirm" data-id="${r.id}">Conferma</button>
+              <button class="soft" data-act="arrived" data-id="${r.id}">Arrivato</button>
+              <button class="danger" data-act="cancel" data-id="${r.id}">Annulla</button>
+            </div>
+          </td>
+        `;
+        resTableBody.appendChild(tr);
+      });
+
+      resTableBody.querySelectorAll("button").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.dataset.id;
+          const act = btn.dataset.act;
+          const all = loadJSON(K.reservations, []);
+          const idx = all.findIndex(x => x.id === id);
+          if(idx < 0) return;
+
+          if(act === "confirm") all[idx].status = "confirmed";
+          if(act === "arrived") all[idx].status = "arrived";
+          if(act === "cancel") all[idx].status = "cancelled";
+
+          saveJSON(K.reservations, all);
+          refreshAll();
+        });
+      });
+    }
+
+    [filterDate, filterStatus, filterText].forEach(el => el.addEventListener("input", renderReservations));
+
+    // ====== tables ======
+    const tablesGrid = document.getElementById("tablesGrid");
+    let selectedTableCode = null;
+
+    function tableState(table){
+      // open true => occupato
+      return table.open ? "open" : "free";
+    }
+
+    function renderTables(){
+      const tables = loadJSON(K.tables, []);
+      tablesGrid.innerHTML = "";
+      tables.forEach(t => {
+        const state = tableState(t);
+        const card = document.createElement("div");
+        card.className = "tableCard";
+        card.innerHTML = `
+          <div class="tTitle">${t.code} · ${t.seats} posti</div>
+          <div class="tMeta">${t.open ? "Tavolo aperto" : "Libero"}</div>
+          <div class="tState ${t.open ? "open" : ""}">${t.open ? "Occupato" : "Libero"}</div>
+        `;
+        card.addEventListener("click", () => openTable(t.code));
+        tablesGrid.appendChild(card);
+      });
+    }
+
+    // ====== drawer (order composer) ======
+    const drawerHint = document.getElementById("drawerHint");
+    const drawerBody = document.getElementById("drawerBody");
+    const drawerTableBadge = document.getElementById("drawerTableBadge");
+    const drawerTableMeta = document.getElementById("drawerTableMeta");
+    const orderList = document.getElementById("orderList");
+    const orderTotal = document.getElementById("orderTotal");
+    const sendKitchenBtn = document.getElementById("sendKitchenBtn");
+    const clearOrderBtn = document.getElementById("clearOrderBtn");
+    const closeTableBtn = document.getElementById("closeTableBtn");
+
+    function getOpenDraftOrders(){
+      // draft per tavolo: oggetto { [tableCode]: { items: {menuId: qty}, notesById: {} } }
+      return loadJSON("om_draft_orders", {});
+    }
+    function setOpenDraftOrders(d){
+      saveJSON("om_draft_orders", d);
+    }
+
+    function openTable(code){
+      selectedTableCode = code;
+      drawerHint.classList.add("hide");
+      drawerBody.classList.remove("hide");
+
+      drawerTableBadge.textContent = `Tavolo ${code}`;
+      const tables = loadJSON(K.tables, []);
+      const t = tables.find(x => x.code === code);
+      drawerTableMeta.textContent = t ? `${t.seats} posti` : "";
+
+      renderOrderEditor();
+    }
+
+    function renderOrderEditor(){
+      const menu = loadJSON(K.menu, []).filter(x => x.active);
+      const drafts = getOpenDraftOrders();
+      const draft = drafts[selectedTableCode] || { items: {}, notesById: {} };
+
+      orderList.innerHTML = "";
+      let total = 0;
+
+      menu.forEach(mi => {
+        const qty = Number(draft.items[mi.id] || 0);
+        total += qty * mi.price;
+
+        const row = document.createElement("div");
+        row.className = "menuItem";
+        row.innerHTML = `
+          <div class="miLeft">
+            <div class="miName">${mi.name}</div>
+            <div class="miCat">${mi.category} · <strong>${euro(mi.price)}</strong></div>
+          </div>
+          <div class="miRight">
+            <div class="qty">
+              <button class="soft" data-mi="${mi.id}" data-d="-1" type="button">−</button>
+              <span>${qty}</span>
+              <button class="soft" data-mi="${mi.id}" data-d="1" type="button">+</button>
+            </div>
+          </div>
+        `;
+        orderList.appendChild(row);
+      });
+
+      orderTotal.textContent = euro(total);
+
+      orderList.querySelectorAll("button[data-mi]").forEach(b => {
+        b.addEventListener("click", () => {
+          const id = b.dataset.mi;
+          const delta = Number(b.dataset.d);
+          const drafts = getOpenDraftOrders();
+          const draft = drafts[selectedTableCode] || { items: {}, notesById: {} };
+          const curr = Number(draft.items[id] || 0);
+          const next = Math.max(0, curr + delta);
+          draft.items[id] = next;
+          drafts[selectedTableCode] = draft;
+          setOpenDraftOrders(drafts);
+          renderOrderEditor();
+        });
+      });
+    }
+
+    clearOrderBtn.addEventListener("click", () => {
+      if(!selectedTableCode) return;
+      const drafts = getOpenDraftOrders();
+      delete drafts[selectedTableCode];
+      setOpenDraftOrders(drafts);
+      renderOrderEditor();
+    });
+
+    sendKitchenBtn.addEventListener("click", () => {
+      if(!selectedTableCode) return;
+
+      const menu = loadJSON(K.menu, []);
+      const drafts = getOpenDraftOrders();
+      const draft = drafts[selectedTableCode];
+      if(!draft) return alert("Comanda vuota.");
+
+      const items = Object.entries(draft.items)
+        .filter(([,q]) => Number(q) > 0)
+        .map(([id,q]) => {
+          const mi = menu.find(x => x.id === id);
+          return { menu_item_id: id, name: mi?.name || "Item", qty: Number(q), price: Number(mi?.price || 0) };
+        });
+
+      if(items.length === 0) return alert("Comanda vuota.");
+
+      // mark table open
+      const tables = loadJSON(K.tables, []);
+      const idx = tables.findIndex(x => x.code === selectedTableCode);
+      if(idx >= 0) tables[idx].open = true;
+      saveJSON(K.tables, tables);
+
+      const orders = loadJSON(K.orders, []);
+      const now = new Date();
+      const order = {
+        id: "o_" + now.getTime(),
+        table: selectedTableCode,
+        status: "sent",
+        created_at: now.toISOString(),
+        items
+      };
+      orders.unshift(order);
+      saveJSON(K.orders, orders);
+
+      // clear draft
+      delete drafts[selectedTableCode];
+      setOpenDraftOrders(drafts);
+
+      alert("Comanda inviata in cucina ✅");
+      renderOrderEditor();
+      renderTables();
+    });
+
+    closeTableBtn.addEventListener("click", () => {
+      if(!selectedTableCode) return;
+      const ok = confirm(`Chiudere ${selectedTableCode}? (bozza: svuota e libera)`);
+      if(!ok) return;
+
+      // free table
+      const tables = loadJSON(K.tables, []);
+      const idx = tables.findIndex(x => x.code === selectedTableCode);
+      if(idx >= 0) tables[idx].open = false;
+      saveJSON(K.tables, tables);
+
+      // clear drafts
+      const drafts = getOpenDraftOrders();
+      delete drafts[selectedTableCode];
+      setOpenDraftOrders(drafts);
+
+      selectedTableCode = null;
+      drawerBody.classList.add("hide");
+      drawerHint.classList.remove("hide");
+      drawerHint.textContent = "Seleziona un tavolo o una prenotazione.";
+
+      renderTables();
+    });
+
+    // ====== menu CRUD (bozza) ======
+    const menuList = document.getElementById("menuList");
+    const miName = document.getElementById("miName");
+    const miCat = document.getElementById("miCat");
+    const miPrice = document.getElementById("miPrice");
+    const addMenuItemBtn = document.getElementById("addMenuItemBtn");
+
+    function renderMenu(){
+      const menu = loadJSON(K.menu, []);
+      menuList.innerHTML = "";
+      menu.forEach(mi => {
+        const el = document.createElement("div");
+        el.className = "menuItem";
+        el.innerHTML = `
+          <div class="miLeft">
+            <div class="miName">${mi.name}</div>
+            <div class="miCat">${mi.category} · <strong>${euro(mi.price)}</strong></div>
+          </div>
+          <div class="miRight">
+            <span class="badge">${mi.active ? "Attivo" : "Disattivo"}</span>
+            <button class="soft" data-act="toggle" data-id="${mi.id}">${mi.active ? "Disattiva" : "Attiva"}</button>
+            <button class="danger" data-act="del" data-id="${mi.id}">Elimina</button>
+          </div>
+        `;
+        menuList.appendChild(el);
+      });
+
+      menuList.querySelectorAll("button").forEach(b => {
+        b.addEventListener("click", () => {
+          const act = b.dataset.act;
+          const id = b.dataset.id;
+          let menu = loadJSON(K.menu, []);
+          const idx = menu.findIndex(x => x.id === id);
+          if(idx < 0) return;
+
+          if(act === "toggle"){
+            menu[idx].active = !menu[idx].active;
+          }
+          if(act === "del"){
+            if(confirm("Eliminare il piatto?")) menu = menu.filter(x => x.id !== id);
+          }
+          saveJSON(K.menu, menu);
+          renderMenu();
+          if(selectedTableCode) renderOrderEditor();
+        });
+      });
+    }
+
+    addMenuItemBtn.addEventListener("click", () => {
+      const name = miName.value.trim();
+      const cat = miCat.value.trim() || "Altro";
+      const price = Number(miPrice.value);
+      if(!name) return alert("Inserisci il nome.");
+      if(!Number.isFinite(price) || price < 0) return alert("Inserisci un prezzo valido.");
+
+      const menu = loadJSON(K.menu, []);
+      menu.unshift({ id: "mi_" + Date.now(), name, category: cat, price, active:true });
+      saveJSON(K.menu, menu);
+
+      miName.value = ""; miCat.value = ""; miPrice.value = "";
+      renderMenu();
+      if(selectedTableCode) renderOrderEditor();
+    });
+
+    // ====== init ======
+    function refreshAll(){
+      renderReservations();
+      renderTables();
+      renderMenu();
+    }
+
+    // default filter date = oggi
+    (function initDate(){
+      const d = new Date();
+      const pad = (x)=>String(x).padStart(2,"0");
+      filterDate.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    })();
+
+    refreshAll();
+  </script>
+</body>
+</html>
