@@ -2,76 +2,77 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Officine Mare — Cucina</title>
-  <meta name="description" content="Cucina: gestione comande." />
   <link rel="icon" href="favicon.ico" />
+
+  <!-- ✅ Supabase JS v2 (UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root{
-      --bgTop:#2f6f91; --bgMid:#285f83; --bgBot:#1e5172;
+      --bgTop:#245b7c; --bgMid:#1b4968; --bgBot:#163e5a;
       --paper: rgba(255,255,255,.95);
       --text:#0b2236; --muted: rgba(11,34,54,.68);
       --borderD: rgba(11,34,54,.10);
       --shadow: 0 22px 70px rgba(0,0,0,.20);
       --max: 1600px; --radiusXL: 26px;
-      --headerH: 72px;
       --safeTop: env(safe-area-inset-top, 0px);
+      --headerReal: 74px;
     }
     *{ box-sizing:border-box; }
-    html, body{ height:100%; }
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color:#fff;
+      overflow-x:hidden;
       background:
         radial-gradient(1100px 480px at 50% -180px, rgba(255,255,255,.16), transparent 62%),
         radial-gradient(900px 420px at 15% 10%, rgba(255,255,255,.10), transparent 60%),
         radial-gradient(900px 420px at 85% 14%, rgba(255,255,255,.08), transparent 62%),
         linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 45%, var(--bgBot) 100%);
-      overflow-x:hidden;
     }
-
-    /* ✅ NO righe: tolto noise overlay */
 
     .container{
       width: min(96vw, var(--max));
       margin: 0 auto;
       padding: 0 clamp(12px, 1.8vw, 28px);
-      position: relative;
-      z-index: 1;
     }
 
     header{
-      position: sticky; top:0; z-index: 50;
+      position: fixed;
+      top:0; left:0; right:0;
+      z-index: 50;
       padding-top: var(--safeTop);
-      background: rgba(20, 70, 95, .72);
+      background: rgba(22,62,90,.78);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(255,255,255,.16);
     }
     .header-inner{
-      min-height: var(--headerH);
+      min-height: 74px;
       display:flex;
       align-items:center;
-      gap: 12px;
+      gap: 10px;
       padding: 10px 0;
       flex-wrap: wrap;
     }
     .brand{
       font-weight: 950;
-      letter-spacing: .8px;
-      font-size: 22px;
+      letter-spacing: .6px;
+      font-size: 20px;
       white-space: nowrap;
       display:flex;
       align-items:center;
       gap:10px;
+      flex: 1 1 auto;
+      min-width: 220px;
     }
     .actions{
-      margin-left:auto;
       display:flex;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
-      align-items:center;
+      justify-content:flex-end;
+      flex: 1 1 auto;
     }
     .ghost{
       padding: 10px 12px;
@@ -85,10 +86,12 @@
       display:inline-flex;
       align-items:center;
       gap: 8px;
-      white-space: nowrap;
+      font-size: 13px;
     }
 
-    main{ padding: 18px 0 60px; }
+    main{
+      padding: calc(var(--headerReal) + 14px) 0 60px;
+    }
 
     .row{ display:flex; gap: 10px; flex-wrap: wrap; align-items:center; }
     select{
@@ -105,7 +108,6 @@
       border: 1px solid rgba(11,34,54,.16);
       cursor:pointer;
       font-weight: 950;
-      white-space: nowrap;
     }
     .primary{
       color:#fff;
@@ -117,11 +119,7 @@
       background: rgba(36,91,124,.10);
       color: rgba(11,34,54,.92);
     }
-    .mini{
-      padding: 8px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-    }
+    .mini{ padding: 8px 10px; font-size: 12px; }
 
     .grid{
       display:grid;
@@ -143,11 +141,13 @@
       position: relative;
       overflow:hidden;
     }
+
     .topline{
       display:flex; gap:10px; align-items:flex-start; justify-content:space-between; flex-wrap: wrap;
     }
     .title{ font-weight: 950; font-size: 18px; margin:0; }
     .muted{ color: var(--muted); font-size: 13px; }
+
     .badge{
       display:inline-flex;
       align-items:center;
@@ -175,10 +175,18 @@
       justify-content:space-between;
       gap: 10px;
     }
-    .itLeft{ min-width: 0; }
     .itName{ font-weight: 950; font-size: 13px; }
-    .small{ font-size: 12px; }
-
+    .qtyPill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 950;
+      border: 1px solid rgba(11,34,54,.12);
+      background: rgba(36,91,124,.06);
+      min-width: 44px;
+    }
     .lineState{
       display:inline-flex;
       align-items:center;
@@ -195,64 +203,11 @@
       background: rgba(40,140,80,.16);
       border-color: rgba(40,140,80,.25);
     }
-    .qtyPill{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-weight: 950;
-      border: 1px solid rgba(11,34,54,.12);
-      background: rgba(36,91,124,.06);
-      min-width: 44px;
-    }
-
-    /* ===== LOGIN OVERLAY ===== */
-    #authOverlay{
-      position:fixed; inset:0; z-index:2000;
-      display:none; align-items:center; justify-content:center;
-      background: rgba(0,0,0,.35); backdrop-filter: blur(8px);
-    }
-    #authBox{
-      width:min(560px, 92vw);
-      background: rgba(255,255,255,.95);
-      border-radius: 22px;
-      padding: 18px;
-      border: 1px solid rgba(11,34,54,.12);
-      box-shadow: 0 22px 70px rgba(0,0,0,.30);
-      color: #0b2236;
-    }
-
-    @media (max-width: 720px){
-      .card{ border-radius: 22px; padding: 14px; }
-    }
   </style>
-
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const SUPABASE_URL = "INCOLLA_PROJECT_URL";
-    const SUPABASE_ANON_KEY = "INCOLLA_ANON_KEY";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  </script>
 </head>
 
 <body>
-  <!-- LOGIN -->
-  <div id="authOverlay">
-    <div id="authBox">
-      <h2 style="margin:0 0 6px;">Accesso Cucina</h2>
-      <p style="margin:0 0 12px; opacity:.75;">Accedi con l’utenza cucina (email fittizia ok).</p>
-      <div class="row">
-        <input id="authEmail" type="email" placeholder="cucina@officinemare.local">
-        <input id="authPass" type="password" placeholder="Password">
-        <button class="primary" id="authBtn">Entra</button>
-      </div>
-      <div id="authMsg" style="margin-top:10px; font-weight:900;"></div>
-    </div>
-  </div>
-
-  <header>
+  <header id="siteHeader">
     <div class="container header-inner">
       <div class="brand">🍳 Officine Mare — Cucina</div>
       <div class="actions">
@@ -260,7 +215,6 @@
         <button class="ghost" id="vibBtn">📳 Vibra: ON</button>
         <button class="ghost" id="refreshBtn">Aggiorna</button>
         <a class="ghost" href="admin.html">↩️ Admin</a>
-        <button class="ghost" id="logoutBtn">Esci</button>
       </div>
     </div>
   </header>
@@ -272,6 +226,7 @@
         <option value="done">Complete</option>
         <option value="all">Tutte</option>
       </select>
+      <button class="soft" id="demoBtn">Demo dati</button>
       <span class="muted" id="statusMsg"></span>
     </div>
 
@@ -279,62 +234,24 @@
   </main>
 
   <script>
-    // ===== AUTH kitchen role =====
-    const authOverlay = document.getElementById("authOverlay");
-    const authEmail = document.getElementById("authEmail");
-    const authPass = document.getElementById("authPass");
-    const authBtn = document.getElementById("authBtn");
-    const authMsg = document.getElementById("authMsg");
-
-    function showAuth(msg=""){ authMsg.textContent = msg; authOverlay.style.display="flex"; }
-    function hideAuth(){ authOverlay.style.display="none"; }
-
-    async function requireKitchen(){
-      const { data: sess } = await supabase.auth.getSession();
-      if(!sess.session){ showAuth(""); return null; }
-
-      const { data: r, error } = await supabase
-        .from("staff_users")
-        .select("role")
-        .eq("user_id", sess.session.user.id)
-        .single();
-
-      if(error || !r){
-        await supabase.auth.signOut();
-        showAuth("Utente non abilitato.");
-        return null;
-      }
-      if(r.role !== "kitchen"){
-        await supabase.auth.signOut();
-        showAuth("Ruolo errato. Serve: KITCHEN");
-        return null;
-      }
-      hideAuth();
-      return sess.session;
+    // --- header height fix (mobile)
+    function setHeaderRealHeight(){
+      const h = Math.ceil(document.getElementById("siteHeader").getBoundingClientRect().height);
+      document.documentElement.style.setProperty("--headerReal", h + "px");
     }
+    window.addEventListener("load", setHeaderRealHeight, { once:true });
+    window.addEventListener("resize", setHeaderRealHeight);
+    window.visualViewport?.addEventListener("resize", setHeaderRealHeight);
+    window.visualViewport?.addEventListener("scroll", setHeaderRealHeight);
+    setTimeout(setHeaderRealHeight, 60);
+    setTimeout(setHeaderRealHeight, 250);
 
-    authBtn.addEventListener("click", async ()=>{
-      try{
-        authMsg.textContent = "Accesso...";
-        const { error } = await supabase.auth.signInWithPassword({
-          email: authEmail.value.trim(),
-          password: authPass.value
-        });
-        if(error) throw error;
-        await requireKitchen();
-        authMsg.textContent = "";
-        await refreshKitchen();
-      }catch(e){
-        authMsg.textContent = "Login fallito: " + (e?.message || "errore");
-      }
-    });
+    // ✅ Supabase init (METTI I TUOI VALORI)
+    const SUPABASE_URL = "PASTE_SUPABASE_URL";
+    const SUPABASE_ANON_KEY = "PASTE_SUPABASE_ANON_KEY";
+    const sb = window.supabase?.createClient?.(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    document.getElementById("logoutBtn").addEventListener("click", async ()=>{
-      await supabase.auth.signOut();
-      showAuth("Sei uscito.");
-    });
-
-    // ===== UI =====
+    // UI
     const ordersGrid = document.getElementById("ordersGrid");
     const filterEl = document.getElementById("filter");
     const statusMsg = document.getElementById("statusMsg");
@@ -357,8 +274,7 @@
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const o = ctx.createOscillator();
         const g = ctx.createGain();
-        o.type = "sine";
-        o.frequency.value = 740;
+        o.type = "sine"; o.frequency.value = 740;
         g.gain.value = 0.06;
         o.connect(g); g.connect(ctx.destination);
         o.start();
@@ -381,57 +297,75 @@
       if(vibOn) vibrate();
     });
 
-    document.getElementById("refreshBtn").addEventListener("click", ()=>refreshKitchen());
-    filterEl.addEventListener("change", ()=>renderKitchen(window.__kitchenCache || []));
-
-    async function fetchOrdersWithItems(){
-      // orders + order_items
-      const { data: orders, error: e1 } = await supabase
-        .from("orders")
-        .select("id, table_code, status, created_at")
-        .order("created_at", { ascending:false });
-
-      if(e1) throw e1;
-
-      const { data: items, error: e2 } = await supabase
-        .from("order_items")
-        .select("id, order_id, name, qty, price, line_status, created_at")
-        .order("created_at", { ascending:true });
-
-      if(e2) throw e2;
-
-      const map = new Map();
-      (orders||[]).forEach(o => map.set(o.id, { ...o, items: [] }));
-      (items||[]).forEach(it => {
-        const o = map.get(it.order_id);
-        if(o) o.items.push(it);
-      });
-
-      return Array.from(map.values());
-    }
-
+    // --- progress: per cucina "done" = tutte READY o SERVED
     function orderProgress(o){
-      const total = (o.items||[]).length;
-      const ready = (o.items||[]).filter(it=>it.line_status==="ready").length;
-      const done = (total>0 && ready===total);
+      const items = o.items || [];
+      const total = items.length;
+      const ready = items.filter(it => it.line_status === "ready" || it.line_status === "served").length;
+      const done = (total > 0 && ready === total);
       return { total, ready, done };
     }
 
-    function renderKitchen(allOrders){
-      window.__kitchenCache = allOrders;
+    async function fetchOrders(){
+      // fallback demo se sb non configurato
+      if(!sb){
+        return [];
+      }
+      // Qui assumo tabelle: orders + order_items
+      // orders: id, table_code, status, created_at
+      // order_items: id, order_id, name, qty, price, line_status, created_at
+      const { data, error } = await sb
+        .from("orders")
+        .select("id, table_code, status, created_at, order_items(id, name, qty, price, line_status, created_at)")
+        .neq("status","archived")
+        .order("created_at",{ ascending:false });
 
+      if(error) throw error;
+
+      return (data || []).map(o => ({
+        id: o.id,
+        table: o.table_code,
+        status: o.status,
+        created_at: o.created_at,
+        items: (o.order_items || []).map(it => ({
+          id: it.id,
+          name: it.name,
+          qty: it.qty,
+          price: it.price,
+          line_status: it.line_status || "todo"
+        }))
+      }));
+    }
+
+    async function setLineStatus(lineId, status){
+      if(!sb) return;
+      const payload = { line_status: status };
+      if(status === "ready") payload.ready_at = new Date().toISOString();
+      if(status === "todo") payload.ready_at = null;
+      // cucina NON mette served
+      const { error } = await sb.from("order_items").update(payload).eq("id", lineId);
+      if(error) throw error;
+    }
+
+    async function archiveOrder(orderId){
+      if(!sb) return;
+      const { error } = await sb.from("orders").update({ status:"archived" }).eq("id", orderId);
+      if(error) throw error;
+    }
+
+    function render(rows){
       const f = filterEl.value;
-      let rows = (allOrders||[]).filter(o => o.status !== "archived");
+      let list = rows;
 
       if(f !== "all"){
-        rows = rows.filter(o => {
+        list = list.filter(o => {
           const p = orderProgress(o);
           return f === "done" ? p.done : !p.done;
         });
       }
 
       ordersGrid.innerHTML = "";
-      if(rows.length === 0){
+      if(list.length === 0){
         ordersGrid.innerHTML = `
           <div class="card">
             <h2 class="title">Nessuna comanda</h2>
@@ -440,9 +374,9 @@
         return;
       }
 
-      rows.forEach(o=>{
+      list.forEach(o => {
         const p = orderProgress(o);
-        const headerBadge = p.done
+        const badge = p.done
           ? `<span class="badge done">Completa (${p.ready}/${p.total})</span>`
           : `<span class="badge open">In lavorazione (${p.ready}/${p.total})</span>`;
 
@@ -451,30 +385,31 @@
         card.innerHTML = `
           <div class="topline">
             <div>
-              <h2 class="title">Tavolo ${o.table_code || "—"}</h2>
-              <div class="muted">Ricevuta alle ${fmtTime(o.created_at)} · ID ${o.id}</div>
+              <h2 class="title">Tavolo ${o.table}</h2>
+              <div class="muted">Ricevuta alle ${fmtTime(o.created_at)} · ID ${String(o.id).slice(0,8)}</div>
             </div>
             <div class="row">
-              ${headerBadge}
-              ${p.done ? `<button class="soft mini" data-act="archive" data-oid="${o.id}">Archivia</button>` : ``}
+              ${badge}
+              ${p.done ? `<button class="soft mini" data-arch="${o.id}">Archivia</button>` : ``}
             </div>
           </div>
 
           <div class="list">
-            ${(o.items||[]).map(it=>{
-              const ready = it.line_status === "ready";
+            ${o.items.map(it => {
+              const ready = it.line_status === "ready" || it.line_status === "served";
               return `
                 <div class="item">
-                  <div class="itLeft">
+                  <div style="min-width:0;">
                     <div class="itName">${it.name}</div>
-                    <div class="muted small">qty: <strong>${it.qty}</strong></div>
+                    <div class="muted" style="font-size:12px;">qty: <strong>${it.qty}</strong></div>
                   </div>
                   <div class="row" style="justify-content:flex-end;">
                     <span class="qtyPill">x${it.qty}</span>
                     <span class="lineState ${ready ? "ready" : ""}">${ready ? "Pronto" : "Da fare"}</span>
-                    ${ready
-                      ? `<button class="soft mini" data-act="undoLine" data-lid="${it.id}">Non pronto</button>`
-                      : `<button class="primary mini" data-act="readyLine" data-lid="${it.id}">Pronto</button>`
+                    ${
+                      ready
+                        ? `<button class="soft mini" data-undo="${it.id}">Non pronto</button>`
+                        : `<button class="primary mini" data-ready="${it.id}">Pronto</button>`
                     }
                   </div>
                 </div>
@@ -483,32 +418,31 @@
           </div>
         `;
 
-        card.querySelectorAll("button[data-act]").forEach(btn=>{
+        card.querySelectorAll("[data-ready]").forEach(btn=>{
           btn.addEventListener("click", async ()=>{
-            const act = btn.dataset.act;
-
-            if(act === "archive"){
+            try{
+              await setLineStatus(btn.dataset.ready, "ready");
+              await poll(true);
+            }catch(e){ alert("Errore: " + (e.message||e)); }
+          });
+        });
+        card.querySelectorAll("[data-undo]").forEach(btn=>{
+          btn.addEventListener("click", async ()=>{
+            try{
+              await setLineStatus(btn.dataset.undo, "todo");
+              await poll(true);
+            }catch(e){ alert("Errore: " + (e.message||e)); }
+          });
+        });
+        card.querySelectorAll("[data-arch]").forEach(btn=>{
+          btn.addEventListener("click", async ()=>{
+            try{
+              // doppio check: archivia solo se tutto pronto
               const pp = orderProgress(o);
               if(!pp.done) return alert("Puoi archiviare solo quando tutte le righe sono pronte.");
-              const { error } = await supabase.from("orders").update({ status:"archived" }).eq("id", o.id);
-              if(error) return alert(error.message);
-              await refreshKitchen();
-              return;
-            }
-
-            const lid = btn.dataset.lid;
-            if(act === "readyLine"){
-              const { error } = await supabase.from("order_items").update({ line_status:"ready" }).eq("id", lid);
-              if(error) return alert(error.message);
-              await refreshKitchen();
-              return;
-            }
-            if(act === "undoLine"){
-              const { error } = await supabase.from("order_items").update({ line_status:"todo" }).eq("id", lid);
-              if(error) return alert(error.message);
-              await refreshKitchen();
-              return;
-            }
+              await archiveOrder(btn.dataset.arch);
+              await poll(true);
+            }catch(e){ alert("Errore: " + (e.message||e)); }
           });
         });
 
@@ -516,44 +450,45 @@
       });
     }
 
-    async function refreshKitchen(){
-      statusMsg.textContent = "Carico...";
+    let lastHash = "";
+    async function poll(showToast){
       try{
-        const all = await fetchOrdersWithItems();
-        renderKitchen(all);
-        statusMsg.textContent = "";
+        const rows = await fetchOrders();
+        const activeIds = rows.map(o=>String(o.id)).sort().join("|");
+        if(lastHash && activeIds !== lastHash){
+          beep(); vibrate();
+          if(showToast !== false){
+            statusMsg.textContent = "Aggiornato ✅";
+            setTimeout(()=> statusMsg.textContent="", 1200);
+          }
+        }
+        lastHash = activeIds;
+        render(rows);
       }catch(e){
-        statusMsg.textContent = "Errore: " + (e?.message || "riprova");
+        statusMsg.textContent = "Errore caricamento: " + (e.message||e);
       }
     }
 
-    // ===== Realtime: se arrivano nuove righe/ordini, notifica =====
-    let lastSeen = "";
-    function newHash(all){
-      return (all||[]).map(o=>o.id).sort().join("|");
-    }
+    document.getElementById("refreshBtn").addEventListener("click", ()=>poll(true));
+    filterEl.addEventListener("change", ()=>poll(false));
 
-    (async ()=>{
-      const s = await requireKitchen();
-      if(!s) return;
+    // demo: SOLO UI (non scrive su DB)
+    document.getElementById("demoBtn").addEventListener("click", ()=>{
+      const demo = [{
+        id:"demo1", table:"T07", status:"open", created_at:new Date().toISOString(),
+        items:[
+          { id:"l1", name:"Crudo di mare (mix)", qty:1, line_status:"todo" },
+          { id:"l2", name:"Spaghetti alle vongole", qty:2, line_status:"ready" },
+          { id:"l3", name:"Frittura di calamari", qty:1, line_status:"todo" },
+        ]
+      }];
+      render(demo);
+      statusMsg.textContent="Demo attiva (solo UI).";
+      setTimeout(()=> statusMsg.textContent="", 1200);
+    });
 
-      await refreshKitchen();
-
-      supabase
-        .channel("rt-kitchen")
-        .on("postgres_changes", { event:"INSERT", schema:"public", table:"orders" }, async ()=>{
-          beep(); vibrate();
-          await refreshKitchen();
-        })
-        .on("postgres_changes", { event:"INSERT", schema:"public", table:"order_items" }, async ()=>{
-          beep(); vibrate();
-          await refreshKitchen();
-        })
-        .on("postgres_changes", { event:"UPDATE", schema:"public", table:"order_items" }, async ()=>{
-          await refreshKitchen();
-        })
-        .subscribe();
-    })();
+    poll(false);
+    setInterval(()=>poll(false), 2500);
   </script>
 </body>
 </html>
