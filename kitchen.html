@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Officine Mare — Cucina</title>
+  <meta name="description" content="Cucina: comande e stati." />
+  <link rel="icon" href="favicon.ico" />
+
+  <style>
+    :root{
+      --bgTop:#245b7c; --bgMid:#1b4968; --bgBot:#163e5a;
+      --paper: rgba(255,255,255,.95);
+      --text:#0b2236; --muted: rgba(11,34,54,.68);
+      --borderD: rgba(11,34,54,.10);
+      --shadow: 0 22px 70px rgba(0,0,0,.22);
+      --max: 1600px; --radius: 22px;
+      --safeTop: env(safe-area-inset-top, 0px);
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:#fff;
+      background:
+        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.18), transparent 60%),
+        linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 42%, var(--bgBot) 100%);
+    }
+    .container{ width: min(96vw, var(--max)); margin: 0 auto; padding: 0 clamp(12px, 1.8vw, 28px); }
+
+    header{
+      position: sticky; top:0; z-index: 50;
+      padding-top: var(--safeTop);
+      background: rgba(22,62,90,.86);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,.16);
+    }
+    .header-inner{
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      padding: 12px 0;
+    }
+    .brand{ font-weight: 950; letter-spacing: 1px; font-size: 20px; }
+    .actions{ margin-left:auto; display:flex; gap:10px; flex-wrap: wrap; align-items:center; }
+
+    .btn{
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.16);
+      color: rgba(255,255,255,.92);
+      font-weight: 950;
+      cursor: pointer;
+      text-decoration:none;
+      display:inline-flex; align-items:center; gap:8px;
+    }
+    .btn.primary{
+      background: rgba(255,255,255,.18);
+      border-color: rgba(255,255,255,.22);
+    }
+
+    main{ padding: 18px 0 60px; }
+
+    .card{
+      background: var(--paper);
+      color: var(--text);
+      border-radius: var(--radius);
+      border: 1px solid var(--borderD);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .order{
+      border-radius: 18px;
+      border: 1px solid rgba(11,34,54,.12);
+      background: rgba(255,255,255,.98);
+      padding: 14px;
+      box-shadow: 0 12px 22px rgba(0,0,0,.10);
+      position: relative;
+      overflow:hidden;
+    }
+    .order.flash{
+      outline: 3px solid rgba(255,180,90,.40);
+      box-shadow: 0 12px 22px rgba(0,0,0,.10), 0 0 0 8px rgba(255,180,90,.14);
+    }
+    .row{ display:flex; gap:10px; flex-wrap: wrap; align-items:center; }
+    .topline{ justify-content: space-between; }
+
+    .badge{
+      display:inline-flex; align-items:center; gap:6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 950;
+      font-size: 12px;
+      border: 1px solid rgba(11,34,54,.12);
+      background: rgba(36,91,124,.08);
+      color: rgba(11,34,54,.92);
+      white-space: nowrap;
+    }
+    .badge.sent{ background: rgba(255,180,90,.18); }
+    .badge.in_progress{ background: rgba(60,120,200,.14); }
+    .badge.ready{ background: rgba(40,140,80,.16); }
+
+    .title{ font-weight: 950; font-size: 16px; }
+    .meta{ color: rgba(11,34,54,.72); font-size: 12px; }
+
+    .items{ margin-top: 10px; display:grid; gap: 8px; }
+    .item{
+      display:flex; justify-content: space-between; gap: 10px;
+      padding: 8px 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(11,34,54,.10);
+      background: rgba(36,91,124,.04);
+    }
+    .item strong{ font-weight: 950; }
+    .controls{ margin-top: 12px; display:flex; gap: 10px; flex-wrap: wrap; }
+    .cbtn{
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(11,34,54,.16);
+      cursor:pointer;
+      font-weight: 950;
+      background: rgba(36,91,124,.10);
+      color: rgba(11,34,54,.92);
+    }
+    .cbtn.primary{
+      color:#fff;
+      border-color: rgba(0,0,0,.10);
+      background: linear-gradient(180deg, rgba(36,91,124,.96), rgba(22,62,90,.98));
+    }
+    .hint{ font-size: 13px; color: rgba(11,34,54,.70); margin-top: 10px; }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container header-inner">
+      <div class="brand">🍳 Officine Mare — Cucina</div>
+      <div class="actions">
+        <button class="btn primary" id="notifyBtn">🔔 Attiva notifiche</button>
+        <a class="btn" href="admin.html">⚙️ Admin</a>
+        <a class="btn" href="index.html">👤 Cliente</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="card">
+      <div class="row topline">
+        <div>
+          <div class="title">Comande</div>
+          <div class="meta">Bozza: legge da localStorage. Poi lo rendiamo realtime con DB.</div>
+        </div>
+        <div class="row">
+          <button class="cbtn" id="refreshBtn">Aggiorna</button>
+          <span class="badge" id="countBadge">0</span>
+        </div>
+      </div>
+
+      <div class="hint" id="notifyHint">Suggerimento: su molti device la vibrazione funziona solo dopo un tap su “Attiva notifiche”.</div>
+
+      <div style="height:12px;"></div>
+      <div class="grid" id="ordersGrid"></div>
+    </div>
+  </main>
+
+  <script>
+    const K = { orders: "om_orders" };
+    const ordersGrid = document.getElementById("ordersGrid");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const countBadge = document.getElementById("countBadge");
+    const notifyBtn = document.getElementById("notifyBtn");
+
+    let notifyEnabled = false;
+    let lastSeenIds = new Set();
+
+    function loadOrders(){
+      try{
+        const v = localStorage.getItem(K.orders);
+        return v ? JSON.parse(v) : [];
+      }catch{
+        return [];
+      }
+    }
+    function saveOrders(o){
+      localStorage.setItem(K.orders, JSON.stringify(o));
+    }
+
+    function statusBadge(status){
+      const map = {
+        sent: {label:"Inviata", cls:"sent"},
+        in_progress: {label:"In lavorazione", cls:"in_progress"},
+        ready: {label:"Pronta", cls:"ready"},
+        served: {label:"Servita", cls:"ready"}
+      };
+      return map[status] || {label:status, cls:"sent"};
+    }
+
+    function vibrate(pattern){
+      if(!notifyEnabled) return;
+      if("vibrate" in navigator){
+        navigator.vibrate(pattern);
+      }
+    }
+
+    function render(){
+      const orders = loadOrders().filter(o => o.status !== "served");
+      countBadge.textContent = `${orders.length} comande`;
+
+      ordersGrid.innerHTML = "";
+      if(orders.length === 0){
+        ordersGrid.innerHTML = `<div class="order"><div class="title">Nessuna comanda</div><div class="meta">Quando invii dall’admin, apparirà qui.</div></div>`;
+        return;
+      }
+
+      orders.forEach(o => {
+        const b = statusBadge(o.status);
+        const el = document.createElement("div");
+        el.className = "order";
+
+        // evidenzia nuove comande
+        const isNew = !lastSeenIds.has(o.id);
+        if(isNew){
+          el.classList.add("flash");
+          // notifica
+          vibrate([150, 80, 150]);
+          // rimuovi flash dopo un po'
+          setTimeout(() => el.classList.remove("flash"), 2000);
+          lastSeenIds.add(o.id);
+        }
+
+        const when = new Date(o.created_at);
+        const whenTxt = `${when.toLocaleDateString("it-IT")} ${when.toLocaleTimeString("it-IT", {hour:"2-digit", minute:"2-digit"})}`;
+
+        el.innerHTML = `
+          <div class="row topline">
+            <div>
+              <div class="title">Tavolo ${o.table}</div>
+              <div class="meta">${whenTxt}</div>
+            </div>
+            <span class="badge ${b.cls}">${b.label}</span>
+          </div>
+
+          <div class="items">
+            ${o.items.map(it => `
+              <div class="item">
+                <div><strong>${it.qty}×</strong> ${it.name}</div>
+                <div class="meta">€ ${(it.price||0).toFixed(2)}</div>
+              </div>
+            `).join("")}
+          </div>
+
+          <div class="controls">
+            <button class="cbtn" data-act="progress" data-id="${o.id}">In lavorazione</button>
+            <button class="cbtn primary" data-act="ready" data-id="${o.id}">Pronta</button>
+            <button class="cbtn" data-act="served" data-id="${o.id}">Servita</button>
+          </div>
+        `;
+
+        ordersGrid.appendChild(el);
+      });
+
+      ordersGrid.querySelectorAll("button[data-act]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.dataset.id;
+          const act = btn.dataset.act;
+          const orders = loadOrders();
+          const idx = orders.findIndex(x => x.id === id);
+          if(idx < 0) return;
+
+          if(act === "progress") orders[idx].status = "in_progress";
+          if(act === "ready"){
+            orders[idx].status = "ready";
+            vibrate([200, 80, 200, 80, 200]);
+          }
+          if(act === "served") orders[idx].status = "served";
+
+          orders[idx].updated_at = new Date().toISOString();
+          saveOrders(orders);
+          render();
+        });
+      });
+    }
+
+    refreshBtn.addEventListener("click", render);
+
+    notifyBtn.addEventListener("click", () => {
+      notifyEnabled = !notifyEnabled;
+      notifyBtn.textContent = notifyEnabled ? "🔔 Notifiche attive" : "🔔 Attiva notifiche";
+      if(notifyEnabled) vibrate(50);
+    });
+
+    // aggiornamento automatico bozza
+    setInterval(render, 3000);
+
+    // init
+    render();
+  </script>
+</body>
+</html>
