@@ -2,56 +2,53 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Officine Mare — Admin</title>
-  <meta name="description" content="Admin: prenotazioni, tavoli e comande." />
   <link rel="icon" href="favicon.ico" />
+
+  <!-- ✅ Supabase JS v2 (UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root{
-      --bgTop:#2f6f91; --bgMid:#285f83; --bgBot:#1e5172;
+      --bgTop:#245b7c; --bgMid:#1b4968; --bgBot:#163e5a;
       --paper: rgba(255,255,255,.95);
       --text:#0b2236; --muted: rgba(11,34,54,.68);
       --borderD: rgba(11,34,54,.10);
-      --shadow: 0 22px 70px rgba(0,0,0,.18);
-      --max: 1700px; --radiusXL: 26px;
-      --headerH: 72px;
+      --shadow: 0 22px 70px rgba(0,0,0,.20);
+      --max: 1600px; --radiusXL: 26px;
       --safeTop: env(safe-area-inset-top, 0px);
+      --headerReal: 86px;
     }
     *{ box-sizing:border-box; }
-    html, body{ height:100%; }
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color:#fff;
+      overflow-x:hidden;
       background:
         radial-gradient(1100px 480px at 50% -180px, rgba(255,255,255,.16), transparent 62%),
         radial-gradient(900px 420px at 15% 10%, rgba(255,255,255,.10), transparent 60%),
         radial-gradient(900px 420px at 85% 14%, rgba(255,255,255,.08), transparent 62%),
         linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 45%, var(--bgBot) 100%);
-      overflow-x:hidden;
     }
-
-    /* ✅ NO “righe”: rimosso noise overlay */
-    /* (volendo si può rimettere molto più soft, ma ora è pulito) */
-
     .container{
       width: min(96vw, var(--max));
       margin: 0 auto;
       padding: 0 clamp(12px, 1.8vw, 28px);
-      position: relative;
-      z-index: 1;
     }
 
     header{
-      position: sticky; top:0; z-index: 50;
+      position: fixed;
+      top:0; left:0; right:0;
+      z-index: 60;
       padding-top: var(--safeTop);
-      background: rgba(20, 70, 95, .72);
+      background: rgba(22,62,90,.78);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(255,255,255,.16);
     }
     .header-inner{
-      min-height: var(--headerH);
+      min-height: 86px;
       display:flex;
       align-items:center;
       gap: 12px;
@@ -60,22 +57,32 @@
     }
     .brand{
       font-weight: 950;
-      letter-spacing: .8px;
-      font-size: 22px;
-      white-space: nowrap;
+      letter-spacing: .6px;
+      font-size: 20px;
       display:flex;
       align-items:center;
       gap:10px;
+      flex: 1 1 auto;
+      min-width: 240px;
+      white-space: nowrap;
     }
-    .tabbar{
-      display:flex; gap: 10px; flex-wrap: nowrap;
+    .tabs{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
       align-items:center;
-      overflow-x:auto;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 4px;
+      justify-content:flex-start;
+      flex: 1 1 auto;
     }
-    .tabbar::-webkit-scrollbar{ display:none; }
-    .ghost{
+    .actions{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items:center;
+      justify-content:flex-end;
+      flex: 1 1 auto;
+    }
+    .chip{
       padding: 10px 12px;
       border-radius: 999px;
       background: rgba(255,255,255,.08);
@@ -87,22 +94,19 @@
       display:inline-flex;
       align-items:center;
       gap: 8px;
-      white-space: nowrap;
+      font-size: 13px;
+      user-select:none;
+    }
+    .chip.active{
+      background: rgba(255,255,255,.16);
+      border-color: rgba(255,255,255,.22);
     }
 
-    .actions{
-      margin-left:auto;
-      display:flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items:center;
-    }
-
-    main{ padding: 18px 0 60px; }
+    main{ padding: calc(var(--headerReal) + 14px) 0 60px; }
 
     .grid{
       display:grid;
-      grid-template-columns: 1.2fr .8fr;
+      grid-template-columns: 1.3fr .9fr;
       gap: 14px;
       align-items:start;
     }
@@ -117,15 +121,14 @@
       border: 1px solid var(--borderD);
       box-shadow: var(--shadow);
       padding: 16px;
-      position: relative;
       overflow:hidden;
     }
-
-    .title{ font-weight: 950; font-size: 18px; margin:0; }
+    .title{ font-weight: 950; font-size: 18px; margin:0 0 6px; }
     .muted{ color: var(--muted); font-size: 13px; }
 
     .row{ display:flex; gap: 10px; flex-wrap: wrap; align-items:center; }
-    input, select{
+    input, select, textarea{
+      width:100%;
       padding: 10px 12px;
       border-radius: 14px;
       border: 1px solid rgba(11,34,54,.18);
@@ -133,15 +136,12 @@
       color: var(--text);
       outline:none;
     }
-    input{ flex: 1; min-width: 240px; }
-
     button{
       padding: 10px 12px;
       border-radius: 999px;
       border: 1px solid rgba(11,34,54,.16);
       cursor:pointer;
       font-weight: 950;
-      white-space: nowrap;
     }
     .primary{
       color:#fff;
@@ -160,48 +160,35 @@
     }
     .mini{ padding: 8px 10px; font-size: 12px; }
 
+    /* tab sections */
+    .section{ display:none; }
+    .section.active{ display:block; }
+
+    /* orders list */
+    .orders{ margin-top: 10px; display:grid; gap: 10px; }
+    .orderCard{
+      border-radius: 18px;
+      border: 1px solid rgba(11,34,54,.10);
+      background: rgba(255,255,255,.98);
+      padding: 12px;
+    }
+    .orderHead{
+      display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:flex-start;
+    }
     .badge{
-      display:inline-flex;
-      align-items:center;
-      gap: 6px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-weight: 950;
-      font-size: 12px;
+      display:inline-flex; align-items:center; gap: 6px;
+      padding: 6px 10px; border-radius: 999px;
+      font-weight: 950; font-size: 12px;
       border: 1px solid rgba(11,34,54,.12);
       background: rgba(36,91,124,.08);
       color: rgba(11,34,54,.92);
       white-space: nowrap;
     }
-    .b-pending{ background: rgba(255,180,90,.20); }
-    .b-ok{ background: rgba(40,140,80,.16); }
-    .b-cancel{ background: rgba(180,30,40,.12); }
-
-    .table{
-      width:100%;
-      border-collapse: collapse;
-      overflow: hidden;
-      border-radius: 18px;
-      border: 1px solid rgba(11,34,54,.10);
-      background: rgba(255,255,255,.98);
-    }
-    .table th, .table td{
-      padding: 10px;
-      border-bottom: 1px solid rgba(11,34,54,.08);
-      text-align:left;
-      vertical-align: top;
-      font-size: 13px;
-    }
-    .table th{ font-size: 12px; letter-spacing:.3px; color: rgba(11,34,54,.70); }
-
-    .cellSmall{ font-size: 12px; color: rgba(11,34,54,.70); }
-
-    .panelBox{ display:grid; gap: 10px; }
-    .divider{ height:1px; background: rgba(11,34,54,.10); margin: 6px 0; }
-
-    .menuList{ display:grid; gap: 8px; }
-    .menuItem{
-      border-radius: 16px;
+    .badge.open{ background: rgba(255,180,90,.18); }
+    .badge.done{ background: rgba(40,140,80,.16); }
+    .list{ margin-top: 10px; display:grid; gap: 8px; }
+    .item{
+      border-radius: 14px;
       border: 1px solid rgba(11,34,54,.10);
       background: rgba(255,255,255,.98);
       padding: 10px;
@@ -210,536 +197,467 @@
       justify-content:space-between;
       gap: 10px;
     }
-    .qtyCtrl{ display:flex; gap: 8px; align-items:center; }
-    .qtyPill{
-      min-width: 40px;
-      text-align:center;
+    .itName{ font-weight: 950; font-size: 13px; }
+    .lineState{
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
       padding: 6px 10px;
       border-radius: 999px;
+      font-weight: 950;
+      font-size: 12px;
       border: 1px solid rgba(11,34,54,.12);
       background: rgba(36,91,124,.06);
+      color: rgba(11,34,54,.90);
+    }
+    .lineState.ready{ background: rgba(40,140,80,.16); border-color: rgba(40,140,80,.25); }
+    .lineState.served{ background: rgba(70,140,230,.16); border-color: rgba(70,140,230,.25); }
+
+    .timerPill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 6px 10px;
+      border-radius: 999px;
       font-weight: 950;
-    }
-
-    /* ===== LOGIN OVERLAY ===== */
-    #authOverlay{
-      position:fixed; inset:0; z-index:2000;
-      display:none; align-items:center; justify-content:center;
-      background: rgba(0,0,0,.35); backdrop-filter: blur(8px);
-    }
-    #authBox{
-      width:min(560px, 92vw);
-      background: rgba(255,255,255,.95);
-      border-radius: 22px;
-      padding: 18px;
       border: 1px solid rgba(11,34,54,.12);
-      box-shadow: 0 22px 70px rgba(0,0,0,.30);
-      color: #0b2236;
-    }
-
-    /* ===== MOBILE FIX ===== */
-    :root{ --safeTop: env(safe-area-inset-top, 0px); }
-    html, body{ width:100%; overflow-x:hidden; }
-    section, [id]{ scroll-margin-top: calc(var(--headerH) + var(--safeTop) + 12px); }
-    @media (max-width: 720px){
-      input{ min-width: 180px; }
-      .card{ border-radius: 22px; padding: 14px; }
-      .table{ display:block; overflow-x:auto; white-space:nowrap; }
+      background: rgba(36,91,124,.06);
+      font-size: 12px;
+      min-width: 76px;
     }
   </style>
-
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const SUPABASE_URL = "INCOLLA_PROJECT_URL";
-    const SUPABASE_ANON_KEY = "INCOLLA_ANON_KEY";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  </script>
 </head>
 
 <body>
-  <!-- LOGIN -->
-  <div id="authOverlay">
-    <div id="authBox">
-      <h2 style="margin:0 0 6px;">Accesso Admin</h2>
-      <p style="margin:0 0 12px; opacity:.75;">Accedi con l’utenza admin (anche email fittizia, non invia email).</p>
-      <div class="row">
-        <input id="authEmail" type="email" placeholder="admin@officinemare.local">
-        <input id="authPass" type="password" placeholder="Password">
-        <button class="primary" id="authBtn">Entra</button>
-      </div>
-      <div id="authMsg" style="margin-top:10px; font-weight:900;"></div>
-    </div>
-  </div>
-
-  <header>
+  <header id="siteHeader">
     <div class="container header-inner">
       <div class="brand">⚓ Officine Mare — Admin</div>
 
-      <div class="tabbar">
-        <a class="ghost" href="#prenotazioni">Prenotazioni</a>
-        <a class="ghost" href="#tavoli">Tavoli</a>
-        <a class="ghost" href="#menu">Menu</a>
+      <div class="tabs">
+        <button class="chip active" data-tab="gestione">Gestione</button>
+        <button class="chip" data-tab="menu">Menù</button>
+        <button class="chip" data-tab="vista">Vista tavoli</button>
       </div>
 
       <div class="actions">
-        <a class="ghost" href="kitchen.html">🍳 Cucina</a>
-        <button class="ghost" id="logoutBtn">Esci</button>
+        <a class="chip" href="kitchen.html">🍳 Cucina</a>
+        <button class="chip" id="refreshBtn">Aggiorna</button>
       </div>
     </div>
   </header>
 
   <main class="container">
-    <div class="grid">
-      <!-- PRENOTAZIONI -->
-      <section class="card" id="prenotazioni">
-        <div class="row" style="justify-content:space-between;">
-          <div>
-            <h2 class="title" style="margin:0;">Prenotazioni</h2>
-            <div class="muted">Assegna tavolo, conferma, arrivato, annulla. Realtime attivo.</div>
-          </div>
-          <button class="soft" id="refreshBtn">Aggiorna</button>
-        </div>
-
-        <div class="row" style="margin-top:12px;">
-          <input id="datePick" type="date">
-          <select id="statusPick">
-            <option value="all">Tutti gli stati</option>
-            <option value="pending">In attesa</option>
-            <option value="confirmed">Confermata</option>
-            <option value="arrived">Arrivato</option>
-            <option value="cancelled">Annullata</option>
-          </select>
-          <input id="searchBox" placeholder="Cerca nome/telefono...">
-        </div>
-
-        <div style="margin-top:12px;">
-          <table class="table" id="resTable">
-            <thead>
-              <tr>
-                <th>Quando</th>
-                <th>Cliente</th>
-                <th>Pers.</th>
-                <th>Stato</th>
-                <th>Tavolo</th>
-                <th>Azioni</th>
-              </tr>
-            </thead>
-            <tbody id="resBody"></tbody>
-          </table>
-        </div>
-
-        <div class="muted" id="resMsg" style="margin-top:10px;"></div>
-      </section>
-
-      <!-- PANNELLO -->
-      <aside class="card" id="tavoli">
-        <h2 class="title" style="margin:0;">Pannello</h2>
-        <div class="muted">Seleziona una prenotazione o un tavolo per inviare comande alla cucina.</div>
-
-        <div class="divider"></div>
-
-        <div class="panelBox">
-          <div class="row">
-            <select id="tablePick">
-              <option value="">Seleziona tavolo…</option>
+    <!-- GESTIONE -->
+    <section class="section active" id="tab-gestione">
+      <div class="grid">
+        <div class="card">
+          <h2 class="title">Prenotazioni / Gestione</h2>
+          <div class="muted">Qui resterà la gestione prenotazioni come piace a te (la colleghiamo al DB dopo).</div>
+          <div style="margin-top:10px" class="row">
+            <input placeholder="Cerca nome/telefono..." />
+            <select style="max-width:220px">
+              <option>Tutti gli stati</option>
+              <option>In attesa</option>
+              <option>Confermata</option>
+              <option>Annullata</option>
             </select>
-            <button class="soft" id="fillTablesBtn">15 tavoli</button>
           </div>
-
-          <div class="muted">
-            Tavoli consigliati: <strong>T01…T15</strong> (circa 40 coperti).
-          </div>
-
-          <div class="divider"></div>
-
-          <h3 class="title" style="font-size:16px;">Comanda (demo menu)</h3>
-          <div class="muted">Clicca +/−, poi “Invia in cucina”.</div>
-
-          <div class="menuList" id="menuList"></div>
-
-          <div class="row" style="justify-content:flex-end;">
-            <button class="soft" id="resetOrderBtn">Pulisci</button>
-            <button class="primary" id="sendKitchenBtn">Invia in cucina</button>
-          </div>
-
-          <div id="panelMsg" class="muted"></div>
+          <div class="muted" style="margin-top:10px">✅ Per ora lo lasciamo “bozza UI”.</div>
         </div>
-      </aside>
-    </div>
 
-    <section class="card" id="menu" style="margin-top:14px;">
-      <h2 class="title" style="margin:0;">Menu (bozza)</h2>
-      <p class="muted" style="margin-top:6px;">
-        In seguito lo carichiamo da DB (tabella <code>menu_items</code>). Per ora è demo, ma l’invio comande funziona.
-      </p>
+        <div class="card">
+          <h2 class="title">Pannello Comande</h2>
+          <div class="muted">Seleziona tavolo e invia comanda alla cucina.</div>
+
+          <div class="row" style="margin-top:10px">
+            <select id="tableSel" style="max-width:220px">
+              <option value="">Seleziona tavolo...</option>
+            </select>
+            <button class="soft" id="seedTablesBtn">15 tavoli</button>
+          </div>
+
+          <div style="margin-top:10px" class="row">
+            <input id="dishName" placeholder="Piatto (es. Spaghetti alle vongole)" />
+            <input id="dishQty" type="number" min="1" value="1" style="max-width:120px" />
+            <button class="primary" id="addDishBtn">Aggiungi</button>
+          </div>
+
+          <div class="muted" id="sendStatus" style="margin-top:10px"></div>
+
+          <div style="margin-top:12px">
+            <button class="primary" id="sendOrderBtn">Invia comanda</button>
+            <button class="soft" id="clearDraftBtn">Pulisci</button>
+          </div>
+
+          <div class="muted" style="margin-top:10px">Bozza comanda:</div>
+          <div id="draftList" class="orders"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h2 class="title">Comande attive</h2>
+        <div class="muted">Cucina → Pronto. Admin → Servito (parte il timer).</div>
+        <div id="ordersArea" class="orders"></div>
+      </div>
+    </section>
+
+    <!-- MENU -->
+    <section class="section" id="tab-menu">
+      <div class="card">
+        <h2 class="title">Menù del giorno (cliente)</h2>
+        <div class="muted">Qui caricherai la foto che vede il cliente e/o testo. (DB dopo)</div>
+        <div style="margin-top:10px" class="row">
+          <input placeholder="Nome file foto (es: menu-oggi.jpg)" />
+          <button class="primary">Salva</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VISTA -->
+    <section class="section" id="tab-vista">
+      <div class="card">
+        <h2 class="title">Vista tavoli (solo visual)</h2>
+        <div class="muted">Ti mostrerà liberi/occupati senza possibilità di modifica. (DB dopo)</div>
+      </div>
     </section>
   </main>
 
   <script>
-    // ===== AUTH =====
-    const authOverlay = document.getElementById("authOverlay");
-    const authEmail = document.getElementById("authEmail");
-    const authPass = document.getElementById("authPass");
-    const authBtn = document.getElementById("authBtn");
-    const authMsg = document.getElementById("authMsg");
-
-    function showAuth(msg=""){
-      authMsg.textContent = msg;
-      authOverlay.style.display = "flex";
+    // --- header height fix
+    function setHeaderRealHeight(){
+      const h = Math.ceil(document.getElementById("siteHeader").getBoundingClientRect().height);
+      document.documentElement.style.setProperty("--headerReal", h + "px");
     }
-    function hideAuth(){
-      authOverlay.style.display = "none";
-    }
+    window.addEventListener("load", setHeaderRealHeight, { once:true });
+    window.addEventListener("resize", setHeaderRealHeight);
+    window.visualViewport?.addEventListener("resize", setHeaderRealHeight);
+    window.visualViewport?.addEventListener("scroll", setHeaderRealHeight);
+    setTimeout(setHeaderRealHeight, 60);
+    setTimeout(setHeaderRealHeight, 250);
 
-    async function requireRole(role){
-      const { data: sess } = await supabase.auth.getSession();
-      if(!sess.session){
-        showAuth("");
-        return null;
-      }
-      const { data: r, error } = await supabase
-        .from("staff_users")
-        .select("role")
-        .eq("user_id", sess.session.user.id)
-        .single();
+    // ✅ Supabase init (METTI I TUOI VALORI)
+    const SUPABASE_URL = "PASTE_SUPABASE_URL";
+    const SUPABASE_ANON_KEY = "PASTE_SUPABASE_ANON_KEY";
+    const sb = window.supabase?.createClient?.(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      if(error || !r){
-        await supabase.auth.signOut();
-        showAuth("Utente non abilitato.");
-        return null;
-      }
-      if(r.role !== role){
-        await supabase.auth.signOut();
-        showAuth("Ruolo errato. Serve: " + role.toUpperCase());
-        return null;
-      }
-      hideAuth();
-      return sess.session;
-    }
-
-    authBtn.addEventListener("click", async () => {
-      try{
-        authMsg.textContent = "Accesso...";
-        const { error } = await supabase.auth.signInWithPassword({
-          email: authEmail.value.trim(),
-          password: authPass.value
-        });
-        if(error) throw error;
-        await requireRole("admin");
-        authMsg.textContent = "";
-        await refreshReservations();
-      }catch(e){
-        authMsg.textContent = "Login fallito: " + (e?.message || "errore");
-      }
+    // tabs
+    document.querySelectorAll("[data-tab]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        document.querySelectorAll("[data-tab]").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        const tab = btn.dataset.tab;
+        document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+        document.getElementById("tab-"+tab).classList.add("active");
+      });
     });
 
-    document.getElementById("logoutBtn").addEventListener("click", async ()=>{
-      await supabase.auth.signOut();
-      showAuth("Sei uscito.");
-    });
+    // tables
+    const tableSel = document.getElementById("tableSel");
+    const seedTablesBtn = document.getElementById("seedTablesBtn");
 
-    // ===== UI refs =====
-    const datePick = document.getElementById("datePick");
-    const statusPick = document.getElementById("statusPick");
-    const searchBox = document.getElementById("searchBox");
-    const resBody = document.getElementById("resBody");
-    const resMsg = document.getElementById("resMsg");
-    const refreshBtn = document.getElementById("refreshBtn");
-
-    // default date: oggi
-    (function setToday(){
-      const d = new Date();
-      const pad = x => String(x).padStart(2,"0");
-      datePick.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    })();
-
-    // ===== Tables =====
-    const tablePick = document.getElementById("tablePick");
-    const fillTablesBtn = document.getElementById("fillTablesBtn");
-    function fillTables(){
-      const cur = tablePick.value;
-      tablePick.innerHTML = `<option value="">Seleziona tavolo…</option>`;
+    function seedTables(){
+      tableSel.innerHTML = `<option value="">Seleziona tavolo...</option>`;
       for(let i=1;i<=15;i++){
         const code = "T" + String(i).padStart(2,"0");
         const opt = document.createElement("option");
         opt.value = code;
         opt.textContent = code;
-        tablePick.appendChild(opt);
+        tableSel.appendChild(opt);
       }
-      tablePick.value = cur;
     }
-    fillTables();
-    fillTablesBtn.addEventListener("click", fillTables);
+    seedTablesBtn.addEventListener("click", seedTables);
+    seedTables();
 
-    // ===== Demo menu for orders =====
-    const MENU = [
-      { id:"mi1", name:"Spaghetti alle vongole", price:14 },
-      { id:"mi2", name:"Frittura di calamari", price:16 },
-      { id:"mi3", name:"Crudo di mare (mix)", price:22 },
-      { id:"mi4", name:"Insalata di mare", price:15 },
-      { id:"mi5", name:"Acqua", price:2 }
-    ];
-    const menuList = document.getElementById("menuList");
-    const sendKitchenBtn = document.getElementById("sendKitchenBtn");
-    const resetOrderBtn = document.getElementById("resetOrderBtn");
-    const panelMsg = document.getElementById("panelMsg");
+    // draft local (non perde)
+    const draftKey = "om_admin_draft";
+    const draftListEl = document.getElementById("draftList");
+    const dishNameEl = document.getElementById("dishName");
+    const dishQtyEl = document.getElementById("dishQty");
+    const addDishBtn = document.getElementById("addDishBtn");
+    const clearDraftBtn = document.getElementById("clearDraftBtn");
+    const sendOrderBtn = document.getElementById("sendOrderBtn");
+    const sendStatus = document.getElementById("sendStatus");
 
-    const orderState = new Map(); // menu_id -> qty
-
-    function renderMenu(){
-      menuList.innerHTML = "";
-      MENU.forEach(m=>{
-        const qty = orderState.get(m.id) || 0;
-        const el = document.createElement("div");
-        el.className = "menuItem";
-        el.innerHTML = `
-          <div>
-            <div style="font-weight:950; font-size:13px;">${m.name}</div>
-            <div class="muted">€ ${m.price}</div>
-          </div>
-          <div class="qtyCtrl">
-            <button class="soft mini" data-act="minus" data-id="${m.id}">−</button>
-            <span class="qtyPill" id="q_${m.id}">${qty}</span>
-            <button class="primary mini" data-act="plus" data-id="${m.id}">+</button>
-          </div>
-        `;
-        el.querySelectorAll("button").forEach(b=>{
-          b.addEventListener("click", ()=>{
-            const id = b.dataset.id;
-            const act = b.dataset.act;
-            const cur = orderState.get(id) || 0;
-            const next = act === "plus" ? cur+1 : Math.max(0, cur-1);
-            orderState.set(id, next);
-            document.getElementById("q_"+id).textContent = String(next);
-          });
-        });
-        menuList.appendChild(el);
-      });
+    function loadDraft(){
+      try{ return JSON.parse(localStorage.getItem(draftKey) || "[]"); }catch{ return []; }
     }
-    renderMenu();
-
-    resetOrderBtn.addEventListener("click", ()=>{
-      orderState.clear();
-      renderMenu();
-      panelMsg.textContent = "";
-    });
-
-    // ===== Reservations CRUD =====
-    function badgeForStatus(s){
-      if(s==="confirmed") return `<span class="badge b-ok">Confermata</span>`;
-      if(s==="arrived") return `<span class="badge b-ok">Arrivato</span>`;
-      if(s==="cancelled") return `<span class="badge b-cancel">Annullata</span>`;
-      return `<span class="badge b-pending">In attesa</span>`;
-    }
-
-    function fmtWhen(r){
-      const d = r.reservation_date;
-      const t = (r.reservation_time || "").slice(0,5);
-      return `<div style="font-weight:950;">${d}</div><div class="cellSmall">${t}</div>`;
-    }
-
-    function smsLink(phone, text){
-      const p = encodeURIComponent(phone);
-      const m = encodeURIComponent(text);
-      return `sms:${p}?&body=${m}`;
-    }
-
-    async function refreshReservations(){
-      resMsg.textContent = "Carico...";
-      const day = datePick.value;
-      const st = statusPick.value;
-      const q = (searchBox.value || "").trim().toLowerCase();
-
-      let query = supabase
-        .from("reservations")
-        .select("*")
-        .eq("reservation_date", day)
-        .order("reservation_time", { ascending: true });
-
-      if(st !== "all") query = query.eq("status", st);
-
-      const { data, error } = await query;
-      if(error){
-        resMsg.textContent = "Errore: " + error.message;
+    function saveDraft(x){ localStorage.setItem(draftKey, JSON.stringify(x)); }
+    function renderDraft(){
+      const d = loadDraft();
+      draftListEl.innerHTML = "";
+      if(d.length === 0){
+        draftListEl.innerHTML = `<div class="muted">Nessun piatto in bozza.</div>`;
         return;
       }
-
-      let rows = data || [];
-      if(q){
-        rows = rows.filter(r =>
-          String(r.customer_name||"").toLowerCase().includes(q) ||
-          String(r.customer_phone||"").toLowerCase().includes(q)
-        );
-      }
-
-      resBody.innerHTML = "";
-      if(rows.length === 0){
-        resBody.innerHTML = `<tr><td colspan="6" class="muted">Nessuna prenotazione per questo filtro.</td></tr>`;
-        resMsg.textContent = "";
-        return;
-      }
-
-      rows.forEach(r=>{
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${fmtWhen(r)}</td>
-          <td>
-            <div style="font-weight:950;">${r.customer_name || ""}</div>
-            <div class="cellSmall">${r.customer_phone || ""}</div>
-          </td>
-          <td>${r.people || ""}</td>
-          <td>${badgeForStatus(r.status)}</td>
-          <td>
-            <div class="row" style="gap:8px;">
-              <select data-assign="${r.id}">
-                <option value="">—</option>
-                ${Array.from({length:15}).map((_,i)=>{
-                  const code = "T"+String(i+1).padStart(2,"0");
-                  const sel = (r.table_code===code) ? "selected" : "";
-                  return `<option value="${code}" ${sel}>${code}</option>`;
-                }).join("")}
-              </select>
-              <button class="soft mini" data-act="setTable" data-id="${r.id}">Assegna</button>
+      d.forEach((it, idx)=>{
+        const div = document.createElement("div");
+        div.className = "orderCard";
+        div.innerHTML = `
+          <div class="row" style="justify-content:space-between">
+            <div>
+              <div style="font-weight:950">${it.name}</div>
+              <div class="muted">qty: ${it.qty}</div>
             </div>
-            <div class="cellSmall">${r.table_code ? ("Assegnato: "+r.table_code) : "Non assegnato"}</div>
-          </td>
-          <td>
-            <div class="row" style="gap:8px;">
-              <button class="soft mini" data-act="confirm" data-id="${r.id}">Conferma</button>
-              <a class="ghost" style="padding:8px 10px; font-size:12px;" data-act="sms" data-id="${r.id}">Conferma + SMS</a>
-              <button class="soft mini" data-act="arrived" data-id="${r.id}">Arrivato</button>
-              <button class="danger mini" data-act="cancel" data-id="${r.id}">Annulla</button>
-            </div>
-          </td>
+            <button class="danger mini" data-del="${idx}">Rimuovi</button>
+          </div>
         `;
-        resBody.appendChild(tr);
-
-        // handlers
-        tr.querySelectorAll("button[data-act]").forEach(btn=>{
-          btn.addEventListener("click", async ()=>{
-            const act = btn.dataset.act;
-            const id = btn.dataset.id;
-
-            if(act === "setTable"){
-              const sel = tr.querySelector(`select[data-assign="${id}"]`);
-              const table = sel.value || null;
-              const { error } = await supabase.from("reservations").update({ table_code: table }).eq("id", id);
-              if(error) alert(error.message);
-              await refreshReservations();
-              return;
-            }
-
-            if(act === "confirm"){
-              const { error } = await supabase.from("reservations").update({ status:"confirmed" }).eq("id", id);
-              if(error) alert(error.message);
-              await refreshReservations();
-              return;
-            }
-
-            if(act === "arrived"){
-              const { error } = await supabase.from("reservations").update({ status:"arrived" }).eq("id", id);
-              if(error) alert(error.message);
-              await refreshReservations();
-              return;
-            }
-
-            if(act === "cancel"){
-              const ok = confirm("Annullare la prenotazione?");
-              if(!ok) return;
-              const { error } = await supabase.from("reservations").update({ status:"cancelled" }).eq("id", id);
-              if(error) alert(error.message);
-              await refreshReservations();
-              return;
-            }
-          });
+        div.querySelector("[data-del]").addEventListener("click", ()=>{
+          const dd = loadDraft();
+          dd.splice(idx,1);
+          saveDraft(dd);
+          renderDraft();
         });
-
-        tr.querySelectorAll("a[data-act='sms']").forEach(a=>{
-          a.addEventListener("click", async (e)=>{
-            e.preventDefault();
-            // carico riga per creare testo
-            const { data, error } = await supabase.from("reservations").select("*").eq("id", a.dataset.id).single();
-            if(error) return alert(error.message);
-
-            const t = (data.reservation_time || "").slice(0,5);
-            const msg = `Officine Mare: prenotazione confermata per ${data.customer_name} (${data.people} persone) il ${data.reservation_date} alle ${t}. A presto!`;
-            const url = smsLink(data.customer_phone || "", msg);
-            window.location.href = url; // apre app SMS
-          });
-        });
+        draftListEl.appendChild(div);
       });
-
-      resMsg.textContent = "";
     }
 
-    refreshBtn.addEventListener("click", refreshReservations);
-    datePick.addEventListener("change", refreshReservations);
-    statusPick.addEventListener("change", refreshReservations);
-    searchBox.addEventListener("input", ()=>{
-      clearTimeout(window.__t);
-      window.__t = setTimeout(refreshReservations, 180);
+    addDishBtn.addEventListener("click", ()=>{
+      const name = (dishNameEl.value||"").trim();
+      const qty = Math.max(1, parseInt(dishQtyEl.value||"1",10));
+      if(!name) return alert("Inserisci il nome del piatto.");
+      const d = loadDraft();
+      d.push({ name, qty });
+      saveDraft(d);
+      dishNameEl.value="";
+      dishQtyEl.value="1";
+      renderDraft();
     });
 
-    // ===== Send order to kitchen =====
-    async function sendToKitchen(){
-      const table = tablePick.value;
-      if(!table) return alert("Seleziona un tavolo.");
-      const lines = [];
-      MENU.forEach(m=>{
-        const qty = orderState.get(m.id) || 0;
-        if(qty>0) lines.push({ menu_item_id:m.id, name:m.name, qty, price:m.price });
-      });
-      if(lines.length === 0) return alert("Nessun piatto selezionato.");
+    clearDraftBtn.addEventListener("click", ()=>{
+      saveDraft([]);
+      renderDraft();
+    });
 
-      panelMsg.textContent = "Invio in cucina...";
+    // helper timeout (così non resta “invio in corso”)
+    function withTimeout(promise, ms=12000){
+      return Promise.race([
+        promise,
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error("Timeout: verifica rete/RLS/chiavi Supabase.")), ms))
+      ]);
+    }
 
-      // 1) crea ordine
-      const { data: ord, error: e1 } = await supabase
+    // --- orders UI
+    const ordersArea = document.getElementById("ordersArea");
+
+    function minutesSince(iso){
+      if(!iso) return null;
+      const ms = Date.now() - new Date(iso).getTime();
+      return Math.max(0, Math.floor(ms / 60000));
+    }
+    function fmtElapsed(min){
+      if(min == null) return "";
+      if(min < 60) return `${min} min`;
+      const h = Math.floor(min/60);
+      const m = min % 60;
+      return `${h}h ${m}m`;
+    }
+
+    function orderProgress(o){
+      const items = o.items || [];
+      const total = items.length;
+      const ready = items.filter(it => it.line_status === "ready" || it.line_status === "served").length;
+      const served = items.filter(it => it.line_status === "served").length;
+      const doneKitchen = (total > 0 && ready === total);
+      return { total, ready, served, doneKitchen };
+    }
+
+    async function fetchOrders(){
+      if(!sb) return [];
+      const { data, error } = await sb
         .from("orders")
-        .insert([{ table_code: table, status:"sent" }])
+        .select("id, table_code, status, created_at, order_items(id, name, qty, price, line_status, ready_at, served_at, created_at)")
+        .neq("status","archived")
+        .order("created_at",{ ascending:false });
+      if(error) throw error;
+
+      return (data||[]).map(o=>({
+        id:o.id,
+        table:o.table_code,
+        status:o.status,
+        created_at:o.created_at,
+        items:(o.order_items||[]).map(it=>({
+          id:it.id,
+          name:it.name,
+          qty:it.qty,
+          price:it.price,
+          line_status:it.line_status || "todo",
+          served_at: it.served_at || null
+        }))
+      }));
+    }
+
+    async function ensureOpenOrder(tableCode){
+      // cerca ordine open per tavolo
+      const { data, error } = await sb
+        .from("orders")
+        .select("id")
+        .eq("table_code", tableCode)
+        .eq("status","open")
+        .order("created_at",{ ascending:false })
+        .limit(1);
+
+      if(error) throw error;
+      if(data && data[0]) return data[0].id;
+
+      // crea nuovo
+      const { data:ins, error:err2 } = await sb
+        .from("orders")
+        .insert({ table_code: tableCode, status:"open" })
         .select("id")
         .single();
-      if(e1){ panelMsg.textContent = "Errore: "+e1.message; return; }
 
-      // 2) crea righe comanda
-      const items = lines.map(l=>({
-        order_id: ord.id,
-        menu_item_id: l.menu_item_id,
-        name: l.name,
-        qty: l.qty,
-        price: l.price,
-        line_status: "todo"
-      }));
-      const { error: e2 } = await supabase.from("order_items").insert(items);
-      if(e2){ panelMsg.textContent = "Errore: "+e2.message; return; }
-
-      panelMsg.textContent = "✅ Inviato alla cucina.";
-      orderState.clear();
-      renderMenu();
-      setTimeout(()=>panelMsg.textContent="", 2200);
+      if(err2) throw err2;
+      return ins.id;
     }
 
-    sendKitchenBtn.addEventListener("click", sendToKitchen);
+    async function insertItems(orderId, items){
+      const payload = items.map(it=>({
+        order_id: orderId,
+        name: it.name,
+        qty: it.qty,
+        line_status: "todo"
+      }));
+      const { error } = await sb.from("order_items").insert(payload);
+      if(error) throw error;
+    }
 
-    // ===== REALTIME reservations =====
-    function vibrate(){ try{ navigator.vibrate?.([70,30,70]); }catch{} }
+    async function setServed(lineId, served){
+      const payload = served
+        ? { line_status:"served", served_at: new Date().toISOString() }
+        : { line_status:"ready", served_at: null };
+      const { error } = await sb.from("order_items").update(payload).eq("id", lineId);
+      if(error) throw error;
+    }
 
-    (async ()=>{
-      const s = await requireRole("admin");
-      if(!s) return;
+    function renderOrders(rows){
+      ordersArea.innerHTML = "";
+      if(rows.length === 0){
+        ordersArea.innerHTML = `<div class="muted">Nessuna comanda attiva.</div>`;
+        return;
+      }
 
-      await refreshReservations();
+      rows.forEach(o=>{
+        const p = orderProgress(o);
+        const badge = p.doneKitchen
+          ? `<span class="badge done">Cucina OK (${p.ready}/${p.total})</span>`
+          : `<span class="badge open">In lavorazione (${p.ready}/${p.total})</span>`;
 
-      supabase
-        .channel("rt-reservations-admin")
-        .on("postgres_changes", { event:"INSERT", schema:"public", table:"reservations" }, async (payload)=>{
-          // notifica soft
-          vibrate();
-          await refreshReservations();
-        })
-        .subscribe();
-    })();
+        const box = document.createElement("div");
+        box.className = "orderCard";
+        box.innerHTML = `
+          <div class="orderHead">
+            <div>
+              <div style="font-weight:950">Tavolo ${o.table}</div>
+              <div class="muted">ID ${String(o.id).slice(0,8)} · righe: ${p.total} · servite: ${p.served}</div>
+            </div>
+            <div class="row">${badge}</div>
+          </div>
+
+          <div class="list">
+            ${o.items.map(it=>{
+              const st = it.line_status;
+              const cls = st === "served" ? "served" : (st === "ready" ? "ready" : "");
+              const label = st === "served" ? "Servito" : (st === "ready" ? "Pronto" : "Da fare");
+              const tmin = minutesSince(it.served_at);
+              return `
+                <div class="item">
+                  <div style="min-width:0;">
+                    <div class="itName">${it.name}</div>
+                    <div class="muted" style="font-size:12px;">qty: <strong>${it.qty}</strong></div>
+                  </div>
+                  <div class="row" style="justify-content:flex-end;">
+                    ${it.served_at ? `<span class="timerPill" data-served-at="${it.served_at}">⏱ ${fmtElapsed(tmin)}</span>` : `<span class="timerPill">—</span>`}
+                    <span class="lineState ${cls}">${label}</span>
+                    ${
+                      st === "ready"
+                        ? `<button class="primary mini" data-served="${it.id}">Servito</button>`
+                        : (st === "served"
+                          ? `<button class="soft mini" data-unserved="${it.id}">Non servito</button>`
+                          : ``)
+                    }
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        `;
+
+        box.querySelectorAll("[data-served]").forEach(btn=>{
+          btn.addEventListener("click", async ()=>{
+            try{ await setServed(btn.dataset.served, true); await poll(true); }
+            catch(e){ alert("Errore: " + (e.message||e)); }
+          });
+        });
+        box.querySelectorAll("[data-unserved]").forEach(btn=>{
+          btn.addEventListener("click", async ()=>{
+            try{ await setServed(btn.dataset.unserved, false); await poll(true); }
+            catch(e){ alert("Errore: " + (e.message||e)); }
+          });
+        });
+
+        ordersArea.appendChild(box);
+      });
+    }
+
+    // timer refresh
+    setInterval(()=>{
+      document.querySelectorAll("[data-served-at]").forEach(el=>{
+        const iso = el.getAttribute("data-served-at");
+        const min = minutesSince(iso);
+        el.textContent = "⏱ " + fmtElapsed(min);
+      });
+    }, 20000);
+
+    async function poll(showToast){
+      try{
+        if(!sb){
+          ordersArea.innerHTML = `<div class="muted">Config Supabase mancante: incolla URL e ANON KEY.</div>`;
+          return;
+        }
+        const rows = await fetchOrders();
+        renderOrders(rows);
+        if(showToast){
+          sendStatus.textContent = "Aggiornato ✅";
+          setTimeout(()=>sendStatus.textContent="", 1200);
+        }
+      }catch(e){
+        sendStatus.textContent = "Errore: " + (e.message||e);
+      }
+    }
+
+    document.getElementById("refreshBtn").addEventListener("click", ()=>poll(true));
+
+    // INVIO COMANDA (non resta bloccato)
+    sendOrderBtn.addEventListener("click", async ()=>{
+      const table = tableSel.value;
+      const items = loadDraft();
+
+      if(!sb) return alert("Config Supabase mancante (URL + ANON KEY).");
+      if(!table) return alert("Seleziona un tavolo.");
+      if(items.length === 0) return alert("Aggiungi almeno un piatto.");
+
+      sendOrderBtn.disabled = true;
+      clearDraftBtn.disabled = true;
+      sendStatus.textContent = "Invio in corso…";
+
+      try{
+        const orderId = await withTimeout(ensureOpenOrder(table), 12000);
+        await withTimeout(insertItems(orderId, items), 12000);
+        saveDraft([]);
+        renderDraft();
+        sendStatus.textContent = "Comanda inviata ✅";
+        await poll(false);
+      }catch(e){
+        sendStatus.textContent = "Errore invio: " + (e.message||e);
+      }finally{
+        sendOrderBtn.disabled = false;
+        clearDraftBtn.disabled = false;
+        setTimeout(()=>{ if(sendStatus.textContent.startsWith("Invio")) sendStatus.textContent=""; }, 1200);
+      }
+    });
+
+    renderDraft();
+    poll(false);
   </script>
 </body>
 </html>
