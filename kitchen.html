@@ -31,22 +31,8 @@
         linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 45%, var(--bgBot) 100%);
       overflow-x:hidden;
     }
-    body::before{
-      content:"";
-      position:fixed; inset:0;
-      pointer-events:none; z-index:0;
-      opacity:.08;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
-      background-size:160px 160px;
-      mix-blend-mode: overlay;
-    }
-    body::after{
-      content:"";
-      position:fixed; inset:0;
-      pointer-events:none; z-index:0;
-      background: linear-gradient(180deg, rgba(0,0,0,.00), rgba(0,0,0,.08));
-      opacity: .9;
-    }
+
+    /* ✅ NO righe: tolto noise overlay */
 
     .container{
       width: min(96vw, var(--max));
@@ -64,11 +50,12 @@
       border-bottom: 1px solid rgba(255,255,255,.16);
     }
     .header-inner{
-      height: var(--headerH);
+      min-height: var(--headerH);
       display:flex;
       align-items:center;
       gap: 12px;
       padding: 10px 0;
+      flex-wrap: wrap;
     }
     .brand{
       font-weight: 950;
@@ -98,6 +85,7 @@
       display:inline-flex;
       align-items:center;
       gap: 8px;
+      white-space: nowrap;
     }
 
     main{ padding: 18px 0 60px; }
@@ -117,6 +105,7 @@
       border: 1px solid rgba(11,34,54,.16);
       cursor:pointer;
       font-weight: 950;
+      white-space: nowrap;
     }
     .primary{
       color:#fff;
@@ -127,11 +116,6 @@
     .soft{
       background: rgba(36,91,124,.10);
       color: rgba(11,34,54,.92);
-    }
-    .danger{
-      background: rgba(180,30,40,.10);
-      color: rgba(140,20,30,.95);
-      border-color: rgba(140,20,30,.18);
     }
     .mini{
       padding: 8px 10px;
@@ -222,10 +206,52 @@
       background: rgba(36,91,124,.06);
       min-width: 44px;
     }
+
+    /* ===== LOGIN OVERLAY ===== */
+    #authOverlay{
+      position:fixed; inset:0; z-index:2000;
+      display:none; align-items:center; justify-content:center;
+      background: rgba(0,0,0,.35); backdrop-filter: blur(8px);
+    }
+    #authBox{
+      width:min(560px, 92vw);
+      background: rgba(255,255,255,.95);
+      border-radius: 22px;
+      padding: 18px;
+      border: 1px solid rgba(11,34,54,.12);
+      box-shadow: 0 22px 70px rgba(0,0,0,.30);
+      color: #0b2236;
+    }
+
+    @media (max-width: 720px){
+      .card{ border-radius: 22px; padding: 14px; }
+    }
   </style>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "INCOLLA_PROJECT_URL";
+    const SUPABASE_ANON_KEY = "INCOLLA_ANON_KEY";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
 </head>
 
 <body>
+  <!-- LOGIN -->
+  <div id="authOverlay">
+    <div id="authBox">
+      <h2 style="margin:0 0 6px;">Accesso Cucina</h2>
+      <p style="margin:0 0 12px; opacity:.75;">Accedi con l’utenza cucina (email fittizia ok).</p>
+      <div class="row">
+        <input id="authEmail" type="email" placeholder="cucina@officinemare.local">
+        <input id="authPass" type="password" placeholder="Password">
+        <button class="primary" id="authBtn">Entra</button>
+      </div>
+      <div id="authMsg" style="margin-top:10px; font-weight:900;"></div>
+    </div>
+  </div>
+
   <header>
     <div class="container header-inner">
       <div class="brand">🍳 Officine Mare — Cucina</div>
@@ -234,6 +260,7 @@
         <button class="ghost" id="vibBtn">📳 Vibra: ON</button>
         <button class="ghost" id="refreshBtn">Aggiorna</button>
         <a class="ghost" href="admin.html">↩️ Admin</a>
+        <button class="ghost" id="logoutBtn">Esci</button>
       </div>
     </div>
   </header>
@@ -245,7 +272,6 @@
         <option value="done">Complete</option>
         <option value="all">Tutte</option>
       </select>
-      <button class="soft" id="demoBtn">Demo dati</button>
       <span class="muted" id="statusMsg"></span>
     </div>
 
@@ -253,7 +279,62 @@
   </main>
 
   <script>
-    const K = { orders:"om_orders" };
+    // ===== AUTH kitchen role =====
+    const authOverlay = document.getElementById("authOverlay");
+    const authEmail = document.getElementById("authEmail");
+    const authPass = document.getElementById("authPass");
+    const authBtn = document.getElementById("authBtn");
+    const authMsg = document.getElementById("authMsg");
+
+    function showAuth(msg=""){ authMsg.textContent = msg; authOverlay.style.display="flex"; }
+    function hideAuth(){ authOverlay.style.display="none"; }
+
+    async function requireKitchen(){
+      const { data: sess } = await supabase.auth.getSession();
+      if(!sess.session){ showAuth(""); return null; }
+
+      const { data: r, error } = await supabase
+        .from("staff_users")
+        .select("role")
+        .eq("user_id", sess.session.user.id)
+        .single();
+
+      if(error || !r){
+        await supabase.auth.signOut();
+        showAuth("Utente non abilitato.");
+        return null;
+      }
+      if(r.role !== "kitchen"){
+        await supabase.auth.signOut();
+        showAuth("Ruolo errato. Serve: KITCHEN");
+        return null;
+      }
+      hideAuth();
+      return sess.session;
+    }
+
+    authBtn.addEventListener("click", async ()=>{
+      try{
+        authMsg.textContent = "Accesso...";
+        const { error } = await supabase.auth.signInWithPassword({
+          email: authEmail.value.trim(),
+          password: authPass.value
+        });
+        if(error) throw error;
+        await requireKitchen();
+        authMsg.textContent = "";
+        await refreshKitchen();
+      }catch(e){
+        authMsg.textContent = "Login fallito: " + (e?.message || "errore");
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", async ()=>{
+      await supabase.auth.signOut();
+      showAuth("Sei uscito.");
+    });
+
+    // ===== UI =====
     const ordersGrid = document.getElementById("ordersGrid");
     const filterEl = document.getElementById("filter");
     const statusMsg = document.getElementById("statusMsg");
@@ -263,13 +344,6 @@
     let soundOn = true;
     let vibOn = true;
 
-    function loadJSON(key, fallback){
-      try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
-      catch{ return fallback; }
-    }
-    function saveJSON(key, val){
-      localStorage.setItem(key, JSON.stringify(val));
-    }
     function fmtTime(iso){
       try{
         const d = new Date(iso);
@@ -277,7 +351,6 @@
       }catch{ return ""; }
     }
 
-    // beep leggero (WebAudio)
     function beep(){
       if(!soundOn) return;
       try{
@@ -308,53 +381,54 @@
       if(vibOn) vibrate();
     });
 
-    // ---- compat: garantisce che ogni item abbia id e status ----
-    function normalizeOrders(all){
-      let changed = false;
-      all.forEach(o => {
-        if(!o.items) o.items = [];
-        o.items.forEach((it, idx) => {
-          if(!it.line_id){
-            it.line_id = `${o.id}_${idx}_${Math.random().toString(16).slice(2)}`;
-            changed = true;
-          }
-          if(!it.line_status){
-            it.line_status = "todo"; // todo | ready
-            changed = true;
-          }
-        });
-        // ordine “archived” resta gestito a livello order.status
-        if(!o.status) { o.status = "sent"; changed = true; }
+    document.getElementById("refreshBtn").addEventListener("click", ()=>refreshKitchen());
+    filterEl.addEventListener("change", ()=>renderKitchen(window.__kitchenCache || []));
+
+    async function fetchOrdersWithItems(){
+      // orders + order_items
+      const { data: orders, error: e1 } = await supabase
+        .from("orders")
+        .select("id, table_code, status, created_at")
+        .order("created_at", { ascending:false });
+
+      if(e1) throw e1;
+
+      const { data: items, error: e2 } = await supabase
+        .from("order_items")
+        .select("id, order_id, name, qty, price, line_status, created_at")
+        .order("created_at", { ascending:true });
+
+      if(e2) throw e2;
+
+      const map = new Map();
+      (orders||[]).forEach(o => map.set(o.id, { ...o, items: [] }));
+      (items||[]).forEach(it => {
+        const o = map.get(it.order_id);
+        if(o) o.items.push(it);
       });
-      return changed;
+
+      return Array.from(map.values());
     }
 
     function orderProgress(o){
-      const items = o.items || [];
-      const total = items.length;
-      const ready = items.filter(it => it.line_status === "ready").length;
-      const done = (total > 0 && ready === total);
+      const total = (o.items||[]).length;
+      const ready = (o.items||[]).filter(it=>it.line_status==="ready").length;
+      const done = (total>0 && ready===total);
       return { total, ready, done };
     }
 
-    function render(){
-      const all = loadJSON(K.orders, []);
-      const changed = normalizeOrders(all);
-      if(changed) saveJSON(K.orders, all);
+    function renderKitchen(allOrders){
+      window.__kitchenCache = allOrders;
 
       const f = filterEl.value;
-
-      // attivi = non archiviati
-      let rows = all.filter(o => o.status !== "archived");
+      let rows = (allOrders||[]).filter(o => o.status !== "archived");
 
       if(f !== "all"){
         rows = rows.filter(o => {
           const p = orderProgress(o);
-          return f === "done" ? p.done : !p.done; // open
+          return f === "done" ? p.done : !p.done;
         });
       }
-
-      rows.sort((a,b) => String(b.created_at).localeCompare(String(a.created_at)));
 
       ordersGrid.innerHTML = "";
       if(rows.length === 0){
@@ -366,7 +440,7 @@
         return;
       }
 
-      rows.forEach(o => {
+      rows.forEach(o=>{
         const p = orderProgress(o);
         const headerBadge = p.done
           ? `<span class="badge done">Completa (${p.ready}/${p.total})</span>`
@@ -374,11 +448,10 @@
 
         const card = document.createElement("div");
         card.className = "card";
-
         card.innerHTML = `
           <div class="topline">
             <div>
-              <h2 class="title">Tavolo ${o.table}</h2>
+              <h2 class="title">Tavolo ${o.table_code || "—"}</h2>
               <div class="muted">Ricevuta alle ${fmtTime(o.created_at)} · ID ${o.id}</div>
             </div>
             <div class="row">
@@ -388,23 +461,20 @@
           </div>
 
           <div class="list">
-            ${(o.items || []).map(it => {
+            ${(o.items||[]).map(it=>{
               const ready = it.line_status === "ready";
               return `
                 <div class="item">
                   <div class="itLeft">
                     <div class="itName">${it.name}</div>
-                    <div class="muted small">
-                      qty: <strong>${it.qty}</strong>
-                    </div>
+                    <div class="muted small">qty: <strong>${it.qty}</strong></div>
                   </div>
-
                   <div class="row" style="justify-content:flex-end;">
                     <span class="qtyPill">x${it.qty}</span>
                     <span class="lineState ${ready ? "ready" : ""}">${ready ? "Pronto" : "Da fare"}</span>
                     ${ready
-                      ? `<button class="soft mini" data-act="undoLine" data-oid="${o.id}" data-lid="${it.line_id}">Non pronto</button>`
-                      : `<button class="primary mini" data-act="readyLine" data-oid="${o.id}" data-lid="${it.line_id}">Pronto</button>`
+                      ? `<button class="soft mini" data-act="undoLine" data-lid="${it.id}">Non pronto</button>`
+                      : `<button class="primary mini" data-act="readyLine" data-lid="${it.id}">Pronto</button>`
                     }
                   </div>
                 </div>
@@ -413,45 +483,30 @@
           </div>
         `;
 
-        // handlers
-        card.querySelectorAll("button[data-act]").forEach(btn => {
-          btn.addEventListener("click", () => {
+        card.querySelectorAll("button[data-act]").forEach(btn=>{
+          btn.addEventListener("click", async ()=>{
             const act = btn.dataset.act;
-            const oid = btn.dataset.oid;
-            const lid = btn.dataset.lid;
-
-            const all = loadJSON(K.orders, []);
-            const changed = normalizeOrders(all);
-            if(changed) saveJSON(K.orders, all);
-
-            const oidx = all.findIndex(x => x.id === oid);
-            if(oidx < 0) return;
 
             if(act === "archive"){
-              // archiviabile solo se davvero completa (doppio check)
-              const pp = orderProgress(all[oidx]);
+              const pp = orderProgress(o);
               if(!pp.done) return alert("Puoi archiviare solo quando tutte le righe sono pronte.");
-              all[oidx].status = "archived";
-              saveJSON(K.orders, all);
-              render();
+              const { error } = await supabase.from("orders").update({ status:"archived" }).eq("id", o.id);
+              if(error) return alert(error.message);
+              await refreshKitchen();
               return;
             }
 
-            // per-riga
-            const items = all[oidx].items || [];
-            const itx = items.findIndex(x => x.line_id === lid);
-            if(itx < 0) return;
-
+            const lid = btn.dataset.lid;
             if(act === "readyLine"){
-              items[itx].line_status = "ready";
-              saveJSON(K.orders, all);
-              render();
+              const { error } = await supabase.from("order_items").update({ line_status:"ready" }).eq("id", lid);
+              if(error) return alert(error.message);
+              await refreshKitchen();
               return;
             }
             if(act === "undoLine"){
-              items[itx].line_status = "todo";
-              saveJSON(K.orders, all);
-              render();
+              const { error } = await supabase.from("order_items").update({ line_status:"todo" }).eq("id", lid);
+              if(error) return alert(error.message);
+              await refreshKitchen();
               return;
             }
           });
@@ -461,49 +516,44 @@
       });
     }
 
-    // Notifica nuova comanda: confronta lista ordini non archiviati
-    let lastHash = "";
-    function poll(){
-      const all = loadJSON(K.orders, []);
-      const changed = normalizeOrders(all);
-      if(changed) saveJSON(K.orders, all);
-
-      const active = all.filter(o => o.status !== "archived");
-      const hash = active.map(o => o.id).sort().join("|");
-      if(lastHash && hash !== lastHash){
-        beep();
-        vibrate();
-        statusMsg.textContent = "Nuova comanda arrivata ✅";
-        setTimeout(() => statusMsg.textContent = "", 1600);
+    async function refreshKitchen(){
+      statusMsg.textContent = "Carico...";
+      try{
+        const all = await fetchOrdersWithItems();
+        renderKitchen(all);
+        statusMsg.textContent = "";
+      }catch(e){
+        statusMsg.textContent = "Errore: " + (e?.message || "riprova");
       }
-      lastHash = hash;
-      render();
     }
 
-    document.getElementById("refreshBtn").addEventListener("click", poll);
-    filterEl.addEventListener("change", render);
+    // ===== Realtime: se arrivano nuove righe/ordini, notifica =====
+    let lastSeen = "";
+    function newHash(all){
+      return (all||[]).map(o=>o.id).sort().join("|");
+    }
 
-    document.getElementById("demoBtn").addEventListener("click", () => {
-      const now = new Date();
-      const o = {
-        id: "o_" + now.getTime(),
-        table: "T07",
-        status: "sent",
-        created_at: now.toISOString(),
-        items: [
-          { menu_item_id:"mi3", name:"Crudo di mare (mix)", qty: 1, price: 22, line_status:"todo" },
-          { menu_item_id:"mi1", name:"Spaghetti alle vongole", qty: 2, price: 14, line_status:"todo" },
-          { menu_item_id:"mi2", name:"Frittura di calamari", qty: 1, price: 16, line_status:"todo" }
-        ]
-      };
-      const all = loadJSON(K.orders, []);
-      all.unshift(o);
-      saveJSON(K.orders, all);
-      poll();
-    });
+    (async ()=>{
+      const s = await requireKitchen();
+      if(!s) return;
 
-    poll();
-    setInterval(poll, 2500);
+      await refreshKitchen();
+
+      supabase
+        .channel("rt-kitchen")
+        .on("postgres_changes", { event:"INSERT", schema:"public", table:"orders" }, async ()=>{
+          beep(); vibrate();
+          await refreshKitchen();
+        })
+        .on("postgres_changes", { event:"INSERT", schema:"public", table:"order_items" }, async ()=>{
+          beep(); vibrate();
+          await refreshKitchen();
+        })
+        .on("postgres_changes", { event:"UPDATE", schema:"public", table:"order_items" }, async ()=>{
+          await refreshKitchen();
+        })
+        .subscribe();
+    })();
   </script>
 </body>
 </html>
