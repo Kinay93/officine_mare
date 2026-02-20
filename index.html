@@ -347,6 +347,14 @@
       #bgImg{ opacity: .48; }
     }
   </style>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "INCOLLA_PROJECT_URL";
+    const SUPABASE_ANON_KEY = "INCOLLA_ANON_KEY";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
 </head>
 
 <body>
@@ -433,7 +441,7 @@
                 <select id="persone" name="persone" required>
                   <option value="">Seleziona</option>
                   <option>1</option><option>2</option><option>3</option><option>4</option>
-                  <option>5</option><option>6</option><option>7</option><option>8+</option>
+                  <option>5</option><option>6</option><option>7</option><option>8</option>
                 </select>
               </div>
               <div>
@@ -610,16 +618,31 @@
     dateEl.addEventListener("change", () => { validateDay(); fillTimes(); });
     turnoEl.addEventListener("change", fillTimes);
 
-    // submit demo (non salva su DB)
-    document.getElementById("contactForm").addEventListener("submit", (e) => {
+    function normalizePhone(p){
+      if(!p) return "";
+      let s = String(p).trim().replace(/[^\d+]/g,"");
+      if(s && !s.startsWith("+")){
+        if(s.startsWith("39")) s = "+" + s;
+        else s = "+39" + s;
+      }
+      return s;
+    }
+
+    // submit -> SALVA SU SUPABASE
+    document.getElementById("contactForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
       const data = new FormData(e.target);
-      const nome = data.get("nome");
-      const dataSel = data.get("data");
-      const turnoSel = data.get("turno");
-      const oraSel = data.get("ora");
-      const persone = data.get("persone");
+      const nome = String(data.get("nome") || "").trim();
+      const tel = normalizePhone(String(data.get("telefono") || "").trim());
+      const dataSel = String(data.get("data") || "");
+      const turnoSel = String(data.get("turno") || "");
+      const oraSel = String(data.get("ora") || "");
+      const personeRaw = String(data.get("persone") || "");
+      const email = String(data.get("email") || "").trim();
+      const note = String(data.get("note") || "").trim();
+
+      const persone = Number(personeRaw || 0);
 
       if(isMonday(dataSel)){
         setStatus("Lunedì chiuso: non è possibile prenotare.", "bad");
@@ -633,11 +656,42 @@
         setStatus("Seleziona un orario valido.", "bad");
         return;
       }
+      if(!nome || !tel || !dataSel || !persone){
+        setStatus("Compila Nome, Telefono, Data e Persone.", "bad");
+        return;
+      }
 
-      setStatus(`Richiesta inviata ✅ (${nome}, ${persone} persone, ${dataSel} ${oraSel} - ${turnoSel}). Ti ricontattiamo per conferma.`, "ok");
-      e.target.reset();
-      validateDay();
-      fillTimes();
+      submitBtn.disabled = true;
+      setStatus("Invio richiesta...", null);
+
+      try{
+        const payload = {
+          reservation_date: dataSel,
+          reservation_time: oraSel + ":00",
+          people: persone,
+          customer_name: nome,
+          customer_phone: tel,
+          customer_email: email || null,
+          notes: note || null,
+          status: "pending",
+          table_code: null
+        };
+
+        const { error } = await supabase
+          .from("reservations")
+          .insert([payload]);
+
+        if(error) throw error;
+
+        setStatus("Richiesta inviata ✅ Ti ricontattiamo per conferma.", "ok");
+        e.target.reset();
+        validateDay();
+        fillTimes();
+      }catch(err){
+        setStatus("Errore invio: " + (err?.message || "riprova"), "bad");
+      }finally{
+        submitBtn.disabled = false;
+      }
     });
 
     resetBtn.addEventListener("click", () => {
