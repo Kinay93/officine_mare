@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Officina Mare</title>
-  <meta name="description" content="Ristorante di pesce - Officina Mare. Menù del giorno e prenotazioni." />
+  <title>Officine Mare</title>
+  <meta name="description" content="Ristorante di pesce - Officine Mare. Menù del giorno e prenotazioni." />
   <link rel="icon" href="favicon.ico" />
 
   <style>
@@ -23,13 +23,18 @@
       --max: 1900px;
       --radiusXL: 30px;
 
-      --headerH: 82px;
+      /* fallback: poi viene sovrascritto da JS con l'altezza reale */
+      --headerReal: 82px;
       --curveH: 20px;
+
+      --safeTop: env(safe-area-inset-top, 0px);
     }
 
     *{ box-sizing:border-box; }
 
-    html{ scroll-padding-top: calc(var(--headerH) + 28px); }
+    html{
+      scroll-padding-top: calc(var(--headerReal) + var(--curveH) + 18px);
+    }
 
     body{
       margin:0;
@@ -45,7 +50,7 @@
         linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 42%, var(--bgBot) 100%);
     }
 
-    /* ===== SFONDO MARE (PNG) ===== */
+    /* ===== SFONDO ===== */
     #bgImg{
       position: fixed;
       inset: 0;
@@ -59,7 +64,6 @@
       filter: saturate(1.08) contrast(1.05) blur(.45px);
     }
 
-    /* overlay sempre sopra */
     #overlay{
       position: fixed;
       inset: 0;
@@ -68,7 +72,7 @@
 
       background:
         radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.12), transparent 60%),
-        linear-gradient(to bottom, rgba(22,62,90,.35), rgba(22,62,90,.78));
+        linear-gradient(to bottom, rgba(22,62,90,.30), rgba(22,62,90,.78));
     }
 
     #app{
@@ -87,8 +91,10 @@
     header{
       position: fixed;
       top:0; left:0; right:0;
-      height: var(--headerH);
       z-index: 1000;
+
+      /* includiamo safe-area su mobile */
+      padding-top: var(--safeTop);
 
       background: rgba(22,62,90,.78);
       backdrop-filter: blur(12px);
@@ -96,19 +102,21 @@
     }
 
     .header-inner{
-      height:100%;
+      height: 82px; /* altezza "design", quella reale verrà misurata */
       display:flex;
       align-items:center;
       justify-content:center;
       gap: 18px;
+      padding: 10px 0;
     }
 
+    /* FOTO LATERALI più "barra" */
     .side-photo{
-      width: clamp(200px, 18vw, 420px);
-      height: 60px;
-      border-radius: 20px;
+      width: clamp(240px, 26vw, 520px);
+      height: 64px;
+      border-radius: 22px;
       overflow:hidden;
-      box-shadow: 0 10px 26px rgba(0,0,0,.28);
+      box-shadow: 0 12px 28px rgba(0,0,0,.28);
       border: 1px solid rgba(255,255,255,.18);
       background: rgba(255,255,255,.06);
       flex: 0 0 auto;
@@ -118,23 +126,36 @@
       height:100%;
       object-fit: cover;
       display:block;
+      transform: scale(1.03);
     }
 
+    /* Brand "marinaio" senza bolla grossa */
     .brand{
       font-weight: 950;
-      letter-spacing: .5px;
-      font-size: clamp(24px, 2.4vw, 40px);
-      padding: 10px 26px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.12);
-      border: 1px solid rgba(255,255,255,.18);
-      box-shadow: 0 10px 22px rgba(0,0,0,.18);
+      letter-spacing: 1px;
+      font-size: clamp(24px, 2.6vw, 44px);
+      padding: 0;
+      margin: 0 4px;
       white-space: nowrap;
+      text-shadow: 0 2px 10px rgba(0,0,0,.25);
+    }
+    .brand::before,
+    .brand::after{
+      content:"";
+      display:inline-block;
+      width: 18px;
+      height: 2px;
+      background: rgba(255,255,255,.70);
+      border-radius: 999px;
+      margin: 0 12px;
+      vertical-align: middle;
+      opacity: .75;
     }
 
+    /* curva concava sotto header */
     .header-curve{
       position: fixed;
-      top: var(--headerH);
+      top: var(--headerReal);
       left:0; right:0;
       height: var(--curveH);
       z-index: 999;
@@ -158,12 +179,13 @@
 
     /* ===== MAIN ===== */
     main{
-      padding-top: calc(var(--headerH) + var(--curveH) + 44px);
+      /* fondamentale: usiamo headerReal misurato */
+      padding-top: calc(var(--headerReal) + var(--curveH) + 22px);
       padding-bottom: 60px;
     }
 
     section, #menu, #prenota, #contatti{
-      scroll-margin-top: calc(var(--headerH) + 28px);
+      scroll-margin-top: calc(var(--headerReal) + var(--curveH) + 18px);
     }
 
     .hero{
@@ -183,6 +205,7 @@
       margin:0;
       color: rgba(255,255,255,.92);
       max-width: 78ch;
+      font-size: clamp(14px, 1.2vw, 18px);
     }
 
     .wave-line{
@@ -211,10 +234,17 @@
       border: 1px solid rgba(255,255,255,.16);
       box-shadow: 0 14px 26px rgba(0,0,0,.14);
       color: rgba(255,255,255,.92);
-      font-weight: 750;
+      font-weight: 800;
       backdrop-filter: blur(8px);
       white-space: nowrap;
+      text-decoration: none;
     }
+    .chip a{
+      color: inherit;
+      text-decoration: none; /* toglie sottolineatura blu */
+    }
+    .chip:hover{ filter: brightness(1.05); }
+
     .chip .dot{
       width: 10px; height: 10px;
       border-radius: 999px;
@@ -356,8 +386,9 @@
 
     @media (max-width: 560px){
       .side-photo{ display:none; }
-      :root{ --headerH: 74px; --curveH: 16px; }
-      .brand{ padding: 10px 18px; }
+      :root{ --curveH: 16px; }
+      .header-inner{ height: 74px; }
+      .brand{ font-size: 34px; }
       button{ width: 100%; min-width: unset; }
       #bgImg{ opacity: .48; }
     }
@@ -365,16 +396,21 @@
 </head>
 
 <body>
-  <!-- SFONDO: adesso è PNG -->
   <img id="bgImg" src="mare.png" alt="" aria-hidden="true">
   <div id="overlay" aria-hidden="true"></div>
 
   <div id="app">
-    <header>
+    <header id="siteHeader">
       <div class="container header-inner">
-        <div class="side-photo" aria-hidden="true"><img src="barriera_corallina.jpg" alt=""></div>
-        <div class="brand">Officina Mare</div>
-        <div class="side-photo" aria-hidden="true"><img src="spaghetti_vongole.jpg" alt=""></div>
+        <div class="side-photo" aria-hidden="true">
+          <img src="barriera_corallina.jpg" alt="">
+        </div>
+
+        <div class="brand">Officine Mare</div>
+
+        <div class="side-photo" aria-hidden="true">
+          <img src="spaghetti_vongole.jpg" alt="">
+        </div>
       </div>
     </header>
 
@@ -473,23 +509,21 @@
       </section>
 
       <footer>
-        <div class="small">© <span id="year"></span> — Officina Mare</div>
+        <div class="small">© <span id="year"></span> — Officine Mare</div>
       </footer>
     </main>
   </div>
 
   <script>
-    // Debug rapido: se mare.png non è trovato, lo vedi in console
-    document.getElementById("bgImg").addEventListener("error", () => {
-      console.error("❌ Non riesco a caricare mare.png: controlla nome/percorso (stessa cartella di index.html).");
-    });
-
+    // 1) anno
     document.getElementById("year").textContent = new Date().getFullYear();
 
+    // 2) demo info
     document.getElementById("btnInfo").addEventListener("click", () => {
       document.getElementById("msg").textContent = "Oggi consigliamo crudi e grigliata di mare 🦞";
     });
 
+    // 3) demo form
     document.getElementById("contactForm").addEventListener("submit", (e) => {
       e.preventDefault();
       const data = new FormData(e.target);
@@ -500,6 +534,19 @@
         `Richiesta inviata ✅ (${nome}, ${persone} persone, ${quando}). Ti ricontattiamo per conferma.`;
       e.target.reset();
     });
+
+    // 4) FIX MOBILE: usa l'altezza reale dell'header per padding/anchor
+    function setHeaderRealHeight(){
+      const header = document.getElementById("siteHeader");
+      if(!header) return;
+      const h = Math.ceil(header.getBoundingClientRect().height);
+      document.documentElement.style.setProperty("--headerReal", h + "px");
+    }
+    window.addEventListener("load", setHeaderRealHeight, { once:true });
+    window.addEventListener("resize", setHeaderRealHeight);
+    // dopo caricamento font/immagini
+    setTimeout(setHeaderRealHeight, 50);
+    setTimeout(setHeaderRealHeight, 250);
   </script>
 </body>
 </html>
