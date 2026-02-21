@@ -1,0 +1,302 @@
+// backend.js
+(function () {
+  if (!window.supabase) {
+    console.error("Supabase JS non caricato. Aggiungi lo script CDN @supabase/supabase-js v2.");
+    return;
+  }
+
+  const { createClient } = window.supabase;
+
+  function getClient() {
+    if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) {
+      throw new Error("Manca SUPABASE_URL o SUPABASE_ANON_KEY (supabase-config.js).");
+    }
+    if (!window.__sb) {
+      window.__sb = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+        },
+        realtime: { params: { eventsPerSecond: 10 } },
+      });
+    }
+    return window.__sb;
+  }
+
+  // ---------- AUTH ----------
+  async function signIn(email, password) {
+    const sb = getClient();
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    return data;
+  }
+
+  async function signOut() {
+    const sb = getClient();
+    const { error } = await sb.auth.signOut();
+    if (error) throw error;
+  }
+
+  async function getSession() {
+    const sb = getClient();
+    const { data, error } = await sb.auth.getSession();
+    if (error) throw error;
+    return data.session;
+  }
+
+  async function requireAuth() {
+    const session = await getSession();
+    if (!session) throw new Error("NON_AUTHENTICATED");
+    return session;
+  }
+
+  async function getMyRole() {
+    const sb = getClient();
+    const session = await getSession();
+    if (!session) return null;
+
+    // staff_users: user_id = auth.uid()
+    const { data, error } = await sb
+      .from("staff_users")
+      .select("role")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data?.role || null;
+  }
+
+  // ---------- PRENOTAZIONI (cliente insert, staff read/update) ----------
+  async function createBooking(payload) {
+    // payload: {nome, telefono, email, data, turno, ora, persone, note}
+    const sb = getClient();
+    const { data, error } = await sb.from("bookings").insert(payload).select().single();
+    if (error) throw error;
+    return data;
+  }
+
+  async function listBookings({ dayISO, status, q } = {}) {
+    // staff only (RLS)
+    const sb = getClient();
+    await requireAuth();
+
+    let query = sb
+      .from("bookings")
+      .select("*")
+      .order("data", { ascending: true })
+      .order("ora", { ascending: true });
+
+    if (dayISO) query = query.eq("data", dayISO);
+    if (status && status !== "all") query = query.eq("status", status);
+
+    if (q && q.trim()) {
+      const term = q.trim();
+      // ricerca semplice su nome/telefono/email (ilike)
+      query = query.or(
+        `nome.ilike.%${term}%,telefono.ilike.%${term}%,email.ilike.%${term}%`
+      );
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function updateBooking(id, patch) {
+    const sb = getClient();
+    await requireAuth();
+    const { data, error } = await sb.from("bookings").update(patch).eq("id", id).select().single();
+    if (error) throw error;
+    return data;
+  }
+
+  // ---------- ORDINI (orders + order_items) ----------
+  async function createOrder({ table_code, note, items }) {
+    // staff only
+    // items: [{name, qty, price}]
+    const sb = getClient();
+    await requireAuth();
+
+    // 1) crea order
+    const { data: order, error: e1 } = await sb
+      .from("orders")
+      .insert({ table_code, note: note || null, status: "sent" })
+      .select()
+      .single();
+
+    if (e1) throw e1;
+
+    // 2) inserisci righe
+    const rows = (items || []).map((it) => ({
+      order_id: order.id,
+      name: it.name,
+      qty: Number(it.qty || 1),
+      price: it.price != null ? Number(it.price) : null,
+      line_status: "todo",
+      served: false,
+      ready_at: null,
+      served_at: null,
+    }));
+
+    if (rows.length) {
+      const { error: e2 } = await sb.from("order_items").insert(rows);
+      if (e2) throw e2;
+    }
+
+    return order;
+  }
+
+  async function getActiveOrdersWithItems() {
+    // staff only
+    const sb = getClient();
+    await requireAuth();
+
+    // join manuale (supabase nested select)
+    const { data, error } = await sb
+      .from("orders")
+      .select("*, order_items(*)")
+      .neq("status", "archived")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function setLineReady(lineId, ready) {
+    // cucina: ready/not ready
+    const sb = getClient();
+    await requireAuth();
+
+    const patch = ready
+      ? { line_status: "ready", ready_at: new Date().toISOString() }
+      : { line_status: "todo", ready_at: null };
+
+    const { data, error } = await sb
+      .from("order_items")
+      .update(patch)
+      .eq("id", lineId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async function setLineServed(lineId, served) {
+    // admin sala: served/not served + timer start
+    const sb = getClient();
+    await requireAuth();
+
+    const patch = served
+      ? { served: true, served_at: new Date().toISOString() }
+      : { served: false, served_at: null };
+
+    const { data, error } = await sb
+      .from("order_items")
+      .update(patch)
+      .eq("id", lineId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async function archiveOrderIfComplete(orderId) {
+    // cucina: archivia solo quando TUTTE le righe sono ready
+    const sb = getClient();
+    await requireAuth();
+
+    // prendi righe
+    const { data: items, error: e1 } = await sb
+      .from("order_items")
+      .select("id,line_status")
+      .eq("order_id", orderId);
+
+    if (e1) throw e1;
+
+    const allReady = (items || []).length > 0 && items.every((x) => x.line_status === "ready");
+    if (!allReady) throw new Error("ORDER_NOT_COMPLETE");
+
+    const { data, error: e2 } = await sb
+      .from("orders")
+      .update({ status: "archived" })
+      .eq("id", orderId)
+      .select()
+      .single();
+
+    if (e2) throw e2;
+    return data;
+  }
+
+  // ---------- REALTIME ----------
+  // callback riceve {type, table, new, old}
+  function subscribeRealtime(onEvent) {
+    const sb = getClient();
+    // ascolta cambi su bookings/orders/order_items
+    const channel = sb
+      .channel("om-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings" },
+        (payload) => onEvent({ table: "bookings", ...payload })
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders" },
+        (payload) => onEvent({ table: "orders", ...payload })
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "order_items" },
+        (payload) => onEvent({ table: "order_items", ...payload })
+      )
+      .subscribe();
+
+    return () => sb.removeChannel(channel);
+  }
+
+  // ---------- SMS (placeholder: Edge Function) ----------
+  // NON mettere segreti in frontend.
+  // Questa chiama una edge function "send-sms" che tu creerai dopo.
+  async function sendSMS({ to, message }) {
+    const sb = getClient();
+    await requireAuth(); // solo staff
+    const { data, error } = await sb.functions.invoke("send-sms", {
+      body: { to, message },
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  // Export
+  window.OM = {
+    sb: getClient,
+
+    // auth
+    signIn,
+    signOut,
+    getSession,
+    requireAuth,
+    getMyRole,
+
+    // bookings
+    createBooking,
+    listBookings,
+    updateBooking,
+
+    // orders
+    createOrder,
+    getActiveOrdersWithItems,
+    setLineReady,
+    setLineServed,
+    archiveOrderIfComplete,
+
+    // realtime
+    subscribeRealtime,
+
+    // sms
+    sendSMS,
+  };
+})();
