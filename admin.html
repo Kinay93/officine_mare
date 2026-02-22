@@ -2,36 +2,73 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Officine Mare — Admin</title>
+  <meta name="description" content="Admin: gestione tavoli, prenotazioni e comande." />
   <link rel="icon" href="favicon.ico" />
 
-  <!-- ✅ Supabase JS v2 (UMD) -->
+  <!-- Supabase JS + tuoi file -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="backend.js"></script>
 
   <style>
     :root{
-      --bgTop:#245b7c; --bgMid:#1b4968; --bgBot:#163e5a;
+      --bgTop:#2f6f91;
+      --bgMid:#2a648a;
+      --bgBot:#1f5677;
+
       --paper: rgba(255,255,255,.95);
-      --text:#0b2236; --muted: rgba(11,34,54,.68);
+      --text:#0b2236;
+      --muted: rgba(11,34,54,.68);
       --borderD: rgba(11,34,54,.10);
       --shadow: 0 22px 70px rgba(0,0,0,.20);
-      --max: 1600px; --radiusXL: 26px;
+
+      --max: 1800px;
+      --radiusXL: 26px;
+
+      --headerReal: 74px;
       --safeTop: env(safe-area-inset-top, 0px);
-      --headerReal: 86px;
+      --topBuffer: 18px;
     }
+
     *{ box-sizing:border-box; }
+    html{ scroll-padding-top: calc(var(--headerReal) + var(--topBuffer)); }
+
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color:#fff;
       overflow-x:hidden;
       background:
-        radial-gradient(1100px 480px at 50% -180px, rgba(255,255,255,.16), transparent 62%),
-        radial-gradient(900px 420px at 15% 10%, rgba(255,255,255,.10), transparent 60%),
-        radial-gradient(900px 420px at 85% 14%, rgba(255,255,255,.08), transparent 62%),
+        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.16), transparent 60%),
+        radial-gradient(800px 420px at 12% 8%, rgba(255,255,255,.10), transparent 55%),
+        radial-gradient(900px 520px at 88% 14%, rgba(255,255,255,.08), transparent 55%),
         linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 45%, var(--bgBot) 100%);
     }
+
+    #bgImg{
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100dvh;
+      object-fit: cover;
+      z-index: 0;
+      pointer-events: none;
+      opacity: .58;
+      filter: saturate(1.06) contrast(1.03);
+    }
+    #overlay{
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.10), transparent 60%),
+        linear-gradient(to bottom, rgba(18,55,78,.14), rgba(18,55,78,.86));
+    }
+    #app{ position: relative; z-index: 2; min-height: 100vh; }
+
     .container{
       width: min(96vw, var(--max));
       margin: 0 auto;
@@ -39,54 +76,48 @@
     }
 
     header{
-      position: fixed;
-      top:0; left:0; right:0;
-      z-index: 60;
+      position: sticky;
+      top:0;
+      z-index: 1000;
       padding-top: var(--safeTop);
-      background: rgba(22,62,90,.78);
+      background: rgba(18,55,78,.74);
       backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255,255,255,.16);
+      border-bottom: 1px solid rgba(255,255,255,.18);
     }
+
     .header-inner{
-      min-height: 86px;
+      min-height: 74px;
       display:flex;
       align-items:center;
       gap: 12px;
       padding: 10px 0;
       flex-wrap: wrap;
     }
+
     .brand{
       font-weight: 950;
-      letter-spacing: .6px;
-      font-size: 20px;
+      letter-spacing: 1px;
+      font-size: clamp(18px, 2.2vw, 24px);
+      white-space: nowrap;
       display:flex;
       align-items:center;
       gap:10px;
-      flex: 1 1 auto;
-      min-width: 240px;
-      white-space: nowrap;
     }
-    .tabs{
+
+    .right-actions{
+      margin-left:auto;
       display:flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items:center;
-      justify-content:flex-start;
-      flex: 1 1 auto;
-    }
-    .actions{
-      display:flex;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
       align-items:center;
       justify-content:flex-end;
-      flex: 1 1 auto;
     }
-    .chip{
+
+    .pill{
       padding: 10px 12px;
       border-radius: 999px;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.18);
       color: rgba(255,255,255,.92);
       font-weight: 900;
       cursor: pointer;
@@ -94,19 +125,36 @@
       display:inline-flex;
       align-items:center;
       gap: 8px;
-      font-size: 13px;
-      user-select:none;
+      user-select: none;
     }
-    .chip.active{
-      background: rgba(255,255,255,.16);
-      border-color: rgba(255,255,255,.22);
-    }
+    .pill:active{ transform: translateY(1px); }
 
-    main{ padding: calc(var(--headerReal) + 14px) 0 60px; }
+    main{ padding: 18px 0 60px; }
+
+    .tabs{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      align-items:center;
+    }
+    .tab{
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.10);
+      color: rgba(255,255,255,.92);
+      font-weight: 950;
+      cursor: pointer;
+    }
+    .tab.active{
+      background: rgba(255,255,255,.18);
+      border-color: rgba(255,255,255,.30);
+    }
 
     .grid{
       display:grid;
-      grid-template-columns: 1.3fr .9fr;
+      grid-template-columns: 1.05fr .95fr;
       gap: 14px;
       align-items:start;
     }
@@ -121,27 +169,32 @@
       border: 1px solid var(--borderD);
       box-shadow: var(--shadow);
       padding: 16px;
+      position: relative;
       overflow:hidden;
     }
-    .title{ font-weight: 950; font-size: 18px; margin:0 0 6px; }
+    .card h2{ margin:0 0 10px; font-size: 18px; }
     .muted{ color: var(--muted); font-size: 13px; }
 
     .row{ display:flex; gap: 10px; flex-wrap: wrap; align-items:center; }
+    .row > *{ flex:1; min-width: 180px; }
+
     input, select, textarea{
       width:100%;
-      padding: 10px 12px;
-      border-radius: 14px;
+      padding: 11px 12px;
+      border-radius: 16px;
       border: 1px solid rgba(11,34,54,.18);
       background: rgba(255,255,255,.98);
       color: var(--text);
       outline:none;
     }
+
     button{
       padding: 10px 12px;
       border-radius: 999px;
       border: 1px solid rgba(11,34,54,.16);
       cursor:pointer;
       font-weight: 950;
+      white-space: nowrap;
     }
     .primary{
       color:#fff;
@@ -158,37 +211,53 @@
       color: rgba(140,20,30,.95);
       border-color: rgba(140,20,30,.18);
     }
-    .mini{ padding: 8px 10px; font-size: 12px; }
+    .mini{
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
 
-    /* tab sections */
-    .section{ display:none; }
-    .section.active{ display:block; }
+    .tableGrid{
+      display:grid;
+      grid-template-columns: repeat(5, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    @media (max-width: 1100px){
+      .tableGrid{ grid-template-columns: repeat(3, minmax(140px, 1fr)); }
+    }
+    @media (max-width: 560px){
+      .tableGrid{ grid-template-columns: repeat(2, minmax(140px, 1fr)); }
+      .right-actions{ width: 100%; justify-content:flex-start; }
+      .pill{ width: 100%; justify-content:center; }
+      .tab{ width: 100%; }
+    }
 
-    /* orders list */
-    .orders{ margin-top: 10px; display:grid; gap: 10px; }
-    .orderCard{
+    .tCard{
       border-radius: 18px;
-      border: 1px solid rgba(11,34,54,.10);
+      border: 1px solid rgba(11,34,54,.12);
       background: rgba(255,255,255,.98);
       padding: 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.08);
     }
-    .orderHead{
-      display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:flex-start;
-    }
-    .badge{
-      display:inline-flex; align-items:center; gap: 6px;
-      padding: 6px 10px; border-radius: 999px;
-      font-weight: 950; font-size: 12px;
+    .tName{ font-weight: 950; }
+    .tState{
+      font-weight: 950;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
       border: 1px solid rgba(11,34,54,.12);
-      background: rgba(36,91,124,.08);
-      color: rgba(11,34,54,.92);
-      white-space: nowrap;
+      background: rgba(36,91,124,.06);
     }
-    .badge.open{ background: rgba(255,180,90,.18); }
-    .badge.done{ background: rgba(40,140,80,.16); }
-    .list{ margin-top: 10px; display:grid; gap: 8px; }
+    .tState.busy{ background: rgba(255,180,90,.18); }
+    .tState.free{ background: rgba(40,140,80,.16); }
+
+    .list{ display:grid; gap: 10px; margin-top: 10px; }
     .item{
-      border-radius: 14px;
+      border-radius: 16px;
       border: 1px solid rgba(11,34,54,.10);
       background: rgba(255,255,255,.98);
       padding: 10px;
@@ -197,23 +266,9 @@
       justify-content:space-between;
       gap: 10px;
     }
+    .itLeft{ min-width: 0; }
     .itName{ font-weight: 950; font-size: 13px; }
-    .lineState{
-      display:inline-flex;
-      align-items:center;
-      gap: 6px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-weight: 950;
-      font-size: 12px;
-      border: 1px solid rgba(11,34,54,.12);
-      background: rgba(36,91,124,.06);
-      color: rgba(11,34,54,.90);
-    }
-    .lineState.ready{ background: rgba(40,140,80,.16); border-color: rgba(40,140,80,.25); }
-    .lineState.served{ background: rgba(70,140,230,.16); border-color: rgba(70,140,230,.25); }
-
-    .timerPill{
+    .pillSmall{
       display:inline-flex;
       align-items:center;
       justify-content:center;
@@ -222,358 +277,456 @@
       font-weight: 950;
       border: 1px solid rgba(11,34,54,.12);
       background: rgba(36,91,124,.06);
+      min-width: 46px;
       font-size: 12px;
-      min-width: 76px;
     }
+
+    .statusLine{
+      font-size: 13px;
+      color: rgba(11,34,54,.72);
+      margin-top: 10px;
+    }
+    .statusLine.bad{ color: rgba(160,30,30,.88); font-weight: 900; }
+    .statusLine.ok{ color: rgba(20,110,60,.88); font-weight: 900; }
+
+    /* LOGIN modal */
+    .modal{
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(6px);
+    }
+    .modal.show{ display:flex; }
+    .loginBox{
+      width: min(520px, 100%);
+      border-radius: 26px;
+      background: rgba(255,255,255,.96);
+      color: var(--text);
+      border: 1px solid rgba(11,34,54,.14);
+      box-shadow: 0 22px 70px rgba(0,0,0,.28);
+      padding: 18px;
+    }
+    .loginBox h2{ margin:0 0 8px; }
+    .loginBox p{ margin:0 0 12px; color: var(--muted); }
+    .loginBox button{ width: 100%; }
+
+    .hidden{ display:none !important; }
   </style>
 </head>
 
 <body>
-  <header id="siteHeader">
-    <div class="container header-inner">
-      <div class="brand">⚓ Officine Mare — Admin</div>
+  <img id="bgImg" src="mare.png" alt="" aria-hidden="true">
+  <div id="overlay" aria-hidden="true"></div>
 
-      <div class="tabs">
-        <button class="chip active" data-tab="gestione">Gestione</button>
-        <button class="chip" data-tab="menu">Menù</button>
-        <button class="chip" data-tab="vista">Vista tavoli</button>
+  <div id="app">
+    <header id="siteHeader">
+      <div class="container header-inner">
+        <div class="brand">🧭 Officine Mare — Admin</div>
+
+        <div class="right-actions">
+          <a class="pill" href="kitchen.html">🍳 Cucina</a>
+          <button class="pill" id="logoutBtn">🚪 Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="tabs" role="tablist" aria-label="Sezioni admin">
+        <button class="tab active" data-tab="tab-tavoli" role="tab" aria-selected="true">Tavoli & Comande</button>
+        <button class="tab" data-tab="tab-prenotazioni" role="tab" aria-selected="false">Prenotazioni</button>
+        <button class="tab" data-tab="tab-menu" role="tab" aria-selected="false">Menù</button>
+        <button class="tab" data-tab="tab-vista" role="tab" aria-selected="false">Vista tavoli</button>
       </div>
 
-      <div class="actions">
-        <a class="chip" href="kitchen.html">🍳 Cucina</a>
-        <button class="chip" id="refreshBtn">Aggiorna</button>
-      </div>
+      <!-- TAB: Tavoli & Comande -->
+      <section id="tab-tavoli">
+        <div class="grid">
+          <section class="card">
+            <h2>Seleziona tavolo</h2>
+            <p class="muted">15 tavoli (~40 coperti). La comanda resta in DB: non si resetta.</p>
+
+            <div class="tableGrid" id="tablesGrid"></div>
+
+            <div class="statusLine" id="tableHint"></div>
+          </section>
+
+          <section class="card">
+            <h2>Nuova comanda</h2>
+            <p class="muted">Scegli un tavolo, aggiungi piatti, poi invia in cucina.</p>
+
+            <div class="row">
+              <div>
+                <label class="muted" style="display:block;margin:0 0 6px;">Tavolo selezionato</label>
+                <input id="selectedTable" disabled value="Nessuno" />
+              </div>
+              <div>
+                <label class="muted" style="display:block;margin:0 0 6px;">Note comanda</label>
+                <input id="orderNote" placeholder="Es. senza aglio..." />
+              </div>
+            </div>
+
+            <div class="list" id="menuList"></div>
+
+            <div class="row" style="margin-top:12px;">
+              <button class="primary" id="sendOrderBtn">Invia comanda</button>
+              <button class="soft" id="clearOrderBtn" type="button">Pulisci selezione</button>
+            </div>
+
+            <div class="statusLine" id="orderStatus"></div>
+
+            <hr style="border:none;border-top:1px solid rgba(11,34,54,.10);margin:14px 0;">
+
+            <h2>Comande attive</h2>
+            <p class="muted">Qui vedi le comande in lavorazione. “Servito” avvia un timer.</p>
+            <div class="list" id="activeOrders"></div>
+          </section>
+        </div>
+      </section>
+
+      <!-- TAB: Prenotazioni -->
+      <section id="tab-prenotazioni" class="hidden">
+        <div class="grid">
+          <section class="card">
+            <h2>Filtri</h2>
+            <div class="row">
+              <div>
+                <label class="muted" style="display:block;margin:0 0 6px;">Data</label>
+                <input id="bkDay" type="date" />
+              </div>
+              <div>
+                <label class="muted" style="display:block;margin:0 0 6px;">Stato</label>
+                <select id="bkStatus">
+                  <option value="all">Tutte</option>
+                  <option value="in_attesa">In attesa</option>
+                  <option value="confermata">Confermata</option>
+                  <option value="arrivato">Arrivato</option>
+                  <option value="annullata">Annullata</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:10px;">
+              <label class="muted" style="display:block;margin:0 0 6px;">Cerca (nome/telefono/email)</label>
+              <input id="bkSearch" placeholder="Es. Rossi / 333..." />
+            </div>
+
+            <div class="row" style="margin-top:12px;">
+              <button class="primary" id="bkRefresh">Aggiorna</button>
+              <span class="statusLine" id="bkMsg"></span>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2>Lista prenotazioni</h2>
+            <p class="muted">Accetta/Conferma e assegna tavolo.</p>
+            <div class="list" id="bkList"></div>
+          </section>
+        </div>
+      </section>
+
+      <!-- TAB: Menù -->
+      <section id="tab-menu" class="hidden">
+        <div class="grid">
+          <section class="card">
+            <h2>Menù del giorno</h2>
+            <p class="muted">Qui è una bozza: per ora salva solo localmente (poi lo mettiamo in DB/storage).</p>
+
+            <label class="muted" style="display:block;margin:0 0 6px;">Testo menù</label>
+            <textarea id="menuText" rows="8" placeholder="Scrivi il menù del giorno..."></textarea>
+
+            <div class="row" style="margin-top:12px;">
+              <button class="primary" id="saveMenuBtn">Salva</button>
+              <button class="soft" id="loadMenuBtn" type="button">Carica</button>
+              <span class="statusLine" id="menuMsg"></span>
+            </div>
+
+            <p class="muted" style="margin-top:10px;">
+              Prossimo step: upload foto su Supabase Storage + link visibile su <code>index.html</code>.
+            </p>
+          </section>
+
+          <section class="card">
+            <h2>Anteprima veloce</h2>
+            <div style="white-space:pre-wrap;line-height:1.5;border:1px dashed rgba(11,34,54,.22);border-radius:16px;padding:12px;background:rgba(255,255,255,.98);" id="menuPreview">
+              (nessun menù salvato)
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <!-- TAB: Vista tavoli (solo visuale) -->
+      <section id="tab-vista" class="hidden">
+        <div class="card">
+          <h2>Vista tavoli</h2>
+          <p class="muted">Solo visuale: liberi / occupati (in base alle comande attive).</p>
+          <div class="tableGrid" id="tablesViewGrid"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- LOGIN MODAL -->
+  <div class="modal" id="loginModal" aria-hidden="true">
+    <div class="loginBox" role="dialog" aria-modal="true" aria-label="Login staff">
+      <h2>Login staff</h2>
+      <p>Accedi con email/password (Supabase Auth). Servono utenti già creati (admin / cucina).</p>
+
+      <label class="muted" style="display:block;margin:0 0 6px;">Email</label>
+      <input id="loginEmail" type="email" placeholder="admin@..." />
+
+      <div style="height:10px"></div>
+
+      <label class="muted" style="display:block;margin:0 0 6px;">Password</label>
+      <input id="loginPass" type="password" placeholder="••••••••" />
+
+      <div style="height:12px"></div>
+
+      <button class="primary" id="loginBtn">Entra</button>
+      <div class="statusLine" id="loginMsg" style="margin-top:10px;"></div>
     </div>
-  </header>
-
-  <main class="container">
-    <!-- GESTIONE -->
-    <section class="section active" id="tab-gestione">
-      <div class="grid">
-        <div class="card">
-          <h2 class="title">Prenotazioni / Gestione</h2>
-          <div class="muted">Qui resterà la gestione prenotazioni come piace a te (la colleghiamo al DB dopo).</div>
-          <div style="margin-top:10px" class="row">
-            <input placeholder="Cerca nome/telefono..." />
-            <select style="max-width:220px">
-              <option>Tutti gli stati</option>
-              <option>In attesa</option>
-              <option>Confermata</option>
-              <option>Annullata</option>
-            </select>
-          </div>
-          <div class="muted" style="margin-top:10px">✅ Per ora lo lasciamo “bozza UI”.</div>
-        </div>
-
-        <div class="card">
-          <h2 class="title">Pannello Comande</h2>
-          <div class="muted">Seleziona tavolo e invia comanda alla cucina.</div>
-
-          <div class="row" style="margin-top:10px">
-            <select id="tableSel" style="max-width:220px">
-              <option value="">Seleziona tavolo...</option>
-            </select>
-            <button class="soft" id="seedTablesBtn">15 tavoli</button>
-          </div>
-
-          <div style="margin-top:10px" class="row">
-            <input id="dishName" placeholder="Piatto (es. Spaghetti alle vongole)" />
-            <input id="dishQty" type="number" min="1" value="1" style="max-width:120px" />
-            <button class="primary" id="addDishBtn">Aggiungi</button>
-          </div>
-
-          <div class="muted" id="sendStatus" style="margin-top:10px"></div>
-
-          <div style="margin-top:12px">
-            <button class="primary" id="sendOrderBtn">Invia comanda</button>
-            <button class="soft" id="clearDraftBtn">Pulisci</button>
-          </div>
-
-          <div class="muted" style="margin-top:10px">Bozza comanda:</div>
-          <div id="draftList" class="orders"></div>
-        </div>
-      </div>
-
-      <div class="card" style="margin-top:14px">
-        <h2 class="title">Comande attive</h2>
-        <div class="muted">Cucina → Pronto. Admin → Servito (parte il timer).</div>
-        <div id="ordersArea" class="orders"></div>
-      </div>
-    </section>
-
-    <!-- MENU -->
-    <section class="section" id="tab-menu">
-      <div class="card">
-        <h2 class="title">Menù del giorno (cliente)</h2>
-        <div class="muted">Qui caricherai la foto che vede il cliente e/o testo. (DB dopo)</div>
-        <div style="margin-top:10px" class="row">
-          <input placeholder="Nome file foto (es: menu-oggi.jpg)" />
-          <button class="primary">Salva</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- VISTA -->
-    <section class="section" id="tab-vista">
-      <div class="card">
-        <h2 class="title">Vista tavoli (solo visual)</h2>
-        <div class="muted">Ti mostrerà liberi/occupati senza possibilità di modifica. (DB dopo)</div>
-      </div>
-    </section>
-  </main>
+  </div>
 
   <script>
-    // --- header height fix
+    // ---------- Header height fix (mobile/tablet)
     function setHeaderRealHeight(){
-      const h = Math.ceil(document.getElementById("siteHeader").getBoundingClientRect().height);
+      const header = document.getElementById("siteHeader");
+      if(!header) return;
+      const h = Math.ceil(header.getBoundingClientRect().height);
       document.documentElement.style.setProperty("--headerReal", h + "px");
     }
     window.addEventListener("load", setHeaderRealHeight, { once:true });
     window.addEventListener("resize", setHeaderRealHeight);
     window.visualViewport?.addEventListener("resize", setHeaderRealHeight);
     window.visualViewport?.addEventListener("scroll", setHeaderRealHeight);
-    setTimeout(setHeaderRealHeight, 60);
+    setTimeout(setHeaderRealHeight, 50);
     setTimeout(setHeaderRealHeight, 250);
+    setTimeout(setHeaderRealHeight, 800);
 
-    // ✅ Supabase init (METTI I TUOI VALORI)
-    const SUPABASE_URL = "PASTE_SUPABASE_URL";
-    const SUPABASE_ANON_KEY = "PASTE_SUPABASE_ANON_KEY";
-    const sb = window.supabase?.createClient?.(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // tabs
-    document.querySelectorAll("[data-tab]").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        document.querySelectorAll("[data-tab]").forEach(b=>b.classList.remove("active"));
-        btn.classList.add("active");
-        const tab = btn.dataset.tab;
-        document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
-        document.getElementById("tab-"+tab).classList.add("active");
+    // ---------- Tabs
+    const tabs = Array.from(document.querySelectorAll(".tab"));
+    function openTab(id){
+      tabs.forEach(t=>{
+        const active = t.dataset.tab === id;
+        t.classList.toggle("active", active);
+        t.setAttribute("aria-selected", active ? "true" : "false");
       });
+      ["tab-tavoli","tab-prenotazioni","tab-menu","tab-vista"].forEach(sec=>{
+        document.getElementById(sec).classList.toggle("hidden", sec !== id);
+      });
+      // piccola utilità: ricalcola header dopo cambio contenuti
+      setTimeout(setHeaderRealHeight, 20);
+    }
+    tabs.forEach(t => t.addEventListener("click", () => openTab(t.dataset.tab)));
+
+    // ---------- Auth UI
+    const loginModal = document.getElementById("loginModal");
+    const loginBtn = document.getElementById("loginBtn");
+    const loginMsg = document.getElementById("loginMsg");
+
+    async function ensureStaff(){
+      const session = await OM.getSession();
+      if(!session){
+        loginModal.classList.add("show");
+        loginModal.setAttribute("aria-hidden", "false");
+        throw new Error("NON_AUTHENTICATED");
+      }
+      const role = await OM.getMyRole(); // da staff_users
+      if(!role){
+        loginModal.classList.add("show");
+        loginModal.setAttribute("aria-hidden", "false");
+        throw new Error("NOT_IN_STAFF_USERS");
+      }
+      loginModal.classList.remove("show");
+      loginModal.setAttribute("aria-hidden", "true");
+      return role;
+    }
+
+    loginBtn.addEventListener("click", async () => {
+      loginBtn.disabled = true;
+      loginMsg.textContent = "Accesso in corso…";
+      loginMsg.className = "statusLine";
+      try{
+        const email = document.getElementById("loginEmail").value.trim();
+        const password = document.getElementById("loginPass").value;
+        await OM.signIn(email, password);
+        await ensureStaff();
+        loginMsg.textContent = "";
+        await bootstrap();
+      }catch(e){
+        console.error(e);
+        loginMsg.textContent = "Errore login: " + (e?.message || e);
+        loginMsg.classList.add("bad");
+      }finally{
+        loginBtn.disabled = false;
+      }
     });
 
-    // tables
-    const tableSel = document.getElementById("tableSel");
-    const seedTablesBtn = document.getElementById("seedTablesBtn");
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      try{ await OM.signOut(); }catch{}
+      location.reload();
+    });
 
-    function seedTables(){
-      tableSel.innerHTML = `<option value="">Seleziona tavolo...</option>`;
-      for(let i=1;i<=15;i++){
-        const code = "T" + String(i).padStart(2,"0");
-        const opt = document.createElement("option");
-        opt.value = code;
-        opt.textContent = code;
-        tableSel.appendChild(opt);
-      }
-    }
-    seedTablesBtn.addEventListener("click", seedTables);
-    seedTables();
+    // ---------- Data / UI logic
+    const TABLES = Array.from({length:15}, (_,i)=>`T${String(i+1).padStart(2,"0")}`);
 
-    // draft local (non perde)
-    const draftKey = "om_admin_draft";
-    const draftListEl = document.getElementById("draftList");
-    const dishNameEl = document.getElementById("dishName");
-    const dishQtyEl = document.getElementById("dishQty");
-    const addDishBtn = document.getElementById("addDishBtn");
-    const clearDraftBtn = document.getElementById("clearDraftBtn");
+    const tablesGrid = document.getElementById("tablesGrid");
+    const tablesViewGrid = document.getElementById("tablesViewGrid");
+    const selectedTableEl = document.getElementById("selectedTable");
+    const tableHint = document.getElementById("tableHint");
+
+    const menuList = document.getElementById("menuList");
     const sendOrderBtn = document.getElementById("sendOrderBtn");
-    const sendStatus = document.getElementById("sendStatus");
+    const clearOrderBtn = document.getElementById("clearOrderBtn");
+    const orderStatus = document.getElementById("orderStatus");
+    const orderNoteEl = document.getElementById("orderNote");
+    const activeOrdersEl = document.getElementById("activeOrders");
 
-    function loadDraft(){
-      try{ return JSON.parse(localStorage.getItem(draftKey) || "[]"); }catch{ return []; }
+    // Menù demo (poi lo colleghi al DB)
+    const MENU = [
+      { name:"Spaghetti alle vongole", price:14 },
+      { name:"Frittura di calamari", price:16 },
+      { name:"Crudo di mare (mix)", price:22 },
+      { name:"Antipasto misto", price:18 },
+      { name:"Grigliata di pesce", price:24 },
+      { name:"Calice di vino", price:6 }
+    ];
+
+    let selectedTable = null;
+    let cart = new Map(); // name -> {name, price, qty}
+
+    function setOrderStatus(msg, kind){
+      orderStatus.textContent = msg || "";
+      orderStatus.className = "statusLine";
+      if(kind) orderStatus.classList.add(kind);
     }
-    function saveDraft(x){ localStorage.setItem(draftKey, JSON.stringify(x)); }
-    function renderDraft(){
-      const d = loadDraft();
-      draftListEl.innerHTML = "";
-      if(d.length === 0){
-        draftListEl.innerHTML = `<div class="muted">Nessun piatto in bozza.</div>`;
-        return;
-      }
-      d.forEach((it, idx)=>{
-        const div = document.createElement("div");
-        div.className = "orderCard";
-        div.innerHTML = `
-          <div class="row" style="justify-content:space-between">
-            <div>
-              <div style="font-weight:950">${it.name}</div>
-              <div class="muted">qty: ${it.qty}</div>
-            </div>
-            <button class="danger mini" data-del="${idx}">Rimuovi</button>
+
+    function renderMenu(){
+      menuList.innerHTML = "";
+      MENU.forEach(m => {
+        const qty = cart.get(m.name)?.qty || 0;
+
+        const row = document.createElement("div");
+        row.className = "item";
+        row.innerHTML = `
+          <div class="itLeft">
+            <div class="itName">${m.name}</div>
+            <div class="muted">€ ${m.price.toFixed(2)}</div>
+          </div>
+          <div class="row" style="justify-content:flex-end;flex:0;min-width:auto;">
+            <button class="soft mini" data-act="minus">−</button>
+            <span class="pillSmall">${qty}</span>
+            <button class="primary mini" data-act="plus">+</button>
           </div>
         `;
-        div.querySelector("[data-del]").addEventListener("click", ()=>{
-          const dd = loadDraft();
-          dd.splice(idx,1);
-          saveDraft(dd);
-          renderDraft();
+        row.querySelector('[data-act="minus"]').addEventListener("click", () => {
+          const cur = cart.get(m.name)?.qty || 0;
+          const next = Math.max(0, cur - 1);
+          if(next === 0) cart.delete(m.name);
+          else cart.set(m.name, { name:m.name, price:m.price, qty: next });
+          renderMenu();
         });
-        draftListEl.appendChild(div);
+        row.querySelector('[data-act="plus"]').addEventListener("click", () => {
+          const cur = cart.get(m.name)?.qty || 0;
+          cart.set(m.name, { name:m.name, price:m.price, qty: cur + 1 });
+          renderMenu();
+        });
+        menuList.appendChild(row);
       });
     }
 
-    addDishBtn.addEventListener("click", ()=>{
-      const name = (dishNameEl.value||"").trim();
-      const qty = Math.max(1, parseInt(dishQtyEl.value||"1",10));
-      if(!name) return alert("Inserisci il nome del piatto.");
-      const d = loadDraft();
-      d.push({ name, qty });
-      saveDraft(d);
-      dishNameEl.value="";
-      dishQtyEl.value="1";
-      renderDraft();
-    });
+    function renderTables(busySet){
+      tablesGrid.innerHTML = "";
+      tablesViewGrid.innerHTML = "";
 
-    clearDraftBtn.addEventListener("click", ()=>{
-      saveDraft([]);
-      renderDraft();
-    });
+      TABLES.forEach(code => {
+        const busy = busySet.has(code);
 
-    // helper timeout (così non resta “invio in corso”)
-    function withTimeout(promise, ms=12000){
-      return Promise.race([
-        promise,
-        new Promise((_,rej)=>setTimeout(()=>rej(new Error("Timeout: verifica rete/RLS/chiavi Supabase.")), ms))
-      ]);
+        const makeCard = () => {
+          const el = document.createElement("div");
+          el.className = "tCard";
+          el.innerHTML = `
+            <div>
+              <div class="tName">${code}</div>
+              <div class="muted">${busy ? "Comanda attiva" : "Libero"}</div>
+            </div>
+            <div class="tState ${busy ? "busy" : "free"}">${busy ? "Occupato" : "Libero"}</div>
+          `;
+          return el;
+        };
+
+        // grid selezionabile (tab-tavoli)
+        const c1 = makeCard();
+        c1.style.cursor = "pointer";
+        c1.addEventListener("click", () => {
+          selectedTable = code;
+          selectedTableEl.value = code;
+          tableHint.textContent = `Tavolo selezionato: ${code}. Ora puoi inviare la comanda.`;
+          tableHint.className = "statusLine ok";
+        });
+        tablesGrid.appendChild(c1);
+
+        // vista tavoli (solo visuale)
+        const c2 = makeCard();
+        c2.style.cursor = "default";
+        tablesViewGrid.appendChild(c2);
+      });
     }
 
-    // --- orders UI
-    const ordersArea = document.getElementById("ordersArea");
-
+    function fmtHM(iso){
+      try{
+        const d = new Date(iso);
+        return d.toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"});
+      }catch{ return ""; }
+    }
     function minutesSince(iso){
       if(!iso) return null;
       const ms = Date.now() - new Date(iso).getTime();
-      return Math.max(0, Math.floor(ms / 60000));
-    }
-    function fmtElapsed(min){
-      if(min == null) return "";
-      if(min < 60) return `${min} min`;
-      const h = Math.floor(min/60);
-      const m = min % 60;
-      return `${h}h ${m}m`;
+      return Math.max(0, Math.floor(ms/60000));
     }
 
-    function orderProgress(o){
-      const items = o.items || [];
-      const total = items.length;
-      const ready = items.filter(it => it.line_status === "ready" || it.line_status === "served").length;
-      const served = items.filter(it => it.line_status === "served").length;
-      const doneKitchen = (total > 0 && ready === total);
-      return { total, ready, served, doneKitchen };
-    }
+    async function refreshActiveOrders(){
+      const all = await OM.getActiveOrdersWithItems();
+      const busySet = new Set(all.map(o => o.table_code));
+      renderTables(busySet);
 
-    async function fetchOrders(){
-      if(!sb) return [];
-      const { data, error } = await sb
-        .from("orders")
-        .select("id, table_code, status, created_at, order_items(id, name, qty, price, line_status, ready_at, served_at, created_at)")
-        .neq("status","archived")
-        .order("created_at",{ ascending:false });
-      if(error) throw error;
-
-      return (data||[]).map(o=>({
-        id:o.id,
-        table:o.table_code,
-        status:o.status,
-        created_at:o.created_at,
-        items:(o.order_items||[]).map(it=>({
-          id:it.id,
-          name:it.name,
-          qty:it.qty,
-          price:it.price,
-          line_status:it.line_status || "todo",
-          served_at: it.served_at || null
-        }))
-      }));
-    }
-
-    async function ensureOpenOrder(tableCode){
-      // cerca ordine open per tavolo
-      const { data, error } = await sb
-        .from("orders")
-        .select("id")
-        .eq("table_code", tableCode)
-        .eq("status","open")
-        .order("created_at",{ ascending:false })
-        .limit(1);
-
-      if(error) throw error;
-      if(data && data[0]) return data[0].id;
-
-      // crea nuovo
-      const { data:ins, error:err2 } = await sb
-        .from("orders")
-        .insert({ table_code: tableCode, status:"open" })
-        .select("id")
-        .single();
-
-      if(err2) throw err2;
-      return ins.id;
-    }
-
-    async function insertItems(orderId, items){
-      const payload = items.map(it=>({
-        order_id: orderId,
-        name: it.name,
-        qty: it.qty,
-        line_status: "todo"
-      }));
-      const { error } = await sb.from("order_items").insert(payload);
-      if(error) throw error;
-    }
-
-    async function setServed(lineId, served){
-      const payload = served
-        ? { line_status:"served", served_at: new Date().toISOString() }
-        : { line_status:"ready", served_at: null };
-      const { error } = await sb.from("order_items").update(payload).eq("id", lineId);
-      if(error) throw error;
-    }
-
-    function renderOrders(rows){
-      ordersArea.innerHTML = "";
-      if(rows.length === 0){
-        ordersArea.innerHTML = `<div class="muted">Nessuna comanda attiva.</div>`;
+      activeOrdersEl.innerHTML = "";
+      if(all.length === 0){
+        activeOrdersEl.innerHTML = `<div class="muted">Nessuna comanda attiva.</div>`;
         return;
       }
 
-      rows.forEach(o=>{
-        const p = orderProgress(o);
-        const badge = p.doneKitchen
-          ? `<span class="badge done">Cucina OK (${p.ready}/${p.total})</span>`
-          : `<span class="badge open">In lavorazione (${p.ready}/${p.total})</span>`;
-
-        const box = document.createElement("div");
-        box.className = "orderCard";
-        box.innerHTML = `
-          <div class="orderHead">
-            <div>
-              <div style="font-weight:950">Tavolo ${o.table}</div>
-              <div class="muted">ID ${String(o.id).slice(0,8)} · righe: ${p.total} · servite: ${p.served}</div>
+      all.forEach(o => {
+        const wrap = document.createElement("div");
+        wrap.className = "card";
+        wrap.style.padding = "14px";
+        wrap.innerHTML = `
+          <div class="row" style="align-items:flex-start;">
+            <div style="flex:1;min-width:240px;">
+              <div style="font-weight:950;font-size:18px;">Tavolo ${o.table_code}</div>
+              <div class="muted">Ricevuta ${fmtHM(o.created_at)} · ID ${o.id}</div>
+              ${o.note ? `<div class="muted" style="margin-top:6px;">Note: <strong>${o.note}</strong></div>` : ``}
             </div>
-            <div class="row">${badge}</div>
           </div>
-
-          <div class="list">
-            ${o.items.map(it=>{
-              const st = it.line_status;
-              const cls = st === "served" ? "served" : (st === "ready" ? "ready" : "");
-              const label = st === "served" ? "Servito" : (st === "ready" ? "Pronto" : "Da fare");
-              const tmin = minutesSince(it.served_at);
+          <div class="list" style="margin-top:10px;">
+            ${(o.order_items || []).map(it => {
+              const servedMin = minutesSince(it.served_at);
+              const servedTxt = it.served ? `Servito ✅ · ${servedMin != null ? servedMin + " min" : ""}` : "Non servito";
+              const readyTxt = it.line_status === "ready" ? "Pronto ✅" : "In cucina…";
               return `
                 <div class="item">
-                  <div style="min-width:0;">
+                  <div class="itLeft">
                     <div class="itName">${it.name}</div>
-                    <div class="muted" style="font-size:12px;">qty: <strong>${it.qty}</strong></div>
+                    <div class="muted">qty: <strong>${it.qty}</strong> · ${readyTxt}</div>
+                    <div class="muted">${servedTxt}</div>
                   </div>
-                  <div class="row" style="justify-content:flex-end;">
-                    ${it.served_at ? `<span class="timerPill" data-served-at="${it.served_at}">⏱ ${fmtElapsed(tmin)}</span>` : `<span class="timerPill">—</span>`}
-                    <span class="lineState ${cls}">${label}</span>
-                    ${
-                      st === "ready"
-                        ? `<button class="primary mini" data-served="${it.id}">Servito</button>`
-                        : (st === "served"
-                          ? `<button class="soft mini" data-unserved="${it.id}">Non servito</button>`
-                          : ``)
+                  <div class="row" style="justify-content:flex-end;flex:0;min-width:auto;">
+                    ${it.served
+                      ? `<button class="soft mini" data-act="unserve" data-lid="${it.id}">Annulla servito</button>`
+                      : `<button class="primary mini" data-act="serve" data-lid="${it.id}">Servito</button>`
                     }
                   </div>
                 </div>
@@ -582,82 +735,223 @@
           </div>
         `;
 
-        box.querySelectorAll("[data-served]").forEach(btn=>{
-          btn.addEventListener("click", async ()=>{
-            try{ await setServed(btn.dataset.served, true); await poll(true); }
-            catch(e){ alert("Errore: " + (e.message||e)); }
-          });
-        });
-        box.querySelectorAll("[data-unserved]").forEach(btn=>{
-          btn.addEventListener("click", async ()=>{
-            try{ await setServed(btn.dataset.unserved, false); await poll(true); }
-            catch(e){ alert("Errore: " + (e.message||e)); }
+        wrap.querySelectorAll("button[data-act]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const act = btn.dataset.act;
+            const lid = btn.dataset.lid;
+            btn.disabled = true;
+            try{
+              if(act === "serve") await OM.setLineServed(lid, true);
+              if(act === "unserve") await OM.setLineServed(lid, false);
+              await refreshActiveOrders();
+            }catch(e){
+              console.error(e);
+              alert("Errore: " + (e?.message || e));
+            }finally{
+              btn.disabled = false;
+            }
           });
         });
 
-        ordersArea.appendChild(box);
+        activeOrdersEl.appendChild(wrap);
       });
     }
 
-    // timer refresh
-    setInterval(()=>{
-      document.querySelectorAll("[data-served-at]").forEach(el=>{
-        const iso = el.getAttribute("data-served-at");
-        const min = minutesSince(iso);
-        el.textContent = "⏱ " + fmtElapsed(min);
-      });
-    }, 20000);
+    sendOrderBtn.addEventListener("click", async () => {
+      sendOrderBtn.disabled = true;
+      setOrderStatus("Invio in corso…", null);
 
-    async function poll(showToast){
       try{
-        if(!sb){
-          ordersArea.innerHTML = `<div class="muted">Config Supabase mancante: incolla URL e ANON KEY.</div>`;
+        await ensureStaff();
+
+        if(!selectedTable){
+          setOrderStatus("Seleziona prima un tavolo.", "bad");
           return;
         }
-        const rows = await fetchOrders();
-        renderOrders(rows);
-        if(showToast){
-          sendStatus.textContent = "Aggiornato ✅";
-          setTimeout(()=>sendStatus.textContent="", 1200);
+        const items = Array.from(cart.values()).filter(x => x.qty > 0);
+        if(items.length === 0){
+          setOrderStatus("Aggiungi almeno un piatto.", "bad");
+          return;
         }
+
+        await OM.createOrder({
+          table_code: selectedTable,
+          note: orderNoteEl.value.trim() || null,
+          items
+        });
+
+        cart.clear();
+        renderMenu();
+        orderNoteEl.value = "";
+        setOrderStatus("Comanda inviata ✅", "ok");
+        await refreshActiveOrders();
       }catch(e){
-        sendStatus.textContent = "Errore: " + (e.message||e);
-      }
-    }
-
-    document.getElementById("refreshBtn").addEventListener("click", ()=>poll(true));
-
-    // INVIO COMANDA (non resta bloccato)
-    sendOrderBtn.addEventListener("click", async ()=>{
-      const table = tableSel.value;
-      const items = loadDraft();
-
-      if(!sb) return alert("Config Supabase mancante (URL + ANON KEY).");
-      if(!table) return alert("Seleziona un tavolo.");
-      if(items.length === 0) return alert("Aggiungi almeno un piatto.");
-
-      sendOrderBtn.disabled = true;
-      clearDraftBtn.disabled = true;
-      sendStatus.textContent = "Invio in corso…";
-
-      try{
-        const orderId = await withTimeout(ensureOpenOrder(table), 12000);
-        await withTimeout(insertItems(orderId, items), 12000);
-        saveDraft([]);
-        renderDraft();
-        sendStatus.textContent = "Comanda inviata ✅";
-        await poll(false);
-      }catch(e){
-        sendStatus.textContent = "Errore invio: " + (e.message||e);
+        console.error(e);
+        setOrderStatus("Errore invio: " + (e?.message || e), "bad");
       }finally{
         sendOrderBtn.disabled = false;
-        clearDraftBtn.disabled = false;
-        setTimeout(()=>{ if(sendStatus.textContent.startsWith("Invio")) sendStatus.textContent=""; }, 1200);
       }
     });
 
-    renderDraft();
-    poll(false);
+    clearOrderBtn.addEventListener("click", () => {
+      cart.clear();
+      renderMenu();
+      setOrderStatus("Selezione pulita.", null);
+    });
+
+    // Prenotazioni
+    const bkDay = document.getElementById("bkDay");
+    const bkStatus = document.getElementById("bkStatus");
+    const bkSearch = document.getElementById("bkSearch");
+    const bkRefresh = document.getElementById("bkRefresh");
+    const bkList = document.getElementById("bkList");
+    const bkMsg = document.getElementById("bkMsg");
+
+    function setBkMsg(msg, kind){
+      bkMsg.textContent = msg || "";
+      bkMsg.className = "statusLine";
+      if(kind) bkMsg.classList.add(kind);
+    }
+
+    async function refreshBookings(){
+      bkRefresh.disabled = true;
+      setBkMsg("Aggiornamento…", null);
+      try{
+        await ensureStaff();
+        const rows = await OM.listBookings({
+          dayISO: bkDay.value || undefined,
+          status: bkStatus.value || "all",
+          q: bkSearch.value || ""
+        });
+
+        bkList.innerHTML = "";
+        if(rows.length === 0){
+          bkList.innerHTML = `<div class="muted">Nessuna prenotazione.</div>`;
+          setBkMsg("", null);
+          return;
+        }
+
+        rows.forEach(r => {
+          const div = document.createElement("div");
+          div.className = "item";
+          div.innerHTML = `
+            <div class="itLeft">
+              <div class="itName">${r.nome} · <span class="muted">${r.persone} pax</span></div>
+              <div class="muted">${r.data} · ${String(r.ora).slice(0,5)} · ${r.turno}</div>
+              <div class="muted">${r.telefono || ""} ${r.email ? " · " + r.email : ""}</div>
+              <div class="muted">Stato: <strong>${r.status}</strong> ${r.table_code ? " · Tavolo: " + r.table_code : ""}</div>
+            </div>
+            <div class="row" style="justify-content:flex-end;flex:0;min-width:auto;">
+              <select class="mini" data-act="status" style="border-radius:999px;padding:8px 10px;">
+                <option value="in_attesa" ${r.status==="in_attesa"?"selected":""}>in_attesa</option>
+                <option value="confermata" ${r.status==="confermata"?"selected":""}>confermata</option>
+                <option value="arrivato" ${r.status==="arrivato"?"selected":""}>arrivato</option>
+                <option value="annullata" ${r.status==="annullata"?"selected":""}>annullata</option>
+              </select>
+              <select class="mini" data-act="table" style="border-radius:999px;padding:8px 10px;">
+                <option value="">Tavolo…</option>
+                ${TABLES.map(t => `<option value="${t}" ${r.table_code===t?"selected":""}>${t}</option>`).join("")}
+              </select>
+              <button class="primary mini" data-act="save">Salva</button>
+            </div>
+          `;
+          const selStatus = div.querySelector('select[data-act="status"]');
+          const selTable = div.querySelector('select[data-act="table"]');
+          const btnSave = div.querySelector('button[data-act="save"]');
+
+          btnSave.addEventListener("click", async () => {
+            btnSave.disabled = true;
+            try{
+              await OM.updateBooking(r.id, {
+                status: selStatus.value,
+                table_code: selTable.value || null
+              });
+              setBkMsg("Salvato ✅", "ok");
+              setTimeout(() => setBkMsg("", null), 1200);
+              await refreshBookings();
+            }catch(e){
+              console.error(e);
+              setBkMsg("Errore: " + (e?.message || e), "bad");
+            }finally{
+              btnSave.disabled = false;
+            }
+          });
+
+          bkList.appendChild(div);
+        });
+
+        setBkMsg("", null);
+      }catch(e){
+        console.error(e);
+        setBkMsg("Errore: " + (e?.message || e), "bad");
+      }finally{
+        bkRefresh.disabled = false;
+      }
+    }
+
+    bkRefresh.addEventListener("click", refreshBookings);
+
+    // Menù (bozza locale)
+    const menuText = document.getElementById("menuText");
+    const menuPreview = document.getElementById("menuPreview");
+    const saveMenuBtn = document.getElementById("saveMenuBtn");
+    const loadMenuBtn = document.getElementById("loadMenuBtn");
+    const menuMsg = document.getElementById("menuMsg");
+
+    function setMenuMsg(msg, kind){
+      menuMsg.textContent = msg || "";
+      menuMsg.className = "statusLine";
+      if(kind) menuMsg.classList.add(kind);
+    }
+    function renderMenuPreview(){
+      const val = (localStorage.getItem("om_menu_text") || "").trim();
+      menuPreview.textContent = val || "(nessun menù salvato)";
+    }
+    saveMenuBtn.addEventListener("click", () => {
+      localStorage.setItem("om_menu_text", menuText.value || "");
+      renderMenuPreview();
+      setMenuMsg("Salvato ✅", "ok");
+      setTimeout(() => setMenuMsg("", null), 1200);
+    });
+    loadMenuBtn.addEventListener("click", () => {
+      menuText.value = localStorage.getItem("om_menu_text") || "";
+      renderMenuPreview();
+      setMenuMsg("Caricato ✅", "ok");
+      setTimeout(() => setMenuMsg("", null), 1200);
+    });
+
+    // Realtime: se cambia qualcosa, refresh intelligente
+    let unsub = null;
+    function setupRealtime(){
+      if(unsub) unsub();
+      unsub = OM.subscribeRealtime(async (evt) => {
+        // Aggiorna liste in modo leggero
+        if(evt.table === "order_items" || evt.table === "orders"){
+          await refreshActiveOrders();
+        }
+        if(evt.table === "bookings"){
+          // aggiorna solo se tab prenotazioni visibile
+          if(!document.getElementById("tab-prenotazioni").classList.contains("hidden")){
+            await refreshBookings();
+          }
+        }
+      });
+    }
+
+    async function bootstrap(){
+      try{
+        await ensureStaff();
+        renderMenu();
+        renderMenuPreview();
+        await refreshActiveOrders();
+        setupRealtime();
+      }catch(e){
+        // login richiesto
+      }
+    }
+
+    // onload
+    window.addEventListener("DOMContentLoaded", bootstrap);
   </script>
 </body>
 </html>
