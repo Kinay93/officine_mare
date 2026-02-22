@@ -71,18 +71,18 @@
   async function createBooking(payload) {
     // payload: {nome, telefono, email, data, turno, ora, persone, note}
     const sb = getClient();
-    const { data, error } = await sb.from("bookings").insert(payload).select().single();
+    const { data, error } = await sb.from("reservations").insert(payload).select().single();
     if (error) throw error;
     return data;
   }
 
-  async function listBookings({ dayISO, status, q } = {}) {
+  async function listreservations({ dayISO, status, q } = {}) {
     // staff only (RLS)
     const sb = getClient();
     await requireAuth();
 
     let query = sb
-      .from("bookings")
+      .from("reservations")
       .select("*")
       .order("data", { ascending: true })
       .order("ora", { ascending: true });
@@ -106,7 +106,7 @@
   async function updateBooking(id, patch) {
     const sb = getClient();
     await requireAuth();
-    const { data, error } = await sb.from("bookings").update(patch).eq("id", id).select().single();
+    const { data, error } = await sb.from("reservations").update(patch).eq("id", id).select().single();
     if (error) throw error;
     return data;
   }
@@ -234,13 +234,13 @@
   // callback riceve {type, table, new, old}
   function subscribeRealtime(onEvent) {
     const sb = getClient();
-    // ascolta cambi su bookings/orders/order_items
+    // ascolta cambi su reservations/orders/order_items
     const channel = sb
       .channel("om-realtime")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "bookings" },
-        (payload) => onEvent({ table: "bookings", ...payload })
+        { event: "*", schema: "public", table: "reservations" },
+        (payload) => onEvent({ table: "reservations", ...payload })
       )
       .on(
         "postgres_changes",
@@ -281,9 +281,9 @@
     requireAuth,
     getMyRole,
 
-    // bookings
+    // reservations
     createBooking,
-    listBookings,
+    listreservations,
     updateBooking,
 
     // orders
