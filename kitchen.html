@@ -2,36 +2,68 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Officine Mare — Cucina</title>
+  <meta name="description" content="Cucina: gestione comande." />
   <link rel="icon" href="favicon.ico" />
 
-  <!-- ✅ Supabase JS v2 (UMD) -->
+  <!-- Supabase JS + tuoi file -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="backend.js"></script>
 
   <style>
     :root{
-      --bgTop:#245b7c; --bgMid:#1b4968; --bgBot:#163e5a;
+      --bgTop:#2f6f91;
+      --bgMid:#2a648a;
+      --bgBot:#1f5677;
+
       --paper: rgba(255,255,255,.95);
-      --text:#0b2236; --muted: rgba(11,34,54,.68);
+      --text:#0b2236;
+      --muted: rgba(11,34,54,.68);
       --borderD: rgba(11,34,54,.10);
       --shadow: 0 22px 70px rgba(0,0,0,.20);
-      --max: 1600px; --radiusXL: 26px;
+
+      --max: 1600px;
+      --radiusXL: 26px;
       --safeTop: env(safe-area-inset-top, 0px);
-      --headerReal: 74px;
     }
+
     *{ box-sizing:border-box; }
+
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color:#fff;
       overflow-x:hidden;
       background:
-        radial-gradient(1100px 480px at 50% -180px, rgba(255,255,255,.16), transparent 62%),
-        radial-gradient(900px 420px at 15% 10%, rgba(255,255,255,.10), transparent 60%),
-        radial-gradient(900px 420px at 85% 14%, rgba(255,255,255,.08), transparent 62%),
+        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.16), transparent 60%),
+        radial-gradient(800px 420px at 12% 8%, rgba(255,255,255,.10), transparent 55%),
+        radial-gradient(900px 520px at 88% 14%, rgba(255,255,255,.08), transparent 55%),
         linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 45%, var(--bgBot) 100%);
     }
+
+    #bgImg{
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100dvh;
+      object-fit: cover;
+      z-index: 0;
+      pointer-events: none;
+      opacity: .56;
+      filter: saturate(1.06) contrast(1.03);
+    }
+    #overlay{
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.10), transparent 60%),
+        linear-gradient(to bottom, rgba(18,55,78,.14), rgba(18,55,78,.86));
+    }
+    #app{ position: relative; z-index: 2; min-height: 100vh; }
 
     .container{
       width: min(96vw, var(--max));
@@ -40,45 +72,44 @@
     }
 
     header{
-      position: fixed;
-      top:0; left:0; right:0;
-      z-index: 50;
+      position: sticky;
+      top:0;
+      z-index: 1000;
       padding-top: var(--safeTop);
-      background: rgba(22,62,90,.78);
+      background: rgba(18,55,78,.74);
       backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255,255,255,.16);
+      border-bottom: 1px solid rgba(255,255,255,.18);
     }
     .header-inner{
       min-height: 74px;
       display:flex;
       align-items:center;
-      gap: 10px;
+      gap: 12px;
       padding: 10px 0;
       flex-wrap: wrap;
     }
     .brand{
       font-weight: 950;
-      letter-spacing: .6px;
-      font-size: 20px;
+      letter-spacing: .8px;
+      font-size: clamp(18px, 2.2vw, 24px);
       white-space: nowrap;
       display:flex;
       align-items:center;
       gap:10px;
-      flex: 1 1 auto;
-      min-width: 220px;
     }
     .actions{
+      margin-left:auto;
       display:flex;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
+      align-items:center;
       justify-content:flex-end;
-      flex: 1 1 auto;
     }
-    .ghost{
+    .pill{
       padding: 10px 12px;
       border-radius: 999px;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.18);
       color: rgba(255,255,255,.92);
       font-weight: 900;
       cursor: pointer;
@@ -86,12 +117,11 @@
       display:inline-flex;
       align-items:center;
       gap: 8px;
-      font-size: 13px;
+      user-select: none;
+      white-space: nowrap;
     }
 
-    main{
-      padding: calc(var(--headerReal) + 14px) 0 60px;
-    }
+    main{ padding: 18px 0 60px; }
 
     .row{ display:flex; gap: 10px; flex-wrap: wrap; align-items:center; }
     select{
@@ -101,6 +131,7 @@
       background: rgba(255,255,255,.98);
       color: var(--text);
       outline:none;
+      font-weight: 900;
     }
     button{
       padding: 10px 12px;
@@ -108,6 +139,7 @@
       border: 1px solid rgba(11,34,54,.16);
       cursor:pointer;
       font-weight: 950;
+      white-space: nowrap;
     }
     .primary{
       color:#fff;
@@ -119,7 +151,11 @@
       background: rgba(36,91,124,.10);
       color: rgba(11,34,54,.92);
     }
-    .mini{ padding: 8px 10px; font-size: 12px; }
+    .mini{
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
 
     .grid{
       display:grid;
@@ -129,6 +165,11 @@
     }
     @media (max-width: 980px){
       .grid{ grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px){
+      .actions{ width: 100%; justify-content:flex-start; }
+      .pill{ width: 100%; justify-content:center; }
+      select, button{ width: 100%; }
     }
 
     .card{
@@ -143,7 +184,11 @@
     }
 
     .topline{
-      display:flex; gap:10px; align-items:flex-start; justify-content:space-between; flex-wrap: wrap;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      justify-content:space-between;
+      flex-wrap: wrap;
     }
     .title{ font-weight: 950; font-size: 18px; margin:0; }
     .muted{ color: var(--muted); font-size: 13px; }
@@ -175,18 +220,10 @@
       justify-content:space-between;
       gap: 10px;
     }
+    .itLeft{ min-width: 0; }
     .itName{ font-weight: 950; font-size: 13px; }
-    .qtyPill{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-weight: 950;
-      border: 1px solid rgba(11,34,54,.12);
-      background: rgba(36,91,124,.06);
-      min-width: 44px;
-    }
+    .small{ font-size: 12px; }
+
     .lineState{
       display:inline-flex;
       align-items:center;
@@ -198,75 +235,168 @@
       border: 1px solid rgba(11,34,54,.12);
       background: rgba(36,91,124,.06);
       color: rgba(11,34,54,.90);
+      white-space: nowrap;
     }
     .lineState.ready{
       background: rgba(40,140,80,.16);
       border-color: rgba(40,140,80,.25);
     }
+    .qtyPill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 950;
+      border: 1px solid rgba(11,34,54,.12);
+      background: rgba(36,91,124,.06);
+      min-width: 44px;
+    }
+
+    /* LOGIN modal */
+    .modal{
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(6px);
+    }
+    .modal.show{ display:flex; }
+    .loginBox{
+      width: min(520px, 100%);
+      border-radius: 26px;
+      background: rgba(255,255,255,.96);
+      color: var(--text);
+      border: 1px solid rgba(11,34,54,.14);
+      box-shadow: 0 22px 70px rgba(0,0,0,.28);
+      padding: 18px;
+    }
+    .loginBox h2{ margin:0 0 8px; }
+    .loginBox p{ margin:0 0 12px; color: var(--muted); }
+    .loginBox button{ width: 100%; }
+
+    .statusMsg{
+      font-size: 13px;
+      color: rgba(11,34,54,.72);
+      margin-top: 10px;
+    }
+    .statusMsg.bad{ color: rgba(160,30,30,.88); font-weight: 900; }
+    .statusMsg.ok{ color: rgba(20,110,60,.88); font-weight: 900; }
   </style>
 </head>
 
 <body>
-  <header id="siteHeader">
-    <div class="container header-inner">
-      <div class="brand">🍳 Officine Mare — Cucina</div>
-      <div class="actions">
-        <button class="ghost" id="soundBtn">🔔 Suono: ON</button>
-        <button class="ghost" id="vibBtn">📳 Vibra: ON</button>
-        <button class="ghost" id="refreshBtn">Aggiorna</button>
-        <a class="ghost" href="admin.html">↩️ Admin</a>
+  <img id="bgImg" src="mare.png" alt="" aria-hidden="true">
+  <div id="overlay" aria-hidden="true"></div>
+
+  <div id="app">
+    <header>
+      <div class="container header-inner">
+        <div class="brand">🍳 Officine Mare — Cucina</div>
+        <div class="actions">
+          <button class="pill" id="soundBtn">🔔 Suono: ON</button>
+          <button class="pill" id="vibBtn">📳 Vibra: ON</button>
+          <button class="pill" id="refreshBtn">Aggiorna</button>
+          <a class="pill" href="admin.html">↩️ Admin</a>
+          <button class="pill" id="logoutBtn">🚪 Logout</button>
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <main class="container">
-    <div class="row" style="margin-bottom:12px;">
-      <select id="filter">
-        <option value="open">Aperte</option>
-        <option value="done">Complete</option>
-        <option value="all">Tutte</option>
-      </select>
-      <button class="soft" id="demoBtn">Demo dati</button>
-      <span class="muted" id="statusMsg"></span>
-    </div>
+    <main class="container">
+      <div class="row" style="margin-bottom:12px;">
+        <select id="filter">
+          <option value="open">Aperte</option>
+          <option value="done">Complete</option>
+          <option value="all">Tutte</option>
+        </select>
+        <span class="muted" id="statusTop"></span>
+      </div>
 
-    <div class="grid" id="ordersGrid"></div>
-  </main>
+      <div class="grid" id="ordersGrid"></div>
+    </main>
+  </div>
+
+  <!-- LOGIN MODAL -->
+  <div class="modal" id="loginModal" aria-hidden="true">
+    <div class="loginBox" role="dialog" aria-modal="true" aria-label="Login staff cucina">
+      <h2>Login staff</h2>
+      <p>Accedi con email/password (Supabase Auth).</p>
+
+      <label class="muted" style="display:block;margin:0 0 6px;">Email</label>
+      <input id="loginEmail" type="email" placeholder="cucina@..." />
+
+      <div style="height:10px"></div>
+
+      <label class="muted" style="display:block;margin:0 0 6px;">Password</label>
+      <input id="loginPass" type="password" placeholder="••••••••" />
+
+      <div style="height:12px"></div>
+
+      <button class="primary" id="loginBtn">Entra</button>
+      <div class="statusMsg" id="loginMsg"></div>
+    </div>
+  </div>
 
   <script>
-    // --- header height fix (mobile)
-    function setHeaderRealHeight(){
-      const h = Math.ceil(document.getElementById("siteHeader").getBoundingClientRect().height);
-      document.documentElement.style.setProperty("--headerReal", h + "px");
+    // ---- Auth
+    const loginModal = document.getElementById("loginModal");
+    const loginBtn = document.getElementById("loginBtn");
+    const loginMsg = document.getElementById("loginMsg");
+    const statusTop = document.getElementById("statusTop");
+
+    async function ensureStaff(){
+      const session = await OM.getSession();
+      if(!session){
+        loginModal.classList.add("show");
+        loginModal.setAttribute("aria-hidden", "false");
+        throw new Error("NON_AUTHENTICATED");
+      }
+      const role = await OM.getMyRole();
+      if(!role){
+        loginModal.classList.add("show");
+        loginModal.setAttribute("aria-hidden", "false");
+        throw new Error("NOT_IN_STAFF_USERS");
+      }
+      loginModal.classList.remove("show");
+      loginModal.setAttribute("aria-hidden", "true");
+      return role;
     }
-    window.addEventListener("load", setHeaderRealHeight, { once:true });
-    window.addEventListener("resize", setHeaderRealHeight);
-    window.visualViewport?.addEventListener("resize", setHeaderRealHeight);
-    window.visualViewport?.addEventListener("scroll", setHeaderRealHeight);
-    setTimeout(setHeaderRealHeight, 60);
-    setTimeout(setHeaderRealHeight, 250);
 
-    // ✅ Supabase init (METTI I TUOI VALORI)
-    const SUPABASE_URL = "PASTE_SUPABASE_URL";
-    const SUPABASE_ANON_KEY = "PASTE_SUPABASE_ANON_KEY";
-    const sb = window.supabase?.createClient?.(SUPABASE_URL, SUPABASE_ANON_KEY);
+    loginBtn.addEventListener("click", async () => {
+      loginBtn.disabled = true;
+      loginMsg.textContent = "Accesso in corso…";
+      loginMsg.className = "statusMsg";
+      try{
+        const email = document.getElementById("loginEmail").value.trim();
+        const password = document.getElementById("loginPass").value;
+        await OM.signIn(email, password);
+        await ensureStaff();
+        loginMsg.textContent = "";
+        await bootstrap();
+      }catch(e){
+        console.error(e);
+        loginMsg.textContent = "Errore login: " + (e?.message || e);
+        loginMsg.classList.add("bad");
+      }finally{
+        loginBtn.disabled = false;
+      }
+    });
 
-    // UI
-    const ordersGrid = document.getElementById("ordersGrid");
-    const filterEl = document.getElementById("filter");
-    const statusMsg = document.getElementById("statusMsg");
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      try{ await OM.signOut(); }catch{}
+      location.reload();
+    });
 
+    // ---- Suono / vibrazione
     const soundBtn = document.getElementById("soundBtn");
     const vibBtn = document.getElementById("vibBtn");
     let soundOn = true;
     let vibOn = true;
-
-    function fmtTime(iso){
-      try{
-        const d = new Date(iso);
-        return d.toLocaleTimeString("it-IT", { hour:"2-digit", minute:"2-digit" });
-      }catch{ return ""; }
-    }
 
     function beep(){
       if(!soundOn) return;
@@ -274,7 +404,8 @@
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const o = ctx.createOscillator();
         const g = ctx.createGain();
-        o.type = "sine"; o.frequency.value = 740;
+        o.type = "sine";
+        o.frequency.value = 740;
         g.gain.value = 0.06;
         o.connect(g); g.connect(ctx.destination);
         o.start();
@@ -297,75 +428,41 @@
       if(vibOn) vibrate();
     });
 
-    // --- progress: per cucina "done" = tutte READY o SERVED
+    // ---- Render comande da DB
+    const ordersGrid = document.getElementById("ordersGrid");
+    const filterEl = document.getElementById("filter");
+
+    function fmtTime(iso){
+      try{
+        const d = new Date(iso);
+        return d.toLocaleTimeString("it-IT", { hour:"2-digit", minute:"2-digit" });
+      }catch{ return ""; }
+    }
+
     function orderProgress(o){
-      const items = o.items || [];
+      const items = o.order_items || [];
       const total = items.length;
-      const ready = items.filter(it => it.line_status === "ready" || it.line_status === "served").length;
+      const ready = items.filter(it => it.line_status === "ready").length;
       const done = (total > 0 && ready === total);
       return { total, ready, done };
     }
 
-    async function fetchOrders(){
-      // fallback demo se sb non configurato
-      if(!sb){
-        return [];
-      }
-      // Qui assumo tabelle: orders + order_items
-      // orders: id, table_code, status, created_at
-      // order_items: id, order_id, name, qty, price, line_status, created_at
-      const { data, error } = await sb
-        .from("orders")
-        .select("id, table_code, status, created_at, order_items(id, name, qty, price, line_status, created_at)")
-        .neq("status","archived")
-        .order("created_at",{ ascending:false });
+    async function render(){
+      await ensureStaff();
+      const rowsAll = await OM.getActiveOrdersWithItems();
 
-      if(error) throw error;
-
-      return (data || []).map(o => ({
-        id: o.id,
-        table: o.table_code,
-        status: o.status,
-        created_at: o.created_at,
-        items: (o.order_items || []).map(it => ({
-          id: it.id,
-          name: it.name,
-          qty: it.qty,
-          price: it.price,
-          line_status: it.line_status || "todo"
-        }))
-      }));
-    }
-
-    async function setLineStatus(lineId, status){
-      if(!sb) return;
-      const payload = { line_status: status };
-      if(status === "ready") payload.ready_at = new Date().toISOString();
-      if(status === "todo") payload.ready_at = null;
-      // cucina NON mette served
-      const { error } = await sb.from("order_items").update(payload).eq("id", lineId);
-      if(error) throw error;
-    }
-
-    async function archiveOrder(orderId){
-      if(!sb) return;
-      const { error } = await sb.from("orders").update({ status:"archived" }).eq("id", orderId);
-      if(error) throw error;
-    }
-
-    function render(rows){
       const f = filterEl.value;
-      let list = rows;
+      let rows = rowsAll;
 
       if(f !== "all"){
-        list = list.filter(o => {
+        rows = rowsAll.filter(o => {
           const p = orderProgress(o);
           return f === "done" ? p.done : !p.done;
         });
       }
 
       ordersGrid.innerHTML = "";
-      if(list.length === 0){
+      if(rows.length === 0){
         ordersGrid.innerHTML = `
           <div class="card">
             <h2 class="title">Nessuna comanda</h2>
@@ -374,9 +471,9 @@
         return;
       }
 
-      list.forEach(o => {
+      rows.forEach(o => {
         const p = orderProgress(o);
-        const badge = p.done
+        const headerBadge = p.done
           ? `<span class="badge done">Completa (${p.ready}/${p.total})</span>`
           : `<span class="badge open">In lavorazione (${p.ready}/${p.total})</span>`;
 
@@ -385,31 +482,32 @@
         card.innerHTML = `
           <div class="topline">
             <div>
-              <h2 class="title">Tavolo ${o.table}</h2>
-              <div class="muted">Ricevuta alle ${fmtTime(o.created_at)} · ID ${String(o.id).slice(0,8)}</div>
+              <h2 class="title">Tavolo ${o.table_code}</h2>
+              <div class="muted">Ricevuta alle ${fmtTime(o.created_at)} · ID ${o.id}</div>
+              ${o.note ? `<div class="muted" style="margin-top:6px;">Note: <strong>${o.note}</strong></div>` : ``}
             </div>
-            <div class="row">
-              ${badge}
-              ${p.done ? `<button class="soft mini" data-arch="${o.id}">Archivia</button>` : ``}
+            <div class="row" style="justify-content:flex-end;">
+              ${headerBadge}
+              ${p.done ? `<button class="soft mini" data-act="archive" data-oid="${o.id}">Archivia</button>` : ``}
             </div>
           </div>
 
           <div class="list">
-            ${o.items.map(it => {
-              const ready = it.line_status === "ready" || it.line_status === "served";
+            ${(o.order_items || []).map(it => {
+              const ready = it.line_status === "ready";
               return `
                 <div class="item">
-                  <div style="min-width:0;">
+                  <div class="itLeft">
                     <div class="itName">${it.name}</div>
-                    <div class="muted" style="font-size:12px;">qty: <strong>${it.qty}</strong></div>
+                    <div class="muted small">qty: <strong>${it.qty}</strong></div>
                   </div>
-                  <div class="row" style="justify-content:flex-end;">
+
+                  <div class="row" style="justify-content:flex-end;flex:0;min-width:auto;">
                     <span class="qtyPill">x${it.qty}</span>
                     <span class="lineState ${ready ? "ready" : ""}">${ready ? "Pronto" : "Da fare"}</span>
-                    ${
-                      ready
-                        ? `<button class="soft mini" data-undo="${it.id}">Non pronto</button>`
-                        : `<button class="primary mini" data-ready="${it.id}">Pronto</button>`
+                    ${ready
+                      ? `<button class="soft mini" data-act="undoLine" data-lid="${it.id}">Non pronto</button>`
+                      : `<button class="primary mini" data-act="readyLine" data-lid="${it.id}">Pronto</button>`
                     }
                   </div>
                 </div>
@@ -418,31 +516,35 @@
           </div>
         `;
 
-        card.querySelectorAll("[data-ready]").forEach(btn=>{
-          btn.addEventListener("click", async ()=>{
+        card.querySelectorAll("button[data-act]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const act = btn.dataset.act;
+            btn.disabled = true;
+            statusTop.textContent = "Aggiornamento…";
             try{
-              await setLineStatus(btn.dataset.ready, "ready");
-              await poll(true);
-            }catch(e){ alert("Errore: " + (e.message||e)); }
-          });
-        });
-        card.querySelectorAll("[data-undo]").forEach(btn=>{
-          btn.addEventListener("click", async ()=>{
-            try{
-              await setLineStatus(btn.dataset.undo, "todo");
-              await poll(true);
-            }catch(e){ alert("Errore: " + (e.message||e)); }
-          });
-        });
-        card.querySelectorAll("[data-arch]").forEach(btn=>{
-          btn.addEventListener("click", async ()=>{
-            try{
-              // doppio check: archivia solo se tutto pronto
-              const pp = orderProgress(o);
-              if(!pp.done) return alert("Puoi archiviare solo quando tutte le righe sono pronte.");
-              await archiveOrder(btn.dataset.arch);
-              await poll(true);
-            }catch(e){ alert("Errore: " + (e.message||e)); }
+              if(act === "readyLine"){
+                await OM.setLineReady(btn.dataset.lid, true);
+              } else if(act === "undoLine"){
+                await OM.setLineReady(btn.dataset.lid, false);
+              } else if(act === "archive"){
+                try{
+                  await OM.archiveOrderIfComplete(btn.dataset.oid);
+                }catch(e){
+                  if(String(e?.message || e).includes("ORDER_NOT_COMPLETE")){
+                    alert("Puoi archiviare solo quando tutte le righe sono pronte.");
+                  } else {
+                    throw e;
+                  }
+                }
+              }
+              await render();
+            }catch(e){
+              console.error(e);
+              alert("Errore: " + (e?.message || e));
+            }finally{
+              statusTop.textContent = "";
+              btn.disabled = false;
+            }
           });
         });
 
@@ -450,45 +552,45 @@
       });
     }
 
-    let lastHash = "";
-    async function poll(showToast){
-      try{
-        const rows = await fetchOrders();
-        const activeIds = rows.map(o=>String(o.id)).sort().join("|");
-        if(lastHash && activeIds !== lastHash){
-          beep(); vibrate();
-          if(showToast !== false){
-            statusMsg.textContent = "Aggiornato ✅";
-            setTimeout(()=> statusMsg.textContent="", 1200);
+    document.getElementById("refreshBtn").addEventListener("click", render);
+    filterEl.addEventListener("change", render);
+
+    // realtime: beep/vibra quando arriva una nuova comanda
+    let unsub = null;
+    let lastIds = "";
+
+    function setupRealtime(){
+      if(unsub) unsub();
+      unsub = OM.subscribeRealtime(async (evt) => {
+        if(evt.table !== "orders" && evt.table !== "order_items") return;
+
+        // notifica “nuova comanda” (quando entra un ordine nuovo)
+        try{
+          const all = await OM.getActiveOrdersWithItems();
+          const ids = all.map(o => o.id).sort().join("|");
+          if(lastIds && ids !== lastIds){
+            beep(); vibrate();
+            statusTop.textContent = "Nuova comanda ✅";
+            setTimeout(() => statusTop.textContent = "", 1400);
           }
-        }
-        lastHash = activeIds;
-        render(rows);
+          lastIds = ids;
+        }catch{}
+
+        await render();
+      });
+    }
+
+    async function bootstrap(){
+      try{
+        await ensureStaff();
+        await render();
+        setupRealtime();
       }catch(e){
-        statusMsg.textContent = "Errore caricamento: " + (e.message||e);
+        // login richiesto
       }
     }
 
-    document.getElementById("refreshBtn").addEventListener("click", ()=>poll(true));
-    filterEl.addEventListener("change", ()=>poll(false));
-
-    // demo: SOLO UI (non scrive su DB)
-    document.getElementById("demoBtn").addEventListener("click", ()=>{
-      const demo = [{
-        id:"demo1", table:"T07", status:"open", created_at:new Date().toISOString(),
-        items:[
-          { id:"l1", name:"Crudo di mare (mix)", qty:1, line_status:"todo" },
-          { id:"l2", name:"Spaghetti alle vongole", qty:2, line_status:"ready" },
-          { id:"l3", name:"Frittura di calamari", qty:1, line_status:"todo" },
-        ]
-      }];
-      render(demo);
-      statusMsg.textContent="Demo attiva (solo UI).";
-      setTimeout(()=> statusMsg.textContent="", 1200);
-    });
-
-    poll(false);
-    setInterval(()=>poll(false), 2500);
+    window.addEventListener("DOMContentLoaded", bootstrap);
   </script>
 </body>
 </html>
