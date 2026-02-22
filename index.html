@@ -2,24 +2,36 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Officine Mare</title>
   <meta name="description" content="Ristorante di pesce - Officine Mare. Menù del giorno e prenotazioni." />
   <link rel="icon" href="favicon.ico" />
 
+  <!-- Supabase JS + tuoi file -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="backend.js"></script>
+
   <style>
     :root{
-      --bgTop:#245b7c; --bgMid:#1b4968; --bgBot:#163e5a;
+      --bgTop:#2f6f91;
+      --bgMid:#2a648a;
+      --bgBot:#1f5677;
+
       --paper: rgba(255,255,255,.95);
-      --text:#0b2236; --muted: rgba(11,34,54,.68);
+      --text:#0b2236;
+      --muted: rgba(11,34,54,.68);
+
       --borderD: rgba(11,34,54,.10);
       --shadow: 0 22px 70px rgba(0,0,0,.22);
-      --max: 1900px; --radiusXL: 30px;
 
-      --safeTop: env(safe-area-inset-top, 0px);
+      --max: 1900px;
+      --radiusXL: 30px;
+
       --headerReal: 82px;
       --curveH: 18px;
-      --topBuffer: 56px;
+      --safeTop: env(safe-area-inset-top, 0px);
+      --topBuffer: 64px;
 
       --chipBg: rgba(255,255,255,.14);
       --chipBd: rgba(255,255,255,.18);
@@ -35,13 +47,13 @@
       color:#fff;
       overflow-x:hidden;
       background:
-        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.18), transparent 60%),
+        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.16), transparent 60%),
         radial-gradient(800px 420px at 12% 8%, rgba(255,255,255,.10), transparent 55%),
         radial-gradient(900px 520px at 88% 14%, rgba(255,255,255,.08), transparent 55%),
-        linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 42%, var(--bgBot) 100%);
+        linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 45%, var(--bgBot) 100%);
     }
 
-    /* Sfondo mare */
+    /* sfondo immagine + overlay (liscio) */
     #bgImg{
       position: fixed;
       inset: 0;
@@ -50,8 +62,8 @@
       object-fit: cover;
       z-index: 0;
       pointer-events: none;
-      opacity: .70;
-      filter: saturate(1.06) contrast(1.04) blur(.45px);
+      opacity: .62;
+      filter: saturate(1.06) contrast(1.03);
     }
     #overlay{
       position: fixed;
@@ -59,10 +71,9 @@
       z-index: 1;
       pointer-events: none;
       background:
-        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.12), transparent 60%),
-        linear-gradient(to bottom, rgba(22,62,90,.28), rgba(22,62,90,.82));
+        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.10), transparent 60%),
+        linear-gradient(to bottom, rgba(18,55,78,.18), rgba(18,55,78,.82));
     }
-
     #app{ position: relative; z-index: 2; min-height: 100vh; }
 
     .container{
@@ -76,13 +87,13 @@
       top:0; left:0; right:0;
       z-index: 1000;
       padding-top: var(--safeTop);
-      background: rgba(22,62,90,.78);
+      background: rgba(18,55,78,.74);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(255,255,255,.18);
     }
 
     .header-inner{
-      min-height: 82px;
+      height: 82px;
       display:grid;
       grid-template-columns: 1fr auto 1fr;
       align-items:center;
@@ -100,7 +111,7 @@
       background: rgba(255,255,255,.06);
       min-width: 0;
     }
-    .side-photo img{ width:100%; height:100%; object-fit: cover; display:block; transform: scale(1.03); }
+    .side-photo img{ width:100%; height:100%; object-fit: cover; display:block; transform: scale(1.02); }
 
     .brand{
       text-align:center;
@@ -110,6 +121,17 @@
       white-space: nowrap;
       text-shadow: 0 2px 12px rgba(0,0,0,.28);
       padding: 0 10px;
+    }
+    .brand::before, .brand::after{
+      content:"";
+      display:inline-block;
+      width: 18px;
+      height: 2px;
+      background: rgba(255,255,255,.70);
+      border-radius: 999px;
+      margin: 0 12px;
+      vertical-align: middle;
+      opacity: .78;
     }
 
     .header-curve{
@@ -141,6 +163,10 @@
       padding-bottom: 60px;
     }
 
+    section, #menu, #prenota, #contatti{
+      scroll-margin-top: calc(var(--headerReal) + var(--curveH) + var(--topBuffer));
+    }
+
     .hero{
       display:grid;
       grid-template-columns: 1.1fr .9fr;
@@ -148,9 +174,13 @@
       align-items:end;
       margin-bottom: 22px;
     }
-
     .hero-left h1{ margin:0 0 8px; font-size: clamp(28px, 3.2vw, 46px); }
-    .hero-left p{ margin:0; color: rgba(255,255,255,.92); max-width: 78ch; font-size: clamp(14px, 1.2vw, 18px); }
+    .hero-left p{
+      margin:0;
+      color: rgba(255,255,255,.92);
+      max-width: 78ch;
+      font-size: clamp(14px, 1.2vw, 18px);
+    }
 
     .wave-line{
       height: 10px;
@@ -185,7 +215,6 @@
       transition: transform .12s ease, filter .12s ease;
     }
     .chip:hover{ transform: translateY(-1px); filter: brightness(1.05); }
-
     .chip .dot{
       width: 10px; height: 10px;
       border-radius: 999px;
@@ -213,6 +242,17 @@
       position: relative;
       overflow:hidden;
     }
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(900px 240px at 20% 0%, rgba(255,255,255,.55), rgba(255,255,255,0) 55%),
+        radial-gradient(700px 220px at 90% 20%, rgba(255,255,255,.35), rgba(255,255,255,0) 60%);
+      opacity:.35;
+      pointer-events:none;
+    }
+    .card > *{ position: relative; }
 
     .card h2{ margin:0 0 10px; font-size: 19px; }
     .hint{ margin:0 0 14px; color: var(--muted); }
@@ -232,6 +272,8 @@
       box-shadow: 0 10px 22px rgba(0,0,0,.10) inset;
     }
 
+    .btn-row{ display:flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; align-items:center; }
+
     button{
       padding: 12px 16px;
       border-radius: 999px;
@@ -240,7 +282,6 @@
       font-weight: 900;
       min-width: 160px;
     }
-
     .btn-primary{
       color:#fff;
       border-color: rgba(0,0,0,.10);
@@ -248,10 +289,15 @@
       box-shadow: 0 16px 28px rgba(0,0,0,.16);
     }
     .btn-soft{ background: rgba(36,91,124,.10); color: rgba(11,34,54,.92); }
+    .btn-primary[disabled], .btn-soft[disabled]{ opacity:.55; cursor:not-allowed; }
 
-    .btn-row{ display:flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; align-items:center; }
-
-    label{ display:block; font-weight: 850; margin: 12px 0 6px; color: rgba(11,34,54,.92); }
+    form{ margin-top: 2px; }
+    label{
+      display:block;
+      font-weight: 850;
+      margin: 12px 0 6px;
+      color: rgba(11,34,54,.92);
+    }
     input, select, textarea{
       width:100%;
       padding: 12px 12px;
@@ -261,6 +307,7 @@
       color: var(--text);
       outline:none;
     }
+
     .row{ display:flex; gap: 12px; flex-wrap: wrap; align-items:center; }
     .row > *{ flex:1; min-width: 190px; }
 
@@ -268,17 +315,31 @@
     .status.bad{ color: rgba(160,30,30,.88); font-weight: 850; }
     .status.ok{ color: rgba(20,110,60,.88); font-weight: 850; }
 
+    .contacts{ margin-top: 18px; }
+
+    footer{
+      margin-top: 22px;
+      padding: 18px 0 0;
+      border-top: 1px solid rgba(255,255,255,.16);
+      color: rgba(255,255,255,.82);
+    }
+    .small{ font-size: 13px; opacity:.95; }
+
     @media (max-width: 980px){
       .grid{ grid-template-columns: 1fr; }
       .hero{ grid-template-columns: 1fr; }
       .hero-right{ justify-content:flex-start; }
+      .menu-box{ min-height: 300px; }
+      #bgImg{ opacity: .54; }
     }
+
     @media (max-width: 560px){
       .side-photo{ display:none; }
-      .header-inner{ grid-template-columns: 1fr; }
+      .header-inner{ grid-template-columns: 1fr; height:auto; padding: 10px 0 14px; }
       .brand{ font-size: 36px; }
       :root{ --curveH: 14px; --topBuffer: 72px; }
       button{ width: 100%; min-width: unset; }
+      #bgImg{ opacity: .46; }
     }
   </style>
 </head>
@@ -298,7 +359,7 @@
 
     <div class="header-curve" aria-hidden="true"></div>
 
-    <main class="container" role="main">
+    <main class="container" id="home" role="main">
       <section class="hero">
         <div class="hero-left">
           <h1>Ristorante di pesce</h1>
@@ -313,11 +374,11 @@
       </section>
 
       <section class="grid">
-        <section class="card" id="menu">
-          <h2>Menù del giorno</h2>
-          <p class="hint">Caricherai qui la foto dal pannello Admin.</p>
+        <section class="card" id="menu" aria-labelledby="menu-title">
+          <h2 id="menu-title">Menù del giorno</h2>
+          <p class="hint">Inserisci una foto del menù oppure scrivilo a testo.</p>
 
-          <div class="menu-box" id="menuBox">
+          <div class="menu-box">
             <div>
               <strong>Spazio foto menù</strong><br>
               <span style="font-size:13px; opacity:.9;">Esempio: <code>menu-oggi.jpg</code></span>
@@ -330,9 +391,9 @@
           </div>
         </section>
 
-        <section class="card" id="prenota">
-          <h2>Prenota un tavolo</h2>
-          <p class="hint">Orari: <strong>12:00–14:30</strong> e <strong>19:00–22:30</strong>. <strong>Lunedì chiuso</strong>.</p>
+        <section class="card" id="prenota" aria-labelledby="prenota-title">
+          <h2 id="prenota-title">Prenota un tavolo</h2>
+          <p class="hint">Orari prenotazioni: <strong>12:00–14:30</strong> e <strong>19:00–22:30</strong>. <strong>Lunedì chiuso</strong>.</p>
 
           <form id="contactForm">
             <label for="nome">Nome</label>
@@ -367,7 +428,9 @@
                 <select id="persone" name="persone" required>
                   <option value="">Seleziona</option>
                   <option>1</option><option>2</option><option>3</option><option>4</option>
-                  <option>5</option><option>6</option><option>7</option><option>8+</option>
+                  <option>5</option><option>6</option><option>7</option><option>8</option>
+                  <option>9</option><option>10</option><option>11</option><option>12</option>
+                  <option>13</option><option>14</option><option>15</option><option>16</option>
                 </select>
               </div>
               <div>
@@ -389,22 +452,25 @@
         </section>
       </section>
 
-      <section class="card" id="contatti" style="margin-top:18px;">
-        <h2>Contatti</h2>
+      <section class="card contacts" id="contatti" aria-labelledby="contatti-title">
+        <h2 id="contatti-title">Contatti</h2>
         <p class="hint" style="margin-bottom:0;">
           Indirizzo: <strong>...</strong> · Telefono: <strong>...</strong> ·
           Orari: <strong>12:00–14:30</strong> / <strong>19:00–22:30</strong> · <strong>Lunedì chiuso</strong>
         </p>
+        <p class="status" style="margin-top:8px;">
+          Suggerimento: qui puoi aggiungere link WhatsApp/Instagram o una mappa.
+        </p>
       </section>
 
-      <footer style="margin-top:22px; padding:18px 0 0; border-top:1px solid rgba(255,255,255,.16); color:rgba(255,255,255,.82);">
-        <div style="font-size:13px;">© <span id="year"></span> — Officine Mare</div>
+      <footer>
+        <div class="small">© <span id="year"></span> — Officine Mare</div>
       </footer>
     </main>
   </div>
 
   <script>
-    // --- Fix header su mobile: calcola altezza reale
+    // --- Fix header su mobile/tablet (evita “testo mangiato”)
     function setHeaderRealHeight(){
       const header = document.getElementById("siteHeader");
       if(!header) return;
@@ -417,15 +483,17 @@
     window.visualViewport?.addEventListener("scroll", setHeaderRealHeight);
     setTimeout(setHeaderRealHeight, 50);
     setTimeout(setHeaderRealHeight, 250);
-    setTimeout(setHeaderRealHeight, 900);
+    setTimeout(setHeaderRealHeight, 800);
 
+    // anno
     document.getElementById("year").textContent = new Date().getFullYear();
 
+    // info
     document.getElementById("btnInfo").addEventListener("click", () => {
       document.getElementById("msg").textContent = "Oggi consigliamo crudi e grigliata di mare 🦞";
     });
 
-    // slots orari + lunedì chiuso
+    // --- Prenotazioni: orari dinamici + lunedì chiuso
     const dateEl = document.getElementById("data");
     const turnoEl = document.getElementById("turno");
     const timeEl = document.getElementById("ora");
@@ -434,17 +502,30 @@
     const resetBtn = document.getElementById("resetBtn");
 
     const pad = (n) => String(n).padStart(2,"0");
+
+    // min = oggi
     const today = new Date();
     dateEl.min = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
 
     const STEP_MIN = 10;
-    function toMinutes(hhmm){ const [h,m]=hhmm.split(":").map(Number); return h*60+m; }
-    function fromMinutes(min){ const h=Math.floor(min/60), m=min%60; return `${pad(h)}:${pad(m)}`; }
-    function buildSlots(start,end,step){
-      const out=[];
-      for(let t=toMinutes(start); t<=toMinutes(end); t+=step) out.push(fromMinutes(t));
-      return out;
+
+    function toMinutes(hhmm){
+      const [h,m] = hhmm.split(":").map(Number);
+      return h*60 + m;
     }
+    function fromMinutes(min){
+      const h = Math.floor(min/60);
+      const m = min%60;
+      return `${pad(h)}:${pad(m)}`;
+    }
+    function buildSlots(start, end, step){
+      const slots = [];
+      for(let t = toMinutes(start); t <= toMinutes(end); t += step){
+        slots.push(fromMinutes(t));
+      }
+      return slots;
+    }
+
     const lunchSlots = buildSlots("12:00","14:30",STEP_MIN);
     const dinnerSlots = buildSlots("19:00","22:30",STEP_MIN);
 
@@ -453,75 +534,124 @@
       statusEl.classList.remove("bad","ok");
       if(kind) statusEl.classList.add(kind);
     }
+
     function isMonday(dateStr){
       if(!dateStr) return false;
       const d = new Date(dateStr + "T00:00:00");
       return d.getDay() === 1;
     }
+
     function resetTimeSelect(placeholder){
       timeEl.innerHTML = `<option value="">${placeholder}</option>`;
     }
+
     function fillTimes(){
       const d = dateEl.value;
       const turno = turnoEl.value;
-      if(!d) return resetTimeSelect("Seleziona prima la data");
-      if(isMonday(d)) return resetTimeSelect("Lunedì chiuso");
-      if(!turno) return resetTimeSelect("Seleziona prima il turno");
-      const slots = turno === "pranzo" ? lunchSlots : dinnerSlots;
-      timeEl.innerHTML = `<option value="">Seleziona un orario</option>`;
-      slots.forEach(t=>{
-        const opt=document.createElement("option");
-        opt.value=t; opt.textContent=t;
-        timeEl.appendChild(opt);
-      });
-    }
-    function validateDay(){
-      const d = dateEl.value;
+
       if(!d){
-        submitBtn.disabled=false;
-        timeEl.disabled=false;
-        turnoEl.disabled=false;
-        setStatus("", null);
+        resetTimeSelect("Seleziona prima la data");
         return;
       }
       if(isMonday(d)){
-        submitBtn.disabled=true;
-        timeEl.disabled=true;
-        turnoEl.disabled=true;
-        turnoEl.value="";
+        resetTimeSelect("Lunedì chiuso");
+        return;
+      }
+      if(!turno){
+        resetTimeSelect("Seleziona prima il turno");
+        return;
+      }
+
+      const slots = turno === "pranzo" ? lunchSlots : dinnerSlots;
+      timeEl.innerHTML = `<option value="">Seleziona un orario</option>`;
+      slots.forEach(t=>{
+        const opt = document.createElement("option");
+        opt.value = t;      // HH:MM
+        opt.textContent = t;
+        timeEl.appendChild(opt);
+      });
+    }
+
+    function validateDay(){
+      const d = dateEl.value;
+
+      if(!d){
+        submitBtn.disabled = false;
+        timeEl.disabled = false;
+        turnoEl.disabled = false;
+        setStatus("", null);
+        return;
+      }
+
+      if(isMonday(d)){
+        submitBtn.disabled = true;
+        timeEl.disabled = true;
+        turnoEl.disabled = true;
+        turnoEl.value = "";
         fillTimes();
         setStatus("Lunedì chiuso: non è possibile prenotare.", "bad");
         return;
       }
-      submitBtn.disabled=false;
-      timeEl.disabled=false;
-      turnoEl.disabled=false;
+
+      submitBtn.disabled = false;
+      timeEl.disabled = false;
+      turnoEl.disabled = false;
       setStatus("Seleziona data, turno e orario tra quelli disponibili.", null);
     }
 
-    validateDay(); fillTimes();
-    dateEl.addEventListener("change", ()=>{ validateDay(); fillTimes(); });
+    validateDay();
+    fillTimes();
+
+    dateEl.addEventListener("change", () => { validateDay(); fillTimes(); });
     turnoEl.addEventListener("change", fillTimes);
 
-    document.getElementById("contactForm").addEventListener("submit", (e)=>{
+    // ✅ invio VERO su Supabase (anon, RLS insert su bookings)
+    document.getElementById("contactForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const data = new FormData(e.target);
-      const nome = data.get("nome");
-      const dataSel = data.get("data");
-      const turnoSel = data.get("turno");
-      const oraSel = data.get("ora");
-      const persone = data.get("persone");
 
-      if(isMonday(dataSel)) return setStatus("Lunedì chiuso: non è possibile prenotare.", "bad");
-      if(!turnoSel) return setStatus("Seleziona il turno (Pranzo/Cena).", "bad");
-      if(!oraSel) return setStatus("Seleziona un orario valido.", "bad");
+      const form = e.target;
+      const data = new FormData(form);
 
-      setStatus(`Richiesta inviata ✅ (${nome}, ${persone} persone, ${dataSel} ${oraSel}). Ti ricontattiamo per conferma.`, "ok");
-      e.target.reset();
-      validateDay(); fillTimes();
+      const payload = {
+        nome: String(data.get("nome") || "").trim(),
+        telefono: String(data.get("telefono") || "").trim() || null,
+        email: String(data.get("email") || "").trim() || null,
+        data: data.get("data"),
+        turno: data.get("turno"),
+        // Postgres TIME: va benissimo 'HH:MM', se vuoi 'HH:MM:00' lo facciamo qui:
+        ora: String(data.get("ora") || "").trim(),
+        persone: Number(data.get("persone") || 1),
+        note: String(data.get("note") || "").trim() || null,
+        status: "in_attesa"
+      };
+
+      if(isMonday(payload.data)){
+        setStatus("Lunedì chiuso: non è possibile prenotare.", "bad");
+        return;
+      }
+      if(!payload.turno){ setStatus("Seleziona il turno (Pranzo/Cena).", "bad"); return; }
+      if(!payload.ora){ setStatus("Seleziona un orario valido.", "bad"); return; }
+
+      submitBtn.disabled = true;
+      setStatus("Invio in corso…", null);
+
+      try{
+        await OM.createBooking(payload);
+        setStatus(`Richiesta inviata ✅ (${payload.nome}, ${payload.persone} persone, ${payload.data} ${payload.ora} - ${payload.turno}). Ti ricontattiamo per conferma.`, "ok");
+        form.reset();
+        validateDay();
+        fillTimes();
+      }catch(err){
+        console.error(err);
+        setStatus("Errore invio: " + (err?.message || err), "bad");
+      }finally{
+        submitBtn.disabled = false;
+      }
     });
 
-    resetBtn.addEventListener("click", ()=> setTimeout(()=>{ validateDay(); fillTimes(); }, 0));
+    resetBtn.addEventListener("click", () => {
+      setTimeout(() => { validateDay(); fillTimes(); }, 0);
+    });
   </script>
 </body>
 </html>
