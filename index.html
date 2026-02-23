@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Officine Mare</title>
   <meta name="description" content="Ristorante di pesce - Officine Mare. Menù del giorno e prenotazioni." />
-  <link rel="icon" href="favicon.ico" />
 
   <style>
     :root{
@@ -31,7 +30,6 @@
       --chipBg: rgba(255,255,255,.14);
       --chipBd: rgba(255,255,255,.18);
     }
-
     *{ box-sizing:border-box; }
     html{ scroll-padding-top: calc(var(--headerReal) + var(--curveH) + var(--topBuffer)); }
 
@@ -56,7 +54,7 @@
       object-fit: cover;
       z-index: 0;
       pointer-events: none;
-      opacity: .68;
+      opacity: .72;
       filter: saturate(1.06) contrast(1.04) blur(.45px);
     }
 
@@ -67,7 +65,7 @@
       pointer-events: none;
       background:
         radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.12), transparent 60%),
-        linear-gradient(to bottom, rgba(22,62,90,.22), rgba(22,62,90,.78));
+        linear-gradient(to bottom, rgba(22,62,90,.28), rgba(22,62,90,.80));
     }
 
     #app{ position: relative; z-index: 2; min-height: 100vh; }
@@ -159,10 +157,6 @@
       padding-bottom: 60px;
     }
 
-    section, #menu, #prenota, #contatti{
-      scroll-margin-top: calc(var(--headerReal) + var(--curveH) + var(--topBuffer));
-    }
-
     .hero{
       display:grid;
       grid-template-columns: 1.1fr .9fr;
@@ -212,7 +206,6 @@
       transition: transform .12s ease, filter .12s ease;
     }
     .chip:hover{ transform: translateY(-1px); filter: brightness(1.05); }
-
     .chip .dot{
       width: 10px; height: 10px;
       border-radius: 999px;
@@ -269,25 +262,23 @@
       flex: 1;
       box-shadow: 0 10px 22px rgba(0,0,0,.10) inset;
       overflow:hidden;
-      position: relative;
     }
-    .menu-img{
+    .menu-box img{
       width:100%;
       height:100%;
-      object-fit: contain;
-      display:block;
+      object-fit:contain;
+      display:none;
     }
     .menu-text{
-      white-space: pre-wrap;
-      text-align:left;
       width:100%;
-      color: rgba(11,34,54,.86);
-      font-size: 14px;
-      line-height: 1.55;
+      white-space:pre-wrap;
+      text-align:left;
+      font-size:14px;
+      color: rgba(11,34,54,.85);
+      display:none;
     }
 
     .btn-row{ display:flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; align-items:center; }
-
     button{
       padding: 12px 16px;
       border-radius: 999px;
@@ -296,18 +287,14 @@
       font-weight: 900;
       min-width: 160px;
     }
-
     .btn-primary{
       color:#fff;
       border-color: rgba(0,0,0,.10);
       background: linear-gradient(180deg, rgba(36,91,124,.96), rgba(22,62,90,.98));
       box-shadow: 0 16px 28px rgba(0,0,0,.16);
     }
-
     .btn-soft{ background: rgba(36,91,124,.10); color: rgba(11,34,54,.92); }
     .btn-primary[disabled], .btn-soft[disabled]{ opacity:.55; cursor:not-allowed; }
-
-    form{ margin-top: 2px; }
 
     label{
       display:block;
@@ -315,7 +302,6 @@
       margin: 12px 0 6px;
       color: rgba(11,34,54,.92);
     }
-
     input, select, textarea{
       width:100%;
       padding: 12px 12px;
@@ -332,8 +318,6 @@
     .status{ margin-top: 10px; font-size: 13px; color: rgba(11,34,54,.72); }
     .status.bad{ color: rgba(160,30,30,.88); font-weight: 850; }
     .status.ok{ color: rgba(20,110,60,.88); font-weight: 850; }
-
-    .contacts{ margin-top: 18px; }
 
     footer{
       margin-top: 22px;
@@ -377,7 +361,7 @@
 
     <div class="header-curve" aria-hidden="true"></div>
 
-    <main class="container" id="home" role="main">
+    <main class="container" role="main">
       <section class="hero">
         <div class="hero-left">
           <h1>Ristorante di pesce</h1>
@@ -392,11 +376,13 @@
       </section>
 
       <section class="grid">
-        <section class="card" id="menu" aria-labelledby="menu-title">
-          <h2 id="menu-title">Menù del giorno</h2>
+        <section class="card" id="menu">
+          <h2>Menù del giorno</h2>
           <p class="hint">Foto o testo: viene mostrato qui automaticamente (da Supabase).</p>
 
           <div class="menu-box" id="menuBox">
+            <img id="menuImg" alt="Menù del giorno">
+            <div class="menu-text" id="menuText"></div>
             <div id="menuPlaceholder">
               <strong>Spazio foto menù</strong><br>
               <span style="font-size:13px; opacity:.9;">(admin carica su DB/storage)</span>
@@ -409,8 +395,8 @@
           </div>
         </section>
 
-        <section class="card" id="prenota" aria-labelledby="prenota-title">
-          <h2 id="prenota-title">Prenota un tavolo</h2>
+        <section class="card" id="prenota">
+          <h2>Prenota un tavolo</h2>
           <p class="hint">Orari prenotazioni: <strong>12:00–14:30</strong> e <strong>19:00–22:30</strong>. <strong>Lunedì chiuso</strong>.</p>
 
           <form id="contactForm">
@@ -418,7 +404,7 @@
             <input id="nome" name="nome" required placeholder="Mario Rossi" />
 
             <label for="telefono">Telefono</label>
-            <input id="telefono" name="telefono" inputmode="tel" placeholder="+39 ..." />
+            <input id="telefono" name="telefono" inputmode="tel" placeholder="+39 ..." required />
 
             <div class="row">
               <div>
@@ -448,6 +434,7 @@
                   <option>1</option><option>2</option><option>3</option><option>4</option>
                   <option>5</option><option>6</option><option>7</option><option>8</option>
                   <option>9</option><option>10</option><option>11</option><option>12</option>
+                  <option>13</option><option>14</option><option>15</option><option>16</option>
                 </select>
               </div>
               <div>
@@ -469,8 +456,8 @@
         </section>
       </section>
 
-      <section class="card contacts" id="contatti" aria-labelledby="contatti-title">
-        <h2 id="contatti-title">Contatti</h2>
+      <section class="card" id="contatti" style="margin-top:22px;">
+        <h2>Contatti</h2>
         <p class="hint" style="margin-bottom:0;">
           Indirizzo: <strong>...</strong> · Telefono: <strong>...</strong> ·
           Orari: <strong>12:00–14:30</strong> / <strong>19:00–22:30</strong> · <strong>Lunedì chiuso</strong>
@@ -492,7 +479,7 @@
   <script src="backend.js"></script>
 
   <script>
-    // --- Fix header su mobile/tablet
+    // --- Fix header height (mobile safe)
     function setHeaderRealHeight(){
       const header = document.getElementById("siteHeader");
       if(!header) return;
@@ -507,15 +494,13 @@
     setTimeout(setHeaderRealHeight, 250);
     setTimeout(setHeaderRealHeight, 800);
 
-    // anno
     document.getElementById("year").textContent = new Date().getFullYear();
 
-    // info
     document.getElementById("btnInfo").addEventListener("click", () => {
       document.getElementById("msg").textContent = "Oggi consigliamo crudi e grigliata di mare 🦞";
     });
 
-    // --- carica menu del giorno da DB (menu_day)
+    // ---- Menu Day load (menu_day)
     function pad(n){ return String(n).padStart(2,"0"); }
     function todayISO(){
       const d = new Date();
@@ -523,38 +508,36 @@
     }
 
     async function loadMenuDay(){
-      const box = document.getElementById("menuBox");
-      const ph = document.getElementById("menuPlaceholder");
+      const day = todayISO();
       try{
-        const row = await OM.getMenuDay(todayISO());
-        if(!row){
-          ph.style.display = "block";
-          return;
-        }
-        ph.style.display = "none";
+        const row = await window.OM.getMenuDay(day);
+        const img = document.getElementById("menuImg");
+        const txt = document.getElementById("menuText");
+        const ph = document.getElementById("menuPlaceholder");
 
-        // priorità immagine, poi testo
+        img.style.display = "none";
+        txt.style.display = "none";
+        ph.style.display = "block";
+
+        if(!row) return;
+
         if(row.image_url){
-          box.innerHTML = `<img class="menu-img" src="${row.image_url}" alt="Menù del giorno">`;
+          img.src = row.image_url;
+          img.style.display = "block";
+          ph.style.display = "none";
           return;
         }
         if(row.text){
-          box.innerHTML = `<div class="menu-text">${escapeHtml(row.text)}</div>`;
+          txt.textContent = row.text;
+          txt.style.display = "block";
+          ph.style.display = "none";
           return;
         }
-        ph.style.display = "block";
-      }catch(err){
-        console.error("loadMenuDay:", err);
-        ph.style.display = "block";
+      }catch(e){
+        // non bloccare la pagina cliente se menu_day non è leggibile per RLS
+        console.warn("Menu day non leggibile:", e?.message || e);
       }
     }
-
-    function escapeHtml(str){
-      return String(str).replace(/[&<>"']/g, (m) => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-      }[m]));
-    }
-
     loadMenuDay();
 
     // --- Prenotazioni: orari dinamici + lunedì chiuso
@@ -565,11 +548,9 @@
     const submitBtn = document.getElementById("submitBtn");
     const resetBtn = document.getElementById("resetBtn");
 
-    // min = oggi
     const today = new Date();
     dateEl.min = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
 
-    // step minuti: 10 (se vuoi 5 -> 5)
     const STEP_MIN = 10;
 
     function toMinutes(hhmm){
@@ -612,18 +593,9 @@
       const d = dateEl.value;
       const turno = turnoEl.value;
 
-      if(!d){
-        resetTimeSelect("Seleziona prima la data");
-        return;
-      }
-      if(isMonday(d)){
-        resetTimeSelect("Lunedì chiuso");
-        return;
-      }
-      if(!turno){
-        resetTimeSelect("Seleziona prima il turno");
-        return;
-      }
+      if(!d){ resetTimeSelect("Seleziona prima la data"); return; }
+      if(isMonday(d)){ resetTimeSelect("Lunedì chiuso"); return; }
+      if(!turno){ resetTimeSelect("Seleziona prima il turno"); return; }
 
       const slots = turno === "pranzo" ? lunchSlots : dinnerSlots;
       timeEl.innerHTML = `<option value="">Seleziona un orario</option>`;
@@ -662,62 +634,53 @@
       setStatus("Seleziona data, turno e orario tra quelli disponibili.", null);
     }
 
-    // init
-    validateDay();
-    fillTimes();
-
+    validateDay(); fillTimes();
     dateEl.addEventListener("change", () => { validateDay(); fillTimes(); });
     turnoEl.addEventListener("change", fillTimes);
 
-    // submit -> Supabase reservations
+    // submit -> reservations
     document.getElementById("contactForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
       const fd = new FormData(e.target);
-      const nome = fd.get("nome");
-      const dataSel = fd.get("data");
-      const turnoSel = fd.get("turno");
-      const oraSel = fd.get("ora");
-      const persone = fd.get("persone");
+      const nome = String(fd.get("nome") || "").trim();
+      const tel = String(fd.get("telefono") || "").trim();
+      const dataSel = String(fd.get("data") || "");
+      const turnoSel = String(fd.get("turno") || "");
+      const oraSel = String(fd.get("ora") || "");
+      const persone = Number(fd.get("persone") || 1);
+      const email = String(fd.get("email") || "").trim();
+      const note = String(fd.get("note") || "").trim();
 
-      if(isMonday(dataSel)){
-        setStatus("Lunedì chiuso: non è possibile prenotare.", "bad");
-        return;
-      }
-      if(!turnoSel){
-        setStatus("Seleziona il turno (Pranzo/Cena).", "bad");
-        return;
-      }
-      if(!oraSel){
-        setStatus("Seleziona un orario valido.", "bad");
-        return;
-      }
+      if(isMonday(dataSel)){ setStatus("Lunedì chiuso: non è possibile prenotare.", "bad"); return; }
+      if(!turnoSel){ setStatus("Seleziona il turno (Pranzo/Cena).", "bad"); return; }
+      if(!oraSel){ setStatus("Seleziona un orario valido.", "bad"); return; }
+
+      // reservations.reservation_time è "time": passiamo "HH:MM"
+      let notes = note || "";
+      if(email) notes = (notes ? notes + "\n" : "") + `Email: ${email}`;
+      notes = notes || null;
 
       submitBtn.disabled = true;
-      submitBtn.textContent = "Invio in corso...";
+      setStatus("Invio in corso...", null);
 
       try{
-        await OM.createReservation({
-          nome: fd.get("nome"),
-          telefono: fd.get("telefono"),
-          email: fd.get("email"),
-          data: fd.get("data"),
-          turno: fd.get("turno"),
-          ora: fd.get("ora"),
-          persone: fd.get("persone"),
-          note: fd.get("note"),
+        await window.OM.createReservation({
+          customer_name: nome,
+          customer_phone: tel,
+          reservation_date: dataSel,
+          reservation_time: oraSel,
+          people: persone,
+          notes
         });
 
         setStatus(`Richiesta inviata ✅ (${nome}, ${persone} persone, ${dataSel} ${oraSel}). Ti ricontattiamo per conferma.`, "ok");
         e.target.reset();
-        validateDay();
-        fillTimes();
+        validateDay(); fillTimes();
       }catch(err){
-        console.error("createReservation:", err);
-        setStatus(`Errore invio: ${err?.message || err}`, "bad");
+        setStatus("Errore invio: " + (err?.message || String(err)), "bad");
       }finally{
         submitBtn.disabled = false;
-        submitBtn.textContent = "Invia richiesta";
       }
     });
 
