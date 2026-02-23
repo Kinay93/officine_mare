@@ -7,105 +7,96 @@
 
   <style>
     :root{
-      --bgTop:#245b7c; --bgMid:#1b4968; --bgBot:#163e5a;
       --paper: rgba(255,255,255,.95);
       --text:#0b2236; --muted: rgba(11,34,54,.68);
       --borderD: rgba(11,34,54,.10);
-      --shadow: 0 22px 70px rgba(0,0,0,.22);
-      --max: 1600px; --radiusXL: 26px;
+      --shadow: 0 22px 70px rgba(0,0,0,.20);
+      --radiusXL: 26px;
+      --max: 1600px;
       --safeTop: env(safe-area-inset-top, 0px);
     }
     *{ box-sizing:border-box; }
+    html, body{ height:100%; }
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color:#fff;
       overflow-x:hidden;
-      background:
-        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.18), transparent 60%),
-        radial-gradient(800px 420px at 12% 8%, rgba(255,255,255,.10), transparent 55%),
-        radial-gradient(900px 520px at 88% 14%, rgba(255,255,255,.08), transparent 55%),
-        linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 42%, var(--bgBot) 100%);
+      background:#0f3c56;
     }
 
     #bgImg{
-      position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100dvh;
-      object-fit: cover;
-      z-index: 0;
-      pointer-events: none;
-      opacity: .70;
-      filter: saturate(1.06) contrast(1.04) blur(.45px);
+      position:fixed; inset:0;
+      width:100vw; height:100vh;
+      object-fit:cover;
+      opacity:.70;
+      filter:saturate(1.05) contrast(1.04);
+      z-index:0;
+      pointer-events:none;
     }
     #overlay{
-      position: fixed;
-      inset: 0;
-      z-index: 1;
-      pointer-events: none;
-      background:
-        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.12), transparent 60%),
-        linear-gradient(to bottom, rgba(22,62,90,.28), rgba(22,62,90,.80));
+      position:fixed; inset:0; z-index:1; pointer-events:none;
+      background: linear-gradient(180deg, rgba(10,40,60,.35), rgba(10,40,60,.78));
     }
 
     .container{
-      width: min(96vw, var(--max));
-      margin: 0 auto;
+      width:min(96vw, var(--max));
+      margin:0 auto;
       padding: 0 clamp(12px, 1.8vw, 28px);
-      position: relative;
-      z-index: 2;
+      position:relative;
+      z-index:2;
     }
 
     header{
-      position: sticky; top:0; z-index: 50;
+      position:sticky; top:0; z-index:50;
       padding-top: var(--safeTop);
-      background: rgba(22,62,90,.78);
+      background: rgba(15,60,86,.78);
       backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255,255,255,.18);
+      border-bottom: 1px solid rgba(255,255,255,.16);
     }
     .header-inner{
-      min-height: 74px;
-      display:flex;
-      align-items:center;
-      gap: 12px;
+      display:flex; align-items:center; gap:12px;
       padding: 10px 0;
       flex-wrap: wrap;
     }
-    .brand{
-      font-weight: 950;
-      letter-spacing: .8px;
-      font-size: 20px;
-      white-space: nowrap;
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .actions{
-      margin-left:auto;
-      display:flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items:center;
-    }
+    .brand{ font-weight:950; font-size: 18px; white-space:nowrap; }
+    .actions{ margin-left:auto; display:flex; gap:10px; flex-wrap:wrap; }
     .ghost{
-      padding: 10px 12px;
-      border-radius: 999px;
+      padding:10px 12px;
+      border-radius:999px;
       background: rgba(255,255,255,.10);
-      border: 1px solid rgba(255,255,255,.16);
+      border:1px solid rgba(255,255,255,.16);
       color: rgba(255,255,255,.92);
-      font-weight: 900;
-      cursor: pointer;
-      text-decoration: none;
-      display:inline-flex;
-      align-items:center;
-      gap: 8px;
-      white-space: nowrap;
+      font-weight:900;
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-flex; align-items:center; gap:8px;
     }
 
-    main{ padding: 18px 0 60px; }
+    main{ padding: 18px 0 50px; }
 
-    .row{ display:flex; gap: 10px; flex-wrap: wrap; align-items:center; }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(280px, 1fr));
+      gap: 14px;
+      align-items:start;
+    }
+    @media (max-width: 980px){ .grid{ grid-template-columns: 1fr; } }
+
+    .card{
+      background: var(--paper);
+      color: var(--text);
+      border-radius: var(--radiusXL);
+      border: 1px solid var(--borderD);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      overflow:hidden;
+    }
+    .title{ font-weight:950; font-size: 18px; margin:0; }
+    .muted{ color: var(--muted); font-size: 13px; }
+
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+
     select{
       padding: 10px 12px;
       border-radius: 14px;
@@ -131,33 +122,20 @@
       background: rgba(36,91,124,.10);
       color: rgba(11,34,54,.92);
     }
-    .mini{ padding: 8px 10px; font-size: 12px; }
+    .mini{ padding: 8px 10px; border-radius:999px; font-size:12px; }
 
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(2, minmax(280px, 1fr));
-      gap: 14px;
-      align-items:start;
+    .list{ margin-top: 10px; display:grid; gap: 8px; }
+    .item{
+      border-radius: 16px;
+      border: 1px solid rgba(11,34,54,.10);
+      background: rgba(255,255,255,.98);
+      padding: 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
     }
-    @media (max-width: 980px){
-      .grid{ grid-template-columns: 1fr; }
-    }
-
-    .card{
-      background: var(--paper);
-      color: var(--text);
-      border-radius: var(--radiusXL);
-      border: 1px solid var(--borderD);
-      box-shadow: var(--shadow);
-      padding: 16px;
-      position: relative;
-      overflow:hidden;
-    }
-    .topline{
-      display:flex; gap:10px; align-items:flex-start; justify-content:space-between; flex-wrap: wrap;
-    }
-    .title{ font-weight: 950; font-size: 18px; margin:0; }
-    .muted{ color: var(--muted); font-size: 13px; }
+    .itName{ font-weight: 950; font-size: 13px; }
     .badge{
       display:inline-flex;
       align-items:center;
@@ -173,21 +151,7 @@
     }
     .badge.open{ background: rgba(255,180,90,.18); }
     .badge.done{ background: rgba(40,140,80,.16); }
-
-    .list{ margin-top: 10px; display:grid; gap: 8px; }
-    .item{
-      border-radius: 16px;
-      border: 1px solid rgba(11,34,54,.10);
-      background: rgba(255,255,255,.98);
-      padding: 10px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .itLeft{ min-width: 220px; }
-    .itName{ font-weight: 950; font-size: 13px; }
+    .badge.served{ background: rgba(70,110,180,.16); }
 
     .lineState{
       display:inline-flex;
@@ -205,24 +169,10 @@
       background: rgba(40,140,80,.16);
       border-color: rgba(40,140,80,.25);
     }
-    .qtyPill{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-weight: 950;
-      border: 1px solid rgba(11,34,54,.12);
-      background: rgba(36,91,124,.06);
-      min-width: 44px;
+    .lineState.served{
+      background: rgba(70,110,180,.16);
+      border-color: rgba(70,110,180,.20);
     }
-
-    /* login */
-    #loginCard{ max-width: 520px; margin: 0 auto; }
-    .statusLine{ margin-top:10px; font-size:13px; color: rgba(11,34,54,.72); }
-    .statusLine.bad{ color: rgba(160,30,30,.88); font-weight: 900; }
-    .statusLine.ok{ color: rgba(20,110,60,.88); font-weight: 900; }
-    .hidden{ display:none !important; }
   </style>
 </head>
 
@@ -238,61 +188,50 @@
         <button class="ghost" id="vibBtn">📳 Vibra: ON</button>
         <button class="ghost" id="refreshBtn">Aggiorna</button>
         <a class="ghost" href="admin.html">↩️ Admin</a>
-        <button class="ghost" id="logoutBtn">🚪 Logout</button>
       </div>
     </div>
   </header>
 
   <main class="container">
-    <section class="card" id="loginCard">
-      <h2 class="title">Login cucina</h2>
-      <p class="muted">Accedi con email/password staff.</p>
-      <div class="row" style="margin-top:10px;">
-        <input id="loginEmail" type="email" placeholder="kitchen@officinemare.it" style="flex:1; min-width:220px;">
-        <input id="loginPass" type="password" placeholder="••••••••" style="flex:1; min-width:220px;">
-        <button class="primary" id="loginBtn">Entra</button>
-      </div>
-      <div id="loginMsg" class="statusLine"></div>
-    </section>
+    <div class="row" style="margin-bottom:12px;">
+      <select id="filter">
+        <option value="open">Aperte</option>
+        <option value="done">Complete</option>
+        <option value="all">Tutte</option>
+      </select>
+      <span class="muted" id="statusMsg"></span>
+    </div>
 
-    <section id="appWrap" class="hidden">
-      <div class="row" style="margin-bottom:12px;">
-        <select id="filter">
-          <option value="open">Aperte</option>
-          <option value="done">Complete</option>
-          <option value="all">Tutte</option>
-        </select>
-        <span class="muted" id="statusMsg"></span>
-      </div>
-
-      <div class="grid" id="ordersGrid"></div>
-    </section>
+    <div class="grid" id="ordersGrid"></div>
   </main>
 
-  <!-- Supabase + config + backend -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
   <script src="backend.js"></script>
 
   <script>
-    const $ = (id) => document.getElementById(id);
+    const ordersGrid = document.getElementById("ordersGrid");
+    const filterEl = document.getElementById("filter");
+    const statusMsg = document.getElementById("statusMsg");
 
-    const ordersGrid = $("ordersGrid");
-    const filterEl = $("filter");
-    const statusMsg = $("statusMsg");
+    const soundBtn = document.getElementById("soundBtn");
+    const vibBtn = document.getElementById("vibBtn");
+    const refreshBtn = document.getElementById("refreshBtn");
 
-    const soundBtn = $("soundBtn");
-    const vibBtn = $("vibBtn");
     let soundOn = true;
     let vibOn = true;
-
-    function setStatus(msg){ statusMsg.textContent = msg || ""; }
 
     function fmtTime(iso){
       try{
         const d = new Date(iso);
         return d.toLocaleTimeString("it-IT", { hour:"2-digit", minute:"2-digit" });
       }catch{ return ""; }
+    }
+    function minutesAgo(iso){
+      if(!iso) return null;
+      const t = new Date(iso).getTime();
+      if(!t) return null;
+      return Math.max(0, Math.floor((Date.now() - t)/60000));
     }
 
     function beep(){
@@ -325,52 +264,19 @@
       if(vibOn) vibrate();
     });
 
-    $("refreshBtn").addEventListener("click", poll);
-    filterEl.addEventListener("change", poll);
-
-    async function refreshAuthUI(){
-      const session = await window.OM.getSession().catch(()=>null);
-      if(session){
-        $("loginCard").classList.add("hidden");
-        $("appWrap").classList.remove("hidden");
-      }else{
-        $("loginCard").classList.remove("hidden");
-        $("appWrap").classList.add("hidden");
-      }
-    }
-
-    $("loginBtn").addEventListener("click", async () => {
-      $("loginMsg").textContent = "Accesso...";
-      $("loginMsg").classList.remove("bad","ok");
-      try{
-        await window.OM.signIn($("loginEmail").value.trim(), $("loginPass").value);
-        $("loginMsg").textContent = "OK ✅";
-        $("loginMsg").classList.add("ok");
-        await refreshAuthUI();
-        await poll();
-        startRealtime();
-      }catch(e){
-        $("loginMsg").textContent = "Errore: " + (e?.message || e);
-        $("loginMsg").classList.add("bad");
-      }
-    });
-
-    $("logoutBtn").addEventListener("click", async () => {
-      try{ await window.OM.signOut(); }catch{}
-      await refreshAuthUI();
-    });
-
     function orderProgress(order){
       const items = order.order_items || [];
       const total = items.length;
       const ready = items.filter(it => it.line_status === "ready").length;
-      const done = (total > 0 && ready === total);
+      const done = total > 0 && ready === total;
       return { total, ready, done };
     }
 
-    function render(orders){
+    async function render(){
+      const all = await OM.getActiveOrdersWithItems();
       const f = filterEl.value;
-      let rows = (orders || []).slice();
+
+      let rows = all;
 
       if(f !== "all"){
         rows = rows.filter(o => {
@@ -380,7 +286,7 @@
       }
 
       ordersGrid.innerHTML = "";
-      if(!rows.length){
+      if(rows.length === 0){
         ordersGrid.innerHTML = `
           <div class="card">
             <h2 class="title">Nessuna comanda</h2>
@@ -390,9 +296,7 @@
       }
 
       rows.forEach(o => {
-        const items = (o.order_items || []);
         const p = orderProgress(o);
-
         const headerBadge = p.done
           ? `<span class="badge done">Completa (${p.ready}/${p.total})</span>`
           : `<span class="badge open">In lavorazione (${p.ready}/${p.total})</span>`;
@@ -401,33 +305,39 @@
         card.className = "card";
 
         card.innerHTML = `
-          <div class="topline">
+          <div class="row" style="justify-content:space-between; align-items:flex-start;">
             <div>
               <h2 class="title">Tavolo ${o.table_code}</h2>
-              <div class="muted">Ricevuta alle ${fmtTime(o.created_at)} · ID ${o.id.slice(0,8)}</div>
+              <div class="muted">Ricevuta alle ${fmtTime(o.created_at)} · ID ${o.id}</div>
             </div>
             <div class="row">
               ${headerBadge}
-              ${p.done ? `<button class="soft mini" data-act="archive" data-oid="${o.id}">Chiudi (archivia)</button>` : ``}
+              ${p.done ? `<button class="soft mini" data-act="archive" data-oid="${o.id}">Archivia</button>` : ``}
             </div>
           </div>
 
           <div class="list">
-            ${items.map(it => {
+            ${(o.order_items || []).map(it => {
               const ready = it.line_status === "ready";
+              const served = !!it.served;
+              const mins = served ? minutesAgo(it.served_at) : null;
+
               return `
                 <div class="item">
-                  <div class="itLeft">
+                  <div>
                     <div class="itName">${it.item_name}</div>
-                    <div class="muted">qty: <strong>${it.qty}</strong> · ${it.served ? "🍽️ Servito" : "Non servito"}</div>
+                    <div class="muted small">qty: <strong>${it.qty}</strong></div>
                   </div>
-
                   <div class="row" style="justify-content:flex-end;">
-                    <span class="qtyPill">x${it.qty}</span>
-                    <span class="lineState ${ready ? "ready" : ""}">${ready ? "Pronto" : "Da fare"}</span>
-                    ${ready
-                      ? `<button class="soft mini" data-act="undoLine" data-lid="${it.id}">Non pronto</button>`
-                      : `<button class="primary mini" data-act="readyLine" data-lid="${it.id}">Pronto</button>`
+                    ${served
+                      ? `<span class="lineState served">Servito ${mins!=null ? `· ${mins} min` : ""}</span>`
+                      : `<span class="lineState ${ready ? "ready" : ""}">${ready ? "Pronto" : "Da fare"}</span>`
+                    }
+                    ${served
+                      ? ``
+                      : (ready
+                        ? `<button class="soft mini" data-act="undo" data-lid="${it.id}">Non pronto</button>`
+                        : `<button class="primary mini" data-act="ready" data-lid="${it.id}">Pronto</button>`)
                     }
                   </div>
                 </div>
@@ -439,17 +349,25 @@
         card.querySelectorAll("button[data-act]").forEach(btn => {
           btn.addEventListener("click", async () => {
             const act = btn.dataset.act;
+
             try{
-              if(act === "readyLine"){
-                await window.OM.setLineReady(btn.dataset.lid, true);
-              }else if(act === "undoLine"){
-                await window.OM.setLineReady(btn.dataset.lid, false);
-              }else if(act === "archive"){
-                await window.OM.archiveOrderIfComplete(btn.dataset.oid);
+              if(act === "archive"){
+                await OM.archiveOrderIfComplete(btn.dataset.oid);
+                await render();
+                return;
               }
-              await poll();
+              if(act === "ready"){
+                await OM.setLineReady(btn.dataset.lid, true);
+                await render();
+                return;
+              }
+              if(act === "undo"){
+                await OM.setLineReady(btn.dataset.lid, false);
+                await render();
+                return;
+              }
             }catch(e){
-              alert("Errore: " + (e?.message || e));
+              alert(e.message || e);
             }
           });
         });
@@ -458,44 +376,32 @@
       });
     }
 
-    let lastHash = "";
+    // realtime: notifica nuova comanda
+    let lastIds = "";
     async function poll(){
-      try{
-        const orders = await window.OM.getActiveOrdersWithItems();
-        const hash = (orders||[]).map(o => o.id).sort().join("|");
-        if(lastHash && hash !== lastHash){
-          beep(); vibrate();
-          setStatus("Nuova comanda arrivata ✅");
-          setTimeout(() => setStatus(""), 1600);
-        }
-        lastHash = hash;
-        render(orders);
-      }catch(e){
-        setStatus("Errore: " + (e?.message || e));
+      const all = await OM.getActiveOrdersWithItems();
+      const ids = all.map(o => o.id).sort().join("|");
+      if(lastIds && ids !== lastIds){
+        beep(); vibrate();
+        statusMsg.textContent = "Nuova comanda arrivata ✅";
+        setTimeout(() => statusMsg.textContent = "", 1500);
       }
+      lastIds = ids;
+      await render();
     }
 
-    let unsub = null;
-    function startRealtime(){
-      try{
-        unsub?.();
-        unsub = window.OM.subscribeRealtime(async (ev) => {
-          if(ev.table === "orders" || ev.table === "order_items"){
-            await poll();
-          }
-        });
-      }catch(e){
-        console.warn("Realtime non attivo:", e?.message || e);
-      }
-    }
+    refreshBtn.addEventListener("click", poll);
+    filterEl.addEventListener("change", render);
 
+    // auth: se non loggato, rimanda admin (tu usi la stessa utenza staff)
     (async () => {
-      await refreshAuthUI();
-      const session = await window.OM.getSession().catch(()=>null);
-      if(session){
-        await poll();
-        startRealtime();
-      }
+      const s = await OM.getSession();
+      if(!s){ location.href = "admin.html"; return; }
+      OM.subscribeRealtime((ev) => {
+        if(ev.table === "orders" || ev.table === "order_items") poll();
+      });
+      poll();
+      setInterval(poll, 2500);
     })();
   </script>
 </body>
