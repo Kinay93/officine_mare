@@ -1,6 +1,5 @@
-// backend.js
+// backend.js (schema-aligned: reservations/orders/order_items/menu_items/menu_day/restaurant_tables)
 (function () {
-  // Richiede Supabase JS v2 da CDN
   if (!window.supabase) {
     console.error("Supabase JS non caricato. Aggiungi lo script CDN @supabase/supabase-js v2.");
     return;
@@ -67,102 +66,110 @@
     return data?.role || null;
   }
 
-  // ---------- MENU ITEMS (menu_items) ----------
-  async function listMenuItems({ activeOnly = true } = {}) {
+  // ---------- MENU (menu_items + menu_day) ----------
+  async function listMenuItems({ onlyActive = true } = {}) {
     const sb = getClient();
-    await requireAuth(); // staff only
-    let q = sb.from("menu_items").select("*").order("created_at", { ascending: false });
-    if (activeOnly) q = q.eq("active", true);
+    // menu visibile anche senza login (puoi cambiare con RLS)
+    let q = sb.from("menu_items").select("*").order("category", { ascending: true }).order("name", { ascending: true });
+    if (onlyActive) q = q.eq("active", true);
     const { data, error } = await q;
     if (error) throw error;
     return data || [];
   }
 
-  async function createMenuItem({ name, category, price, active = true }) {
+  async function upsertMenuItem(item) {
+    // staff only
     const sb = getClient();
     await requireAuth();
-    const { data, error } = await sb
-      .from("menu_items")
-      .insert({
-        name: String(name || "").trim(),
-        category: String(category || "").trim() || null,
-        price: price != null ? Number(price) : null,
-        active: !!active,
-      })
-      .select()
-      .single();
+    // item: {id?, name, category, price, active}
+    const payload = {
+      id: item.id || undefined,
+      name: String(item.name || "").trim(),
+      category: String(item.category || "Altro").trim(),
+      price: item.price == null || item.price === "" ? null : Number(item.price),
+      active: item.active !== false,
+    };
+    const { data, error } = await sb.from("menu_items").upsert(payload).select().single();
     if (error) throw error;
     return data;
   }
 
-  async function updateMenuItem(id, patch) {
+  async function setMenuItemActive(id, active) {
     const sb = getClient();
     await requireAuth();
-    const { data, error } = await sb.from("menu_items").update(patch).eq("id", id).select().single();
+    const { data, error } = await sb.from("menu_items").update({ active: !!active }).eq("id", id).select().single();
     if (error) throw error;
     return data;
   }
 
-  async function deactivateMenuItem(id) {
-    return updateMenuItem(id, { active: false });
-  }
-
-  // ---------- MENU DAY (menu_day) ----------
   async function getMenuDay(dayISO) {
     const sb = getClient();
-    // lettura pubblica OK (se fai policy public read) altrimenti metti requireAuth
-    const { data, error } = await sb.from("menu_day").select("*").eq("day", dayISO).maybeSingle();
+    // dayISO: 'YYYY-MM-DD'
+    const { data, error } = await sb
+      .from("menu_day")
+      .select("*")
+      .eq("day", dayISO)
+      .order("created_at", { ascending: false })
+      .maybeSingle();
     if (error) throw error;
     return data || null;
   }
 
-  async function upsertMenuDay({ day, text, image_url }) {
+  async function saveMenuDay({ dayISO, text, image_url }) {
     const sb = getClient();
-    await requireAuth(); // staff
+    await requireAuth();
+
     const payload = {
-      day,
-      text: text ?? null,
-      image_url: image_url ?? null,
+      day: dayISO,
+      text: text || null,
+      image_url: image_url || null,
     };
-    // se non hai unique su day, funziona comunque ma inserisce più righe: consigliato mettere UNIQUE(day)
-    const { data, error } = await sb.from("menu_day").upsert(payload, { onConflict: "day" }).select().single();
+
+    // upsert by day (se hai unique(day) è perfetto; altrimenti crea record multipli ma prendiamo l’ultimo)
+    const { data, error } = await sb.from("menu_day").insert(payload).select().single();
     if (error) throw error;
     return data;
   }
 
-  // ---------- RESERVATIONS (reservations) ----------
-  // DB columns: reservation_date (date), reservation_time (time),
-  // people, customer_name, customer_phone, customer_email, notes, status, table_code
+  // ---------- TAVOLI ----------
+  async function listRestaurantTables() {
+    const sb = getClient();
+    // staff view (di solito). Se vuoi anche senza login, togli requireAuth e apri RLS.
+    await requireAuth();
+    const { data, error } = await sb.from("restaurant_tables").select("*").order("code", { ascending: true });
+    if (error) throw error;
+    return data || [];
+  }
+
+  // ---------- PRENOTAZIONI (reservations) ----------
+  // Schema reale (dal tuo diagramma):
+  // reservations: reservation_date(date), reservation_time(time), people(int),
+  // customer_name(text), customer_phone(text), notes(text),
+  // status(text), table_code(text), created_at(timestamptz)
   async function createReservation(payload) {
+    // payload: { customer_name, customer_phone, reservation_date, reservation_time, people, notes }
     const sb = getClient();
 
-    const cleanTurno = payload.turno ? String(payload.turno).trim() : "";
-    const noteBase = String(payload.note || "").trim();
-    const notes =
-      cleanTurno && !noteBase.startsWith("[turno:")
-        ? `[turno:${cleanTurno}] ${noteBase}`.trim()
-        : noteBase || null;
-
-    const row = {
-      reservation_date: payload.data,           // "YYYY-MM-DD"
-      reservation_time: payload.ora,            // "HH:MM"
-      people: payload.persone != null ? Number(payload.persone) : null,
-      customer_name: String(payload.nome || "").trim(),
-      customer_phone: String(payload.telefono || "").trim() || null,
-      customer_email: String(payload.email || "").trim() || null,
-      notes,
-      status: "pending",                        // pending / confirmed / arrived / canceled (decidi tu)
-      table_code: payload.table_code || null,   // assegnabile dall'admin dopo
+    // NON inseriamo customer_email (non esiste).
+    // Se arriva email dal form, la mettiamo dentro notes.
+    const clean = {
+      reservation_date: payload.reservation_date,
+      reservation_time: payload.reservation_time, // "HH:MM:SS" o "HH:MM"
+      people: Number(payload.people || 1),
+      customer_name: String(payload.customer_name || "").trim(),
+      customer_phone: String(payload.customer_phone || "").trim(),
+      notes: payload.notes ? String(payload.notes) : null,
+      // status e table_code li decide lo staff (o default DB)
     };
 
-    const { data, error } = await sb.from("reservations").insert(row).select().single();
+    const { data, error } = await sb.from("reservations").insert(clean).select().single();
     if (error) throw error;
     return data;
   }
 
   async function listReservations({ dayISO, status, q } = {}) {
     const sb = getClient();
-    await requireAuth(); // staff only (RLS)
+    await requireAuth();
 
     let query = sb
       .from("reservations")
@@ -176,7 +183,7 @@
     if (q && q.trim()) {
       const term = q.trim();
       query = query.or(
-        `customer_name.ilike.%${term}%,customer_phone.ilike.%${term}%,customer_email.ilike.%${term}%`
+        `customer_name.ilike.%${term}%,customer_phone.ilike.%${term}%`
       );
     }
 
@@ -193,59 +200,71 @@
     return data;
   }
 
-  // ---------- TABLES (restaurant_tables) ----------
-  async function listRestaurantTables() {
+  // ---------- ORDINI (orders + order_items) ----------
+  // orders: id(uuid), table_code(text), status(text check: usa 'open' / 'archived'), created_by(uuid), created_at
+  // order_items: id(uuid), order_id, menu_item_id(uuid), item_name(text), qty(int), line_status(text), ready_at, served(bool), served_at
+  async function getOpenOrderForTable(table_code) {
     const sb = getClient();
     await requireAuth();
+
     const { data, error } = await sb
-      .from("restaurant_tables")
+      .from("orders")
       .select("*")
-      .order("code", { ascending: true });
+      .eq("table_code", table_code)
+      .eq("status", "open")
+      .order("created_at", { ascending: false })
+      .maybeSingle();
+
     if (error) throw error;
-    return data || [];
+    return data || null;
   }
 
-  // ---------- ORDERS (orders + order_items) ----------
-  // orders columns: id, table_code, status, created_by, created_at
-  // order_items columns: id, order_id, menu_item_id, item_name, qty, line_status, ready_at, served, served_at
-  async function createOrder({ table_code, note, items }) {
+  async function createOrAppendOrder({ table_code, note, items }) {
+    // staff only
     const sb = getClient();
     const session = await requireAuth();
 
-    const { data: order, error: e1 } = await sb
-      .from("orders")
-      .insert({
-        table_code,
-        status: "sent",
-        created_by: session.user.id,
-      })
-      .select()
-      .single();
+    if (!table_code) throw new Error("TABLE_REQUIRED");
+    const cleanItems = (items || []).filter(x => Number(x.qty || 0) > 0);
 
-    if (e1) throw e1;
+    if (!cleanItems.length) throw new Error("NO_ITEMS");
 
-    const rows = (items || [])
-      .filter((x) => Number(x.qty) > 0)
-      .map((it) => ({
-        order_id: order.id,
-        menu_item_id: it.menu_item_id || null,
-        item_name: String(it.name || it.item_name || "").trim(),
-        qty: Number(it.qty || 1),
-        line_status: "todo",
-        ready_at: null,
-        served: false,
-        served_at: null,
-      }));
+    // 1) prendi ordine open del tavolo (se esiste)
+    let order = await getOpenOrderForTable(table_code);
 
-    if (rows.length) {
-      const { error: e2 } = await sb.from("order_items").insert(rows);
-      if (e2) throw e2;
+    // 2) se non esiste, crealo con status 'open' (NON 'sent')
+    if (!order) {
+      const { data: created, error: e1 } = await sb
+        .from("orders")
+        .insert({
+          table_code,
+          status: "open",
+          created_by: session.user.id,
+        })
+        .select()
+        .single();
+      if (e1) throw e1;
+      order = created;
     }
 
-    // salva note nel modo più semplice: append alle note in reservation? (non c'è colonna note su orders)
-    // nel tuo schema orders non ha "note". Se la vuoi, va aggiunta. Per ora la metto dentro a order_items? NO.
-    // Quindi: ignoro note qui per coerenza con schema.
-    // Se vuoi note su order, aggiungi colonna "note text" a orders.
+    // 3) inserisci righe
+    const rows = cleanItems.map((it) => ({
+      order_id: order.id,
+      menu_item_id: it.menu_item_id || null,
+      item_name: String(it.item_name || it.name || "").trim(),
+      qty: Number(it.qty || 1),
+      line_status: "todo",
+      ready_at: null,
+      served: false,
+      served_at: null,
+    }));
+
+    const { error: e2 } = await sb.from("order_items").insert(rows);
+    if (e2) throw e2;
+
+    // 4) se note, appendi in notes dell’ordine? (non hai colonna note su orders nel diagramma)
+    // quindi la salviamo come riga "nota" fittizia? NO.
+    // Per ora: se vuoi note, aggiungi colonna note su orders. Intanto la ignoriamo.
     return order;
   }
 
@@ -256,7 +275,7 @@
     const { data, error } = await sb
       .from("orders")
       .select("*, order_items(*)")
-      .neq("status", "archived")
+      .eq("status", "open")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -271,7 +290,13 @@
       ? { line_status: "ready", ready_at: new Date().toISOString() }
       : { line_status: "todo", ready_at: null };
 
-    const { data, error } = await sb.from("order_items").update(patch).eq("id", lineId).select().single();
+    const { data, error } = await sb
+      .from("order_items")
+      .update(patch)
+      .eq("id", lineId)
+      .select()
+      .single();
+
     if (error) throw error;
     return data;
   }
@@ -284,7 +309,13 @@
       ? { served: true, served_at: new Date().toISOString() }
       : { served: false, served_at: null };
 
-    const { data, error } = await sb.from("order_items").update(patch).eq("id", lineId).select().single();
+    const { data, error } = await sb
+      .from("order_items")
+      .update(patch)
+      .eq("id", lineId)
+      .select()
+      .single();
+
     if (error) throw error;
     return data;
   }
@@ -339,7 +370,7 @@
     return () => sb.removeChannel(channel);
   }
 
-  // ---------- SMS placeholder (Edge Function) ----------
+  // ---------- SMS (placeholder Edge Function) ----------
   async function sendSMS({ to, message }) {
     const sb = getClient();
     await requireAuth();
@@ -348,7 +379,6 @@
     return data;
   }
 
-  // Compat alias: "bookings" -> "reservations"
   window.OM = {
     sb: getClient,
 
@@ -359,29 +389,24 @@
     requireAuth,
     getMyRole,
 
+    // menu
+    listMenuItems,
+    upsertMenuItem,
+    setMenuItemActive,
+    getMenuDay,
+    saveMenuDay,
+
+    // tables
+    listRestaurantTables,
+
     // reservations
     createReservation,
     listReservations,
     updateReservation,
 
-    // alias vecchi nomi (se qualche pagina li usa ancora)
-    createBooking: createReservation,
-    listBookings: listReservations,
-    updateBooking: updateReservation,
-
-    // menu
-    listMenuItems,
-    createMenuItem,
-    updateMenuItem,
-    deactivateMenuItem,
-    getMenuDay,
-    upsertMenuDay,
-
-    // tables
-    listRestaurantTables,
-
     // orders
-    createOrder,
+    getOpenOrderForTable,
+    createOrAppendOrder,
     getActiveOrdersWithItems,
     setLineReady,
     setLineServed,
