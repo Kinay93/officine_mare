@@ -1,5 +1,6 @@
-/* backend.js */
+// backend.js
 (function () {
+  // Richiede: <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   if (!window.supabase) {
     console.error("Supabase JS non caricato. Aggiungi CDN @supabase/supabase-js v2.");
     return;
@@ -13,14 +14,34 @@
     }
     if (!window.__sb) {
       window.__sb = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+        },
         realtime: { params: { eventsPerSecond: 10 } },
       });
     }
     return window.__sb;
   }
 
-  // ---------- AUTH ----------
+  // ----------------- Helpers -----------------
+  function csvFromTables(tables) {
+    if (!tables) return null;
+    if (Array.isArray(tables)) {
+      const clean = tables.map(String).map(s => s.trim()).filter(Boolean);
+      return clean.length ? clean.join(",") : null;
+    }
+    const s = String(tables).trim();
+    return s ? s : null;
+  }
+
+  function tablesFromCsv(csv) {
+    if (!csv) return [];
+    return String(csv).split(",").map(s => s.trim()).filter(Boolean);
+  }
+
+  // ----------------- AUTH -----------------
   async function signIn(email, password) {
     const sb = getClient();
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
@@ -42,9 +63,9 @@
   }
 
   async function requireAuth() {
-    const s = await getSession();
-    if (!s) throw new Error("NON_AUTHENTICATED");
-    return s;
+    const session = await getSession();
+    if (!session) throw new Error("NON_AUTHENTICATED");
+    return session;
   }
 
   async function getMyRole() {
@@ -62,69 +83,54 @@
     return data?.role || null;
   }
 
-  // ---------- TABLES ----------
+  // ----------------- TABLES -----------------
   async function listRestaurantTables() {
     const sb = getClient();
     await requireAuth();
-    const { data, error } = await sb.from("restaurant_tables").select("*").order("code");
+    const { data, error } = await sb
+      .from("restaurant_tables")
+      .select("*")
+      .order("code", { ascending: true });
     if (error) throw error;
     return data || [];
   }
 
-  // ---------- MENU ITEMS (GESTIBILE) ----------
-  async function listMenuItems({ activeOnly = true } = {}) {
+  async function setTableOpen(code, is_open) {
     const sb = getClient();
     await requireAuth();
-    let q = sb.from("menu_items").select("*").order("category").order("name");
-    if (activeOnly) q = q.eq("active", true);
-    const { data, error } = await q;
-    if (error) throw error;
-    return data || [];
-  }
-
-  async function createMenuItem({ name, category, price }) {
-    const sb = getClient();
-    await requireAuth();
-    const row = { name, category: category || null, price: price != null ? Number(price) : null, active: true };
-    const { data, error } = await sb.from("menu_items").insert(row).select().single();
+    const { data, error } = await sb
+      .from("restaurant_tables")
+      .update({ is_open: !!is_open })
+      .eq("code", code)
+      .select()
+      .single();
     if (error) throw error;
     return data;
   }
 
-  async function updateMenuItem(id, patch) {
-    const sb = getClient();
-    await requireAuth();
-    const { data, error } = await sb.from("menu_items").update(patch).eq("id", id).select().single();
-    if (error) throw error;
-    return data;
-  }
-
-  async function setMenuItemActive(id, active) {
-    return updateMenuItem(id, { active: !!active });
-  }
-
-  // ---------- RESERVATIONS (CLIENT INSERT, STAFF READ/UPDATE) ----------
-  // Mappa payload client -> schema reale reservations
-  // Schema (dal tuo screenshot): reservation_date, reservation_time, people, customer_name, customer_phone, notes, status, table_code
+  // ----------------- RESERVATIONS (CLIENT INSERT / STAFF READ+UPDATE) -----------------
+  // Schema: reservations(
+  //  id uuid, reservation_date date, reservation_time time, people,
+  //  customer_name, customer_phone, notes, status, table_code, created_at
+  // )
   async function createReservation(payload) {
+    // payload UI: { nome, telefono, email?, data, ora, persone, note }
     const sb = getClient();
 
-    // payload atteso dal form cliente:
-    // { nome, telefono, email?, data, ora, persone, note }
-    const notes = [
-      payload.note || payload.notes || "",
-      payload.email ? `Email: ${payload.email}` : ""
-    ].filter(Boolean).join("\n");
+    const notesParts = [];
+    if (payload?.note) notesParts.push(String(payload.note));
+    if (payload?.email) notesParts.push(`Email: ${String(payload.email).trim()}`);
+    const notes = notesParts.join("\n").trim() || null;
 
     const row = {
-      reservation_date: payload.data,                 // YYYY-MM-DD
-      reservation_time: payload.ora,                  // HH:MM
-      people: Number(payload.persone || payload.people || 1),
-      customer_name: payload.nome || payload.customer_name,
-      customer_phone: payload.telefono || payload.customer_phone || null,
-      notes: notes || null,
-      status: "pending",                              // pending | confirmed | arrived | cancelled (coerente con gestionale)
-      table_code: payload.table_code || null          // compat: primo tavolo (se lo metti)
+      reservation_date: payload.data,         // YYYY-MM-DD
+      reservation_time: payload.ora,          // HH:MM
+      people: Number(payload.persone || 1),
+      customer_name: String(payload.nome || "").trim(),
+      customer_phone: String(payload.telefono || "").trim() || null,
+      notes,
+      status: "pending",                      // usa "pending" come default (staff lo cambia)
+      table_code: null,                       // assegnazione dopo (multi in CSV)
     };
 
     const { data, error } = await sb.from("reservations").insert(row).select().single();
@@ -136,10 +142,9 @@
     const sb = getClient();
     await requireAuth();
 
-    // join per mostrare multi tavoli (se esiste reservation_tables)
     let query = sb
       .from("reservations")
-      .select("*, reservation_tables(table_code)")
+      .select("*")
       .order("reservation_date", { ascending: true })
       .order("reservation_time", { ascending: true });
 
@@ -161,75 +166,148 @@
   async function updateReservation(id, patch) {
     const sb = getClient();
     await requireAuth();
-    const { data, error } = await sb.from("reservations").update(patch).eq("id", id).select().single();
+
+    // patch permessi: status, notes, table_code, people, reservation_date/time, customer_*
+    const safePatch = { ...patch };
+
+    if (safePatch.table_code && Array.isArray(safePatch.table_code)) {
+      safePatch.table_code = csvFromTables(safePatch.table_code);
+    }
+
+    const { data, error } = await sb
+      .from("reservations")
+      .update(safePatch)
+      .eq("id", id)
+      .select()
+      .single();
+
     if (error) throw error;
     return data;
   }
 
-  // Multi-tavolo: salva in reservation_tables e aggiorna table_code su reservations (per compat UI)
-  async function setReservationTables(reservationId, tableCodes) {
-    const sb = getClient();
-    await requireAuth();
-
-    const tables = Array.from(new Set((tableCodes || []).filter(Boolean)));
-
-    // 1) delete vecchie righe
-    // (se la tabella non esiste, qui ti darà errore: in quel caso crea reservation_tables)
-    const { error: eDel } = await sb
-      .from("reservation_tables")
-      .delete()
-      .eq("reservation_id", reservationId);
-
-    if (eDel) throw eDel;
-
-    // 2) insert nuove
-    if (tables.length) {
-      const rows = tables.map((t) => ({ reservation_id: reservationId, table_code: t }));
-      const { error: eIns } = await sb.from("reservation_tables").insert(rows);
-      if (eIns) throw eIns;
-    }
-
-    // 3) aggiorna colonna compat (primo tavolo)
-    const primary = tables[0] || null;
-    await updateReservation(reservationId, { table_code: primary });
-
-    return { ok: true, tables };
+  async function assignReservationTables(reservationId, tableCodesArray) {
+    return updateReservation(reservationId, { table_code: csvFromTables(tableCodesArray) });
   }
 
-  // ---------- ORDERS ----------
-  // Schema orders (dal tuo screenshot): id, table_code, status, created_by, created_at
-  // Schema order_items: id, order_id, menu_item_id, item_name, qty, line_status, ready_at, served, served_at
-  async function createOrder({ table_code, items }) {
+  // ----------------- MENU ITEMS -----------------
+  async function listMenuItems({ activeOnly = true } = {}) {
     const sb = getClient();
     await requireAuth();
 
-    if (!table_code) throw new Error("Manca table_code");
-    if (!items || !items.length) throw new Error("Nessun item");
+    let q = sb.from("menu_items").select("*").order("category", { ascending: true }).order("name", { ascending: true });
+    if (activeOnly) q = q.eq("active", true);
 
-    // 1) crea ordine
+    const { data, error } = await q;
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function createMenuItem({ name, category, price, active = true }) {
+    const sb = getClient();
+    await requireAuth();
+
+    const row = {
+      name: String(name || "").trim(),
+      category: String(category || "").trim() || null,
+      price: price != null ? Number(price) : null,
+      active: !!active,
+    };
+
+    const { data, error } = await sb.from("menu_items").insert(row).select().single();
+    if (error) throw error;
+    return data;
+  }
+
+  async function updateMenuItem(id, patch) {
+    const sb = getClient();
+    await requireAuth();
+
+    const safe = { ...patch };
+    if (safe.price != null) safe.price = Number(safe.price);
+
+    const { data, error } = await sb.from("menu_items").update(safe).eq("id", id).select().single();
+    if (error) throw error;
+    return data;
+  }
+
+  async function deactivateMenuItem(id) {
+    return updateMenuItem(id, { active: false });
+  }
+
+  // ----------------- MENU DAY (foto/testo del giorno) -----------------
+  // menu_day: id, day, text, image_url, created_at
+  async function getMenuDay(dayISO) {
+    const sb = getClient();
+    await requireAuth();
+    const { data, error } = await sb
+      .from("menu_day")
+      .select("*")
+      .eq("day", dayISO)
+      .maybeSingle();
+    if (error) throw error;
+    return data || null;
+  }
+
+  async function upsertMenuDay({ day, text, image_url }) {
+    const sb = getClient();
+    await requireAuth();
+
+    const row = {
+      day,
+      text: text != null ? String(text) : null,
+      image_url: image_url != null ? String(image_url) : null,
+    };
+
+    // upsert su "day" (serve unique index su day; se non c'è, fa insert e basta)
+    const { data, error } = await sb.from("menu_day").upsert(row, { onConflict: "day" }).select().single();
+    if (error) throw error;
+    return data;
+  }
+
+  // ----------------- ORDERS + ORDER ITEMS -----------------
+  // orders: id, table_code, status, created_by, created_at
+  // order_items: id, order_id, menu_item_id, item_name, qty, line_status, ready_at, served, served_at
+
+  // IMPORTANT: il tuo DB ha un CHECK su orders.status -> NON usare "sent".
+  // Usiamo: "open" e "archived"
+  async function createOrder({ table_code, note, items }) {
+    const sb = getClient();
+    const session = await requireAuth();
+
+    // 1) order
     const { data: order, error: e1 } = await sb
       .from("orders")
-      .insert({ table_code, status: "open" })
+      .insert({
+        table_code: String(table_code),
+        status: "open",
+        created_by: session.user.id,
+      })
       .select()
       .single();
 
     if (e1) throw e1;
 
-    // 2) righe
-    const rows = items.map((it) => ({
-      order_id: order.id,
-      menu_item_id: it.menu_item_id || null,
-      item_name: it.item_name || it.name, // compat
-      qty: Number(it.qty || 1),
-      line_status: "todo",
-      ready_at: null,
-      served: false,
-      served_at: null,
-    }));
+    // 2) order_items
+    const rows = (items || [])
+      .filter(it => Number(it.qty || 0) > 0)
+      .map((it) => ({
+        order_id: order.id,
+        menu_item_id: it.menu_item_id || null,
+        item_name: String(it.item_name || it.name || "").trim(),
+        qty: Number(it.qty || 1),
+        line_status: "todo",
+        ready_at: null,
+        served: false,
+        served_at: null,
+      }));
 
-    const { error: e2 } = await sb.from("order_items").insert(rows);
-    if (e2) throw e2;
+    if (rows.length) {
+      const { error: e2 } = await sb.from("order_items").insert(rows);
+      if (e2) throw e2;
+    }
 
+    // opzionale: nota -> la mettiamo in "notes" non esiste in orders, quindi NO DB.
+    // La gestiamo lato UI (local) oppure in futuro aggiungiamo colonna.
     return order;
   }
 
@@ -266,26 +344,24 @@
     return data;
   }
 
-  // ✅ SERVITO: solo “true”, NON si può tornare indietro
+  // SERVITO: una volta true NON si torna indietro (richiesta tua)
   async function setLineServed(lineId) {
     const sb = getClient();
     await requireAuth();
 
-    // se già servito non fare nulla
-    const { data: current, error: e0 } = await sb
+    // check stato attuale
+    const { data: cur, error: e0 } = await sb
       .from("order_items")
       .select("served")
       .eq("id", lineId)
       .single();
-
     if (e0) throw e0;
-    if (current?.served) return current;
 
-    const patch = { served: true, served_at: new Date().toISOString() };
+    if (cur?.served) return cur;
 
     const { data, error } = await sb
       .from("order_items")
-      .update(patch)
+      .update({ served: true, served_at: new Date().toISOString() })
       .eq("id", lineId)
       .select()
       .single();
@@ -294,7 +370,23 @@
     return data;
   }
 
-  // archivia solo quando TUTTE le righe sono ready (cucina)
+  // Admin: chiudi comanda a mano (archived)
+  async function archiveOrder(orderId) {
+    const sb = getClient();
+    await requireAuth();
+
+    const { data, error } = await sb
+      .from("orders")
+      .update({ status: "archived" })
+      .eq("id", orderId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  // Cucina: archivia solo quando TUTTE le righe sono ready (come avevi chiesto)
   async function archiveOrderIfComplete(orderId) {
     const sb = getClient();
     await requireAuth();
@@ -303,33 +395,21 @@
       .from("order_items")
       .select("id,line_status")
       .eq("order_id", orderId);
-
     if (e1) throw e1;
 
     const allReady = (items || []).length > 0 && items.every((x) => x.line_status === "ready");
     if (!allReady) throw new Error("ORDER_NOT_COMPLETE");
 
-    const { data, error: e2 } = await sb
-      .from("orders")
-      .update({ status: "archived" })
-      .eq("id", orderId)
-      .select()
-      .single();
-
-    if (e2) throw e2;
-    return data;
+    return archiveOrder(orderId);
   }
 
-  // ---------- REALTIME ----------
+  // ----------------- REALTIME -----------------
   function subscribeRealtime(onEvent) {
     const sb = getClient();
     const channel = sb
       .channel("om-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "reservations" }, (payload) =>
         onEvent({ table: "reservations", ...payload })
-      )
-      .on("postgres_changes", { event: "*", schema: "public", table: "reservation_tables" }, (payload) =>
-        onEvent({ table: "reservation_tables", ...payload })
       )
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, (payload) =>
         onEvent({ table: "orders", ...payload })
@@ -345,6 +425,16 @@
     return () => sb.removeChannel(channel);
   }
 
+  // ----------------- SMS (placeholder Edge Function) -----------------
+  async function sendSMS({ to, message }) {
+    const sb = getClient();
+    await requireAuth();
+    const { data, error } = await sb.functions.invoke("send-sms", { body: { to, message } });
+    if (error) throw error;
+    return data;
+  }
+
+  // Export globale
   window.OM = {
     sb: getClient,
 
@@ -357,27 +447,37 @@
 
     // tables
     listRestaurantTables,
-
-    // menu
-    listMenuItems,
-    createMenuItem,
-    updateMenuItem,
-    setMenuItemActive,
+    setTableOpen,
 
     // reservations
     createReservation,
     listReservations,
     updateReservation,
-    setReservationTables,
+    assignReservationTables,
+    tablesFromCsv,
+
+    // menu items
+    listMenuItems,
+    createMenuItem,
+    updateMenuItem,
+    deactivateMenuItem,
+
+    // menu day
+    getMenuDay,
+    upsertMenuDay,
 
     // orders
     createOrder,
     getActiveOrdersWithItems,
     setLineReady,
-    setLineServed,
+    setLineServed,        // one-way
+    archiveOrder,
     archiveOrderIfComplete,
 
     // realtime
     subscribeRealtime,
+
+    // sms
+    sendSMS,
   };
 })();
