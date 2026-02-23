@@ -1,4 +1,3 @@
-<script>
 /* backend.js */
 (function () {
   if (!window.supabase) {
@@ -382,4 +381,3 @@
     subscribeRealtime,
   };
 })();
-</script>
