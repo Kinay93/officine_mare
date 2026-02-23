@@ -4,43 +4,33 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Officine Mare — Admin</title>
-  <meta name="description" content="Admin: prenotazioni, tavoli, comande e menù." />
-  <link rel="icon" href="favicon.ico" />
 
   <style>
     :root{
-      --bgTop:#245b7c;
-      --bgMid:#1b4968;
-      --bgBot:#163e5a;
-
+      --bgTop:#245b7c; --bgMid:#1b4968; --bgBot:#163e5a;
       --paper: rgba(255,255,255,.95);
-      --text:#0b2236;
-      --muted: rgba(11,34,54,.68);
+      --text:#0b2236; --muted: rgba(11,34,54,.68);
       --borderD: rgba(11,34,54,.10);
-      --shadow: 0 22px 70px rgba(0,0,0,.20);
-
+      --shadow: 0 22px 70px rgba(0,0,0,.22);
       --max: 1900px;
-      --radiusXL: 26px;
-      --safeTop: env(safe-area-inset-top, 0px);
-      --headerH: 74px;
+      --radiusXL: 28px;
 
-      --chipBg: rgba(255,255,255,.10);
-      --chipBd: rgba(255,255,255,.16);
+      --safeTop: env(safe-area-inset-top, 0px);
+      --headerReal: 76px;
     }
 
     *{ box-sizing:border-box; }
-    html, body{ height:100%; }
-
+    html{ scroll-padding-top: calc(var(--headerReal) + 16px); }
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color:#fff;
-      background:
-        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.14), transparent 62%),
-        radial-gradient(900px 420px at 15% 10%, rgba(255,255,255,.10), transparent 60%),
-        radial-gradient(900px 420px at 85% 14%, rgba(255,255,255,.08), transparent 62%),
-        linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 45%, var(--bgBot) 100%);
       overflow-x:hidden;
+      background:
+        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.18), transparent 60%),
+        radial-gradient(800px 420px at 12% 8%, rgba(255,255,255,.10), transparent 55%),
+        radial-gradient(900px 520px at 88% 14%, rgba(255,255,255,.08), transparent 55%),
+        linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 42%, var(--bgBot) 100%);
     }
 
     #bgImg{
@@ -51,8 +41,8 @@
       object-fit: cover;
       z-index: 0;
       pointer-events: none;
-      opacity: .55;
-      filter: saturate(1.05) contrast(1.03) blur(.5px);
+      opacity: .72;
+      filter: saturate(1.06) contrast(1.04) blur(.45px);
     }
     #overlay{
       position: fixed;
@@ -60,8 +50,8 @@
       z-index: 1;
       pointer-events: none;
       background:
-        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.10), transparent 60%),
-        linear-gradient(to bottom, rgba(22,62,90,.18), rgba(22,62,90,.72));
+        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.12), transparent 60%),
+        linear-gradient(to bottom, rgba(22,62,90,.28), rgba(22,62,90,.80));
     }
 
     .container{
@@ -73,89 +63,88 @@
     }
 
     header{
-      position: sticky; top:0; z-index: 50;
+      position: sticky;
+      top:0;
+      z-index: 50;
       padding-top: var(--safeTop);
-      background: rgba(20, 70, 95, .78);
+      background: rgba(22,62,90,.78);
       backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255,255,255,.16);
+      border-bottom: 1px solid rgba(255,255,255,.18);
     }
-
     .header-inner{
-      min-height: var(--headerH);
+      min-height: 76px;
       display:flex;
-      align-items:center;
       gap: 12px;
+      align-items:center;
       padding: 10px 0;
       flex-wrap: wrap;
     }
-
     .brand{
       font-weight: 950;
       letter-spacing: .6px;
-      font-size: clamp(18px, 2.2vw, 24px);
-      white-space: nowrap;
+      font-size: 20px;
       display:flex;
       align-items:center;
       gap:10px;
+      white-space: nowrap;
+    }
+    .tabs{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items:center;
+      margin-left: 10px;
+      flex: 1;
+      min-width: 260px;
+    }
+    .tabBtn{
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.16);
+      color: rgba(255,255,255,.92);
+      font-weight: 950;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tabBtn.active{
+      background: rgba(255,255,255,.18);
+      border-color: rgba(255,255,255,.24);
     }
 
     .actions{
       margin-left:auto;
       display:flex;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
       align-items:center;
-      justify-content:flex-end;
     }
-
     .ghost{
       padding: 10px 12px;
       border-radius: 999px;
       background: rgba(255,255,255,.10);
       border: 1px solid rgba(255,255,255,.16);
-      color: rgba(255,255,255,.94);
-      font-weight: 900;
+      color: rgba(255,255,255,.92);
+      font-weight: 950;
       cursor: pointer;
       text-decoration: none;
       display:inline-flex;
       align-items:center;
       gap: 8px;
-    }
-
-    .tabs{
-      display:flex;
-      gap: 10px;
-      padding: 8px 0 14px;
-      overflow:auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    .tab{
-      border: 1px solid var(--chipBd);
-      background: var(--chipBg);
-      color: rgba(255,255,255,.92);
-      font-weight: 950;
-      padding: 10px 14px;
-      border-radius: 999px;
-      cursor:pointer;
       white-space: nowrap;
     }
-    .tab.active{
-      background: rgba(255,255,255,.18);
-      border-color: rgba(255,255,255,.24);
-      box-shadow: 0 14px 26px rgba(0,0,0,.14);
-    }
 
-    main{ padding: 14px 0 60px; }
+    main{ padding: 18px 0 60px; }
 
-    .grid2{
+    .grid{
       display:grid;
-      grid-template-columns: 1.25fr .75fr;
-      gap: 14px;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 16px;
       align-items:start;
     }
     @media (max-width: 980px){
-      .grid2{ grid-template-columns: 1fr; }
-      .actions{ margin-left: 0; width: 100%; justify-content:flex-start; }
+      .grid{ grid-template-columns: 1fr; }
+      .tabs{ flex-basis: 100%; margin-left:0; }
     }
 
     .card{
@@ -168,11 +157,10 @@
       position: relative;
       overflow:hidden;
     }
-    .card h2{ margin:0 0 8px; font-size: 18px; }
+    .card h2{ margin:0 0 6px; font-size: 18px; }
     .muted{ color: var(--muted); font-size: 13px; }
-
-    .row{ display:flex; gap:10px; flex-wrap: wrap; align-items:center; }
-    .row > *{ min-width: 180px; flex: 1; }
+    .row{ display:flex; gap: 10px; flex-wrap: wrap; align-items:center; }
+    .row > *{ min-width: 160px; }
 
     input, select, textarea{
       width:100%;
@@ -190,7 +178,6 @@
       border: 1px solid rgba(11,34,54,.16);
       cursor:pointer;
       font-weight: 950;
-      white-space: nowrap;
     }
     .primary{
       color:#fff;
@@ -200,57 +187,24 @@
     }
     .soft{ background: rgba(36,91,124,.10); color: rgba(11,34,54,.92); }
     .danger{ background: rgba(180,30,40,.10); color: rgba(140,20,30,.95); border-color: rgba(140,20,30,.18); }
-    .mini{ padding: 8px 10px; border-radius: 999px; font-size: 12px; }
+    .mini{ padding: 8px 10px; font-size: 12px; }
 
     .pill{
-      display:inline-flex; align-items:center; justify-content:center;
-      padding: 6px 10px; border-radius: 999px; font-weight: 950; font-size: 12px;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
       border: 1px solid rgba(11,34,54,.12);
-      background: rgba(36,91,124,.08);
+      background: rgba(36,91,124,.06);
       color: rgba(11,34,54,.92);
+      font-weight: 950;
+      font-size: 12px;
       white-space: nowrap;
     }
 
-    .tableWrap{ overflow:auto; border-radius: 16px; border: 1px solid rgba(11,34,54,.10); }
-    table{ width:100%; border-collapse: collapse; min-width: 760px; background: rgba(255,255,255,.98); }
-    th, td{ padding: 10px 12px; border-bottom: 1px solid rgba(11,34,54,.08); text-align:left; vertical-align: top; }
-    th{ font-size: 12px; color: rgba(11,34,54,.72); text-transform: uppercase; letter-spacing: .06em; }
-    td{ font-size: 13px; }
-
-    .statusBadge{
-      display:inline-flex; align-items:center; justify-content:center;
-      padding: 6px 10px; border-radius: 999px; font-weight: 950; font-size: 12px;
-      border: 1px solid rgba(11,34,54,.12);
-      background: rgba(36,91,124,.06);
-    }
-    .st-pending{ background: rgba(255,180,90,.18); }
-    .st-confirmed{ background: rgba(40,140,80,.16); }
-    .st-arrived{ background: rgba(90,160,255,.16); }
-    .st-canceled{ background: rgba(180,30,40,.10); color: rgba(140,20,30,.92); border-color: rgba(140,20,30,.18); }
-
-    .login-overlay{
-      position: fixed; inset:0; z-index: 9999;
-      display:flex; align-items:center; justify-content:center;
-      background: rgba(10,20,30,.55);
-      backdrop-filter: blur(10px);
-      padding: 20px;
-    }
-    .login-card{
-      width: min(560px, 96vw);
-      background: rgba(255,255,255,.96);
-      color: var(--text);
-      border-radius: 26px;
-      border: 1px solid rgba(11,34,54,.10);
-      box-shadow: 0 22px 70px rgba(0,0,0,.28);
-      padding: 18px;
-    }
-    .login-card h2{ margin:0 0 6px; }
-    .login-card .muted{ margin-bottom: 12px; }
-
-    .hidden{ display:none !important; }
-
-    .menuList{ display:grid; gap:10px; margin-top: 10px; }
-    .menuItem{
+    .list{ display:grid; gap: 10px; margin-top: 12px; }
+    .itemRow{
       border-radius: 16px;
       border: 1px solid rgba(11,34,54,.10);
       background: rgba(255,255,255,.98);
@@ -261,26 +215,41 @@
       justify-content:space-between;
       flex-wrap: wrap;
     }
-    .menuItem strong{ display:block; }
-    .menuItem .meta{ font-size: 12px; color: rgba(11,34,54,.70); }
-
-    .orderLine{
-      border-radius: 14px;
-      border: 1px solid rgba(11,34,54,.10);
-      background: rgba(255,255,255,.98);
-      padding: 10px;
+    .itLeft{ min-width: 220px; }
+    .itName{ font-weight: 950; }
+    .qtyBox{
       display:flex;
-      gap: 10px;
+      gap: 8px;
       align-items:center;
-      justify-content:space-between;
-      flex-wrap: wrap;
-      margin-top: 8px;
+      justify-content:flex-end;
     }
-    .orderLine .left{ min-width: 240px; }
-    .timer{
-      font-size: 12px;
-      color: rgba(11,34,54,.70);
-      font-weight: 900;
+    .qtyPill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-weight: 950;
+      border: 1px solid rgba(11,34,54,.12);
+      background: rgba(36,91,124,.06);
+      min-width: 50px;
+    }
+
+    .statusLine{
+      font-size: 13px;
+      margin-top: 10px;
+      color: rgba(11,34,54,.72);
+    }
+    .statusLine.bad{ color: rgba(160,30,30,.88); font-weight: 900; }
+    .statusLine.ok{ color: rgba(20,110,60,.88); font-weight: 900; }
+
+    .hidden{ display:none !important; }
+
+    /* Login modal-ish */
+    #loginWrap{
+      max-width: 520px;
+      margin: 0 auto;
+      padding-top: 22px;
     }
   </style>
 </head>
@@ -289,166 +258,177 @@
   <img id="bgImg" src="mare.png" alt="" aria-hidden="true">
   <div id="overlay" aria-hidden="true"></div>
 
-  <header>
+  <header id="hdr">
     <div class="container header-inner">
-      <div class="brand">⏱️ Officine Mare — Admin</div>
+      <div class="brand">🧭 Officine Mare — Admin</div>
+
+      <div class="tabs" id="tabs">
+        <button class="tabBtn active" data-tab="tab-orders">Tavoli & Comande</button>
+        <button class="tabBtn" data-tab="tab-res">Prenotazioni</button>
+        <button class="tabBtn" data-tab="tab-menu">Menù</button>
+        <button class="tabBtn" data-tab="tab-view">Vista tavoli</button>
+      </div>
+
       <div class="actions">
         <a class="ghost" href="kitchen.html">🍳 Cucina</a>
         <button class="ghost" id="logoutBtn">🚪 Logout</button>
-      </div>
-      <div class="tabs" role="tablist" aria-label="Sezioni admin">
-        <button class="tab active" data-tab="tab-orders" role="tab">Tavoli &amp; Comande</button>
-        <button class="tab" data-tab="tab-res" role="tab">Prenotazioni</button>
-        <button class="tab" data-tab="tab-menu" role="tab">Menù</button>
-        <button class="tab" data-tab="tab-view" role="tab">Vista tavoli</button>
       </div>
     </div>
   </header>
 
   <main class="container">
-    <!-- TAB: ORDERS -->
-    <section id="tab-orders">
-      <div class="grid2">
-        <div class="card">
-          <h2>Tavoli &amp; Comande</h2>
-          <p class="muted">Scegli un tavolo, aggiungi piatti, invia in cucina. Lo storico resta su DB.</p>
+    <!-- LOGIN -->
+    <section class="card" id="loginWrap">
+      <h2>Login staff</h2>
+      <p class="muted">Accedi con email/password staff (Supabase Auth). Il cliente non vede questa pagina.</p>
 
-          <div class="row">
-            <div>
+      <div class="row">
+        <div style="flex:1; min-width: 220px;">
+          <label class="muted">Email</label>
+          <input id="loginEmail" type="email" placeholder="staff@officinemare.it">
+        </div>
+        <div style="flex:1; min-width: 220px;">
+          <label class="muted">Password</label>
+          <input id="loginPass" type="password" placeholder="••••••••">
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <button class="primary" id="loginBtn">Entra</button>
+        <span class="statusLine" id="loginMsg"></span>
+      </div>
+    </section>
+
+    <!-- APP -->
+    <section id="appWrap" class="hidden">
+      <!-- TAB: ORDERS -->
+      <section id="tab-orders" class="grid">
+        <div class="card">
+          <h2>Tavoli & Comande</h2>
+          <p class="muted">Scegli un tavolo, aggiungi piatti, poi invia in cucina. <strong>Non resetta</strong>: aggiunge righe all’ordine aperto del tavolo.</p>
+
+          <div class="row" style="margin-top:10px;">
+            <div style="flex:1; min-width: 220px;">
               <label class="muted">Tavolo selezionato</label>
-              <select id="tableSelect"></select>
+              <select id="tableSel"></select>
             </div>
-            <div>
+            <div style="flex:1; min-width: 220px;">
               <label class="muted">Note comanda (opzionale)</label>
-              <input id="orderNote" placeholder="Es. senza aglio..." />
+              <input id="orderNote" placeholder="Es. senza aglio... (per ora non salvato su DB)">
             </div>
           </div>
 
-          <div id="menuForOrders" class="menuList"></div>
+          <div class="list" id="menuPickList" style="margin-top:12px;"></div>
 
           <div class="row" style="margin-top:12px;">
-            <button class="primary" id="sendOrderBtn">Invia in cucina</button>
-            <span class="muted" id="orderMsg"></span>
+            <button class="primary" id="sendKitchenBtn" style="flex:1;">Invia in cucina</button>
+            <button class="soft" id="resetDraftBtn">Reset selezione</button>
           </div>
+
+          <div id="orderMsg" class="statusLine"></div>
         </div>
 
         <div class="card">
           <h2>Comande aperte</h2>
-          <p class="muted">Qui vedi lo stato: “Pronto” dalla cucina e “Servito” dalla sala (timer).</p>
-          <div id="activeOrdersBox" class="menuList"></div>
+          <p class="muted">Stato “Pronto” dalla cucina e “Servito” dalla sala (timer minuti per ogni riga servita).</p>
+          <div class="list" id="openOrdersBox">
+            <div class="muted">(nessuna comanda)</div>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- TAB: RESERVATIONS -->
-    <section id="tab-res" class="hidden">
-      <div class="grid2">
+      <!-- TAB: RESERVATIONS -->
+      <section id="tab-res" class="grid hidden">
         <div class="card">
           <h2>Prenotazioni</h2>
-          <p class="muted">Filtra e gestisci (conferma/arrivato/annulla + assegna tavolo).</p>
+          <p class="muted">Assegna tavolo, conferma/arrivato/annulla.</p>
 
-          <div class="row">
-            <input type="date" id="resDay" />
-            <select id="resStatus">
+          <div class="row" style="margin-top:10px;">
+            <input id="resDay" type="date" style="max-width:220px;">
+            <select id="resStatus" style="max-width:220px;">
               <option value="all">Tutti gli stati</option>
               <option value="pending">In attesa</option>
               <option value="confirmed">Confermata</option>
               <option value="arrived">Arrivato</option>
-              <option value="canceled">Annullata</option>
+              <option value="cancelled">Annullata</option>
             </select>
-            <input id="resSearch" placeholder="Cerca nome/telefono/email..." />
-            <button class="soft" id="resReload">Aggiorna</button>
+            <input id="resQ" placeholder="Cerca nome/telefono..." style="flex:1; min-width:220px;">
+            <button class="soft" id="resRefreshBtn">Aggiorna</button>
           </div>
 
-          <div class="tableWrap" style="margin-top:12px;">
-            <table>
-              <thead>
-                <tr>
-                  <th>Quando</th>
-                  <th>Cliente</th>
-                  <th>Pers.</th>
-                  <th>Stato</th>
-                  <th>Tavolo</th>
-                  <th>Azioni</th>
-                </tr>
-              </thead>
-              <tbody id="resTbody"></tbody>
-            </table>
-          </div>
-
-          <p class="muted" id="resMsg" style="margin-top:10px;"></p>
+          <div class="list" id="resList"></div>
+          <div id="resMsg" class="statusLine"></div>
         </div>
 
         <div class="card">
           <h2>Pannello</h2>
-          <p class="muted">Seleziona una prenotazione per vedere i dettagli.</p>
+          <p class="muted">Seleziona una prenotazione per azioni rapide.</p>
           <div id="resPanel" class="muted">(seleziona una riga)</div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- TAB: MENU -->
-    <section id="tab-menu" class="hidden">
-      <div class="grid2">
+      <!-- TAB: MENU -->
+      <section id="tab-menu" class="grid hidden">
         <div class="card">
-          <h2>Menù (piatti)</h2>
-          <p class="muted">Questi piatti sono la lista che usi per le comande (puoi aggiungere/rimuovere).</p>
-
-          <div class="row">
-            <input id="mName" placeholder="Nome piatto (es. Spaghetti alle vongole)" />
-            <input id="mCat" placeholder="Categoria (es. Primo)" />
-            <input id="mPrice" type="number" step="0.01" placeholder="Prezzo (es. 14.00)" />
-            <button class="primary" id="mAdd">Aggiungi</button>
-          </div>
-
-          <div id="menuAdminList" class="menuList"></div>
-          <p class="muted" id="menuMsg" style="margin-top:10px;"></p>
-        </div>
-
-        <div class="card">
-          <h2>Menù del giorno (cliente)</h2>
-          <p class="muted">Aggiorna testo/URL immagine che comparirà nella pagina cliente.</p>
-
-          <div class="row">
-            <input type="date" id="mdDay" />
-            <input id="mdImage" placeholder="URL immagine (facoltativo)" />
-          </div>
-          <textarea id="mdText" rows="8" placeholder="Testo menù del giorno..."></textarea>
+          <h2>Menù del giorno (testo)</h2>
+          <p class="muted">Salva testo su <code>menu_day</code> per la data di oggi. (Foto: la mettiamo dopo su Storage.)</p>
 
           <div class="row" style="margin-top:10px;">
-            <button class="primary" id="mdSave">Salva</button>
-            <button class="soft" id="mdLoad">Carica</button>
-            <span class="muted" id="mdMsg"></span>
+            <input id="menuDayDate" type="date" style="max-width:220px;">
+            <button class="soft" id="menuDayLoad">Carica</button>
+          </div>
+
+          <label class="muted" style="margin-top:10px;">Testo menù</label>
+          <textarea id="menuDayText" rows="8" placeholder="Scrivi il menù del giorno..."></textarea>
+
+          <div class="row" style="margin-top:12px;">
+            <button class="primary" id="menuDaySave">Salva</button>
+            <span id="menuDayMsg" class="statusLine"></span>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- TAB: VIEW TABLES -->
-    <section id="tab-view" class="hidden">
-      <div class="card">
-        <h2>Vista tavoli (solo lettura)</h2>
-        <p class="muted">Mostra quali tavoli sono aperti e i coperti stimati.</p>
-        <div id="tablesView" class="menuList"></div>
-      </div>
+        <div class="card">
+          <h2>Piatti (menu_items)</h2>
+          <p class="muted">Da qui arrivano i piatti che vedi nella sezione “Tavoli & Comande”. Puoi aggiungere/aggiornare/disattivare.</p>
+
+          <div class="row" style="margin-top:10px;">
+            <input id="miName" placeholder="Nome piatto" style="flex:1; min-width:220px;">
+            <input id="miCategory" placeholder="Categoria (Primi, Secondi...)" style="flex:1; min-width:200px;">
+            <input id="miPrice" type="number" step="0.01" placeholder="Prezzo" style="max-width:160px;">
+            <button class="primary" id="miAddBtn">Aggiungi</button>
+          </div>
+
+          <div class="row" style="margin-top:10px;">
+            <button class="soft" id="miReloadBtn">Ricarica lista</button>
+            <span id="miMsg" class="statusLine"></span>
+          </div>
+
+          <div class="list" id="miList"></div>
+        </div>
+      </section>
+
+      <!-- TAB: VIEW TABLES -->
+      <section id="tab-view" class="grid hidden">
+        <div class="card">
+          <h2>Vista tavoli</h2>
+          <p class="muted">Solo visualizzazione: libero/occupato (occupato se esiste ordine <code>open</code> su quel tavolo).</p>
+          <div class="list" id="tablesView"></div>
+          <div id="tablesMsg" class="statusLine"></div>
+        </div>
+
+        <div class="card">
+          <h2>Legenda</h2>
+          <div class="row">
+            <span class="pill">🟢 Libero</span>
+            <span class="pill">🟠 Occupato</span>
+          </div>
+          <p class="muted" style="margin-top:10px;">
+            Quando archivi l’ordine (solo dopo “Pronto” totale dalla cucina) il tavolo torna libero.
+          </p>
+        </div>
+      </section>
     </section>
   </main>
-
-  <!-- LOGIN -->
-  <div id="loginOverlay" class="login-overlay hidden" aria-modal="true" role="dialog">
-    <div class="login-card">
-      <h2>Accesso staff</h2>
-      <p class="muted">Inserisci email e password (Supabase Auth). Solo staff.</p>
-      <div class="row">
-        <input id="loginEmail" type="email" placeholder="email" />
-        <input id="loginPass" type="password" placeholder="password" />
-      </div>
-      <div class="row" style="margin-top:10px;">
-        <button class="primary" id="loginBtn">Entra</button>
-        <span class="muted" id="loginMsg"></span>
-      </div>
-    </div>
-  </div>
 
   <!-- Supabase + config + backend -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -456,288 +436,158 @@
   <script src="backend.js"></script>
 
   <script>
+    // header height var
+    function setHeaderRealHeight(){
+      const h = Math.ceil(document.getElementById("hdr")?.getBoundingClientRect().height || 76);
+      document.documentElement.style.setProperty("--headerReal", h + "px");
+    }
+    window.addEventListener("load", setHeaderRealHeight, { once:true });
+    window.addEventListener("resize", setHeaderRealHeight);
+
+    // helpers
     const $ = (id) => document.getElementById(id);
-
-    // ---------- tabs ----------
-    const tabButtons = Array.from(document.querySelectorAll(".tab"));
-    function setTab(tabId){
-      tabButtons.forEach(b => b.classList.toggle("active", b.dataset.tab === tabId));
-      ["tab-orders","tab-res","tab-menu","tab-view"].forEach(id => $(id).classList.toggle("hidden", id !== tabId));
-    }
-    tabButtons.forEach(b => b.addEventListener("click", () => setTab(b.dataset.tab)));
-
-    // ---------- auth ----------
-    async function ensureAuth(){
-      const sess = await OM.getSession();
-      if(!sess){
-        $("loginOverlay").classList.remove("hidden");
-        return false;
-      }
-      $("loginOverlay").classList.add("hidden");
-
-      const role = await OM.getMyRole();
-      // admin o kitchen possono entrare qui, ma se vuoi stringere: if(role!=="admin") blocca.
-      if(!role){
-        $("loginOverlay").classList.remove("hidden");
-        $("loginMsg").textContent = "Utente non registrato come staff (staff_users).";
-        return false;
-      }
-      return true;
-    }
-
-    $("loginBtn").addEventListener("click", async () => {
-      $("loginMsg").textContent = "Accesso...";
-      try{
-        await OM.signIn($("loginEmail").value.trim(), $("loginPass").value);
-        $("loginMsg").textContent = "OK ✅";
-        $("loginOverlay").classList.add("hidden");
-        boot();
-      }catch(err){
-        console.error(err);
-        $("loginMsg").textContent = err?.message || String(err);
-      }
-    });
-
-    $("logoutBtn").addEventListener("click", async () => {
-      try{ await OM.signOut(); }catch{}
-      location.reload();
-    });
-
-    // ---------- helpers ----------
     function pad(n){ return String(n).padStart(2,"0"); }
     function todayISO(){
       const d = new Date();
       return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
     }
-    function fmtTime(iso){
-      try{
-        const d = new Date(iso);
-        return d.toLocaleTimeString("it-IT", { hour:"2-digit", minute:"2-digit" });
-      }catch{return "";}
+    function setMsg(el, msg, kind){
+      el.textContent = msg || "";
+      el.classList.remove("bad","ok");
+      if(kind) el.classList.add(kind);
     }
     function minutesSince(iso){
-      if(!iso) return null;
+      if(!iso) return "";
       const t = new Date(iso).getTime();
-      if(!t) return null;
-      const diff = Math.max(0, Date.now() - t);
-      return Math.floor(diff / 60000);
+      if(!isFinite(t)) return "";
+      const m = Math.floor((Date.now() - t) / 60000);
+      return m >= 0 ? `${m} min` : "";
     }
 
-    // ---------- data loaders ----------
-    let MENU_ITEMS = [];
-    let TABLES = [];
-
-    async function loadTables(){
-      TABLES = await OM.listRestaurantTables();
-      const sel = $("tableSelect");
-      sel.innerHTML = "";
-      TABLES.forEach(t => {
-        const opt = document.createElement("option");
-        opt.value = t.code;
-        opt.textContent = `${t.code} (${t.seats || "?"} coperti)`;
-        sel.appendChild(opt);
-      });
-
-      // Vista tavoli
-      const tv = $("tablesView");
-      tv.innerHTML = "";
-      TABLES.forEach(t => {
-        const div = document.createElement("div");
-        div.className = "menuItem";
-        div.innerHTML = `
-          <div>
-            <strong>${t.code}</strong>
-            <div class="meta">coperti: ${t.seats ?? "?"}</div>
-          </div>
-          <span class="pill">${t.is_open ? "APERTO" : "CHIUSO"}</span>
-        `;
-        tv.appendChild(div);
+    // tabs
+    const tabBtns = Array.from(document.querySelectorAll(".tabBtn"));
+    function showTab(tabId){
+      tabBtns.forEach(b => b.classList.toggle("active", b.dataset.tab === tabId));
+      ["tab-orders","tab-res","tab-menu","tab-view"].forEach(id => {
+        $(id).classList.toggle("hidden", id !== tabId);
       });
     }
+    tabBtns.forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
 
-    async function loadMenuItems(){
-      MENU_ITEMS = await OM.listMenuItems({ activeOnly:true });
-
-      // admin list
-      const list = $("menuAdminList");
-      list.innerHTML = "";
-      MENU_ITEMS.forEach(mi => {
-        const div = document.createElement("div");
-        div.className = "menuItem";
-        div.innerHTML = `
-          <div>
-            <strong>${mi.name}</strong>
-            <div class="meta">${mi.category || "—"} · € ${(mi.price ?? 0).toFixed(2)}</div>
-          </div>
-          <div class="row" style="justify-content:flex-end; flex:0;">
-            <button class="soft mini" data-act="edit" data-id="${mi.id}">Modifica</button>
-            <button class="danger mini" data-act="del" data-id="${mi.id}">Rimuovi</button>
-          </div>
-        `;
-        div.querySelector('[data-act="del"]').addEventListener("click", async () => {
-          if(!confirm("Rimuovere dal menù? (active=false)")) return;
-          try{
-            await OM.deactivateMenuItem(mi.id);
-            await loadMenuItems();
-            await renderMenuForOrders();
-            $("menuMsg").textContent = "Rimosso ✅";
-          }catch(err){
-            console.error(err);
-            $("menuMsg").textContent = err?.message || String(err);
-          }
-        });
-        div.querySelector('[data-act="edit"]').addEventListener("click", async () => {
-          const newName = prompt("Nome piatto:", mi.name);
-          if(newName == null) return;
-          const newCat = prompt("Categoria:", mi.category || "");
-          if(newCat == null) return;
-          const newPrice = prompt("Prezzo:", String(mi.price ?? ""));
-          if(newPrice == null) return;
-          try{
-            await OM.updateMenuItem(mi.id, { name:newName, category:newCat || null, price: newPrice===""? null : Number(newPrice) });
-            await loadMenuItems();
-            await renderMenuForOrders();
-            $("menuMsg").textContent = "Aggiornato ✅";
-          }catch(err){
-            console.error(err);
-            $("menuMsg").textContent = err?.message || String(err);
-          }
-        });
-        list.appendChild(div);
-      });
-
-      // menu per creare ordini
-      await renderMenuForOrders();
+    // login
+    async function refreshAuthUI(){
+      const session = await window.OM.getSession().catch(()=>null);
+      if(session){
+        $("loginWrap").classList.add("hidden");
+        $("appWrap").classList.remove("hidden");
+      }else{
+        $("loginWrap").classList.remove("hidden");
+        $("appWrap").classList.add("hidden");
+      }
     }
 
-    async function renderMenuForOrders(){
-      const box = $("menuForOrders");
+    $("loginBtn").addEventListener("click", async () => {
+      setMsg($("loginMsg"), "Accesso...", null);
+      try{
+        await window.OM.signIn($("loginEmail").value.trim(), $("loginPass").value);
+        setMsg($("loginMsg"), "OK ✅", "ok");
+        await refreshAuthUI();
+        await boot();
+      }catch(e){
+        setMsg($("loginMsg"), "Errore: " + (e?.message || e), "bad");
+      }
+    });
+
+    $("logoutBtn").addEventListener("click", async () => {
+      try{ await window.OM.signOut(); }catch{}
+      await refreshAuthUI();
+    });
+
+    // ---- Data state
+    let menuItems = [];
+    let tables = [];
+    let draftQty = {}; // menu_item_id -> qty
+
+    function resetDraft(){
+      draftQty = {};
+      renderMenuPick();
+    }
+
+    // ---- Menu picker (orders tab)
+    function renderMenuPick(){
+      const box = $("menuPickList");
       box.innerHTML = "";
-      MENU_ITEMS.forEach(mi => {
-        const div = document.createElement("div");
-        div.className = "menuItem";
-        div.innerHTML = `
-          <div style="min-width:240px;">
-            <strong>${mi.name}</strong>
-            <div class="meta">${mi.category || "—"} · € ${(mi.price ?? 0).toFixed(2)}</div>
+
+      if(!menuItems.length){
+        box.innerHTML = `<div class="muted">Nessun piatto attivo. Vai su “Menù” e aggiungi piatti.</div>`;
+        return;
+      }
+
+      menuItems.forEach(mi => {
+        const qty = Number(draftQty[mi.id] || 0);
+
+        const row = document.createElement("div");
+        row.className = "itemRow";
+        row.innerHTML = `
+          <div class="itLeft">
+            <div class="itName">${mi.name}</div>
+            <div class="muted">${mi.category || "Altro"} · ${mi.price != null ? `€ ${Number(mi.price).toFixed(2)}` : ""}</div>
           </div>
-          <div class="row" style="justify-content:flex-end; flex:0;">
-            <button class="soft mini" data-act="minus">−</button>
-            <span class="pill" data-qty>0</span>
-            <button class="primary mini" data-act="plus">+</button>
+          <div class="qtyBox">
+            <button class="soft mini" data-act="dec" data-id="${mi.id}">-</button>
+            <span class="qtyPill">${qty}</span>
+            <button class="primary mini" data-act="inc" data-id="${mi.id}">+</button>
           </div>
         `;
-        let qty = 0;
-        const qtyEl = div.querySelector("[data-qty]");
-        div.querySelector('[data-act="minus"]').addEventListener("click", () => {
-          qty = Math.max(0, qty - 1);
-          qtyEl.textContent = qty;
-        });
-        div.querySelector('[data-act="plus"]').addEventListener("click", () => {
-          qty = qty + 1;
-          qtyEl.textContent = qty;
+
+        row.querySelectorAll("button[data-act]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const id = btn.dataset.id;
+            const act = btn.dataset.act;
+            const cur = Number(draftQty[id] || 0);
+            const next = act === "inc" ? cur + 1 : Math.max(0, cur - 1);
+            draftQty[id] = next;
+            renderMenuPick();
+          });
         });
 
-        div.dataset.menuId = mi.id;
-        div.dataset.name = mi.name;
-        div.dataset.price = mi.price ?? "";
-        div._getQty = () => qty;
-
-        box.appendChild(div);
+        box.appendChild(row);
       });
     }
 
-    async function loadReservations(){
-      const day = $("resDay").value || null;
-      const status = $("resStatus").value || "all";
-      const q = $("resSearch").value || "";
+    // ---- Send to kitchen (create or append order)
+    $("sendKitchenBtn").addEventListener("click", async () => {
+      const table_code = $("tableSel").value;
+      const items = menuItems
+        .map(mi => ({
+          menu_item_id: mi.id,
+          item_name: mi.name,
+          qty: Number(draftQty[mi.id] || 0),
+        }))
+        .filter(x => x.qty > 0);
 
-      $("resMsg").textContent = "Caricamento...";
-      const rows = await OM.listReservations({ dayISO: day, status, q });
-      $("resMsg").textContent = rows.length ? "" : "Nessuna prenotazione.";
+      setMsg($("orderMsg"), "Invio in corso...", null);
 
-      const tb = $("resTbody");
-      tb.innerHTML = "";
-
-      rows.forEach(r => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><strong>${r.reservation_date}</strong><br><span class="muted">${String(r.reservation_time).slice(0,5)}</span></td>
-          <td><strong>${r.customer_name || ""}</strong><br><span class="muted">${r.customer_phone || ""}</span></td>
-          <td>${r.people ?? ""}</td>
-          <td><span class="statusBadge st-${r.status}">${r.status}</span></td>
-          <td>
-            <select data-table>
-              <option value="">—</option>
-              ${TABLES.map(t => `<option value="${t.code}" ${t.code===r.table_code?"selected":""}>${t.code}</option>`).join("")}
-            </select>
-            <div class="muted" style="margin-top:6px;">${r.table_code ? `Assegnato: ${r.table_code}` : "Non assegnato"}</div>
-          </td>
-          <td>
-            <div class="row" style="justify-content:flex-end;">
-              <button class="soft mini" data-act="confirm">Conferma</button>
-              <button class="soft mini" data-act="arrived">Arrivato</button>
-              <button class="danger mini" data-act="cancel">Annulla</button>
-              <button class="primary mini" data-act="assign">Assegna</button>
-            </div>
-          </td>
-        `;
-
-        tr.addEventListener("click", () => {
-          $("resPanel").innerHTML = `
-            <div><strong>${r.customer_name || ""}</strong> · ${r.customer_phone || ""} · ${r.customer_email || ""}</div>
-            <div class="muted">Data: ${r.reservation_date} · Ora: ${String(r.reservation_time).slice(0,5)} · Persone: ${r.people}</div>
-            <div class="muted">Note: ${escapeHtml(r.notes || "(nessuna)")}</div>
-            <div class="muted">Stato: ${r.status} · Tavolo: ${r.table_code || "—"}</div>
-          `;
+      try{
+        await window.OM.createOrAppendOrder({
+          table_code,
+          note: $("orderNote").value.trim(),
+          items
         });
+        setMsg($("orderMsg"), "Inviato ✅", "ok");
+        resetDraft();
+        await refreshOrders();
+        await refreshTablesView();
+      }catch(e){
+        setMsg($("orderMsg"), "Errore invio: " + (e?.message || e), "bad");
+      }
+    });
 
-        const tableSel = tr.querySelector("[data-table]");
-        tr.querySelector('[data-act="assign"]').addEventListener("click", async (ev) => {
-          ev.stopPropagation();
-          try{
-            await OM.updateReservation(r.id, { table_code: tableSel.value || null });
-            await loadReservations();
-          }catch(err){ alert(err?.message || String(err)); }
-        });
+    $("resetDraftBtn").addEventListener("click", resetDraft);
 
-        tr.querySelector('[data-act="confirm"]').addEventListener("click", async (ev) => {
-          ev.stopPropagation();
-          try{
-            await OM.updateReservation(r.id, { status: "confirmed" });
-            await loadReservations();
-          }catch(err){ alert(err?.message || String(err)); }
-        });
-        tr.querySelector('[data-act="arrived"]').addEventListener("click", async (ev) => {
-          ev.stopPropagation();
-          try{
-            await OM.updateReservation(r.id, { status: "arrived" });
-            await loadReservations();
-          }catch(err){ alert(err?.message || String(err)); }
-        });
-        tr.querySelector('[data-act="cancel"]').addEventListener("click", async (ev) => {
-          ev.stopPropagation();
-          if(!confirm("Annullare questa prenotazione?")) return;
-          try{
-            await OM.updateReservation(r.id, { status: "canceled" });
-            await loadReservations();
-          }catch(err){ alert(err?.message || String(err)); }
-        });
-
-        tb.appendChild(tr);
-      });
-    }
-
-    function escapeHtml(str){
-      return String(str).replace(/[&<>"']/g, (m) => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-      }[m]));
-    }
-
-    async function loadActiveOrders(){
-      const box = $("activeOrdersBox");
-      box.innerHTML = `<div class="muted">Caricamento...</div>`;
-      const orders = await OM.getActiveOrdersWithItems();
+    // ---- Open orders box (admin view)
+    function renderOpenOrdersBox(orders){
+      const box = $("openOrdersBox");
       box.innerHTML = "";
 
       if(!orders.length){
@@ -746,183 +596,371 @@
       }
 
       orders.forEach(o => {
-        const div = document.createElement("div");
-        div.className = "menuItem";
-        div.innerHTML = `
-          <div style="min-width:280px;">
-            <strong>Tavolo ${o.table_code}</strong>
-            <div class="meta">Ricevuta: ${fmtTime(o.created_at)} · ID ${o.id}</div>
+        const items = (o.order_items || []).slice().sort((a,b) => String(a.created_at||"").localeCompare(String(b.created_at||"")));
+        const readyCount = items.filter(x => x.line_status === "ready").length;
+        const allReady = items.length > 0 && readyCount === items.length;
+
+        const card = document.createElement("div");
+        card.className = "itemRow";
+        card.style.alignItems = "flex-start";
+        card.innerHTML = `
+          <div style="min-width:240px;">
+            <div class="itName">Tavolo ${o.table_code}</div>
+            <div class="muted">Ordine ${o.id.slice(0,8)} · ${readyCount}/${items.length} pronto</div>
+            <div style="margin-top:8px; display:grid; gap:8px;">
+              ${items.map(it => {
+                const isReady = it.line_status === "ready";
+                const isServed = !!it.served;
+                const t = isServed ? minutesSince(it.served_at) : "";
+                return `
+                  <div class="row" style="justify-content:space-between; border:1px solid rgba(11,34,54,.10); border-radius:14px; padding:8px; background:rgba(255,255,255,.98);">
+                    <div style="min-width:180px;">
+                      <div class="itName" style="font-size:13px;">${it.item_name} <span class="muted">x${it.qty}</span></div>
+                      <div class="muted" style="font-size:12px;">
+                        ${isReady ? "✅ Pronto" : "⏳ In lavorazione"} ·
+                        ${isServed ? `🍽️ Servito (${t})` : "Non servito"}
+                      </div>
+                    </div>
+                    <div class="row" style="justify-content:flex-end;">
+                      <button class="${isServed ? "soft" : "primary"} mini" data-act="toggleServed" data-line="${it.id}">
+                        ${isServed ? "Annulla servito" : "Servito"}
+                      </button>
+                    </div>
+                  </div>
+                `;
+              }).join("")}
+            </div>
           </div>
-          <span class="pill">${o.status}</span>
-          <div style="width:100%"></div>
+
+          <div class="row" style="justify-content:flex-end;">
+            <span class="pill">${allReady ? "✅ Tutto pronto" : "⏳ In corso"}</span>
+          </div>
         `;
 
-        (o.order_items || []).forEach(it => {
-          const mins = it.served_at ? minutesSince(it.served_at) : null;
-          const line = document.createElement("div");
-          line.className = "orderLine";
-          line.innerHTML = `
-            <div class="left">
-              <strong>${it.item_name}</strong>
-              <div class="muted">qty: ${it.qty} · stato cucina: <strong>${it.line_status}</strong></div>
-              ${it.served ? `<div class="timer">⏱️ servito da ${mins ?? 0} min</div>` : `<div class="timer">non servito</div>`}
-            </div>
-            <div class="row" style="justify-content:flex-end; flex:0;">
-              ${it.served
-                ? `<button class="soft mini" data-act="unserve" data-id="${it.id}">Non servito</button>`
-                : `<button class="primary mini" data-act="serve" data-id="${it.id}">Servito</button>`
-              }
-            </div>
-          `;
-          line.querySelector("button").addEventListener("click", async () => {
+        card.querySelectorAll("button[data-act='toggleServed']").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const lineId = btn.dataset.line;
+            const it = items.find(x => x.id === lineId);
+            if(!it) return;
             try{
-              await OM.setLineServed(it.id, !it.served);
-              await loadActiveOrders();
-            }catch(err){ alert(err?.message || String(err)); }
+              await window.OM.setLineServed(lineId, !it.served);
+              await refreshOrders();
+            }catch(e){
+              alert("Errore: " + (e?.message || e));
+            }
           });
-          div.appendChild(line);
         });
 
-        box.appendChild(div);
+        box.appendChild(card);
       });
     }
 
-    // ---------- actions ----------
-    $("mAdd").addEventListener("click", async () => {
-      $("menuMsg").textContent = "Salvataggio...";
+    // ---- Reservations
+    function isMondayISO(dayISO){
+      const d = new Date(dayISO + "T00:00:00");
+      return d.getDay() === 1;
+    }
+
+    async function refreshReservations(){
+      setMsg($("resMsg"), "Carico...", null);
       try{
-        await OM.createMenuItem({
-          name: $("mName").value,
-          category: $("mCat").value,
-          price: $("mPrice").value === "" ? null : Number($("mPrice").value),
-          active: true
+        const day = $("resDay").value || todayISO();
+        const status = $("resStatus").value;
+        const q = $("resQ").value;
+
+        const rows = await window.OM.listReservations({ dayISO: day, status, q });
+        renderReservations(rows);
+        setMsg($("resMsg"), `OK (${rows.length})`, "ok");
+      }catch(e){
+        setMsg($("resMsg"), "Errore: " + (e?.message || e), "bad");
+      }
+    }
+
+    function renderReservations(rows){
+      const box = $("resList");
+      box.innerHTML = "";
+      if(!rows.length){
+        box.innerHTML = `<div class="muted">(nessuna prenotazione)</div>`;
+        return;
+      }
+
+      rows.forEach(r => {
+        const row = document.createElement("div");
+        row.className = "itemRow";
+        const time = (r.reservation_time || "").toString().slice(0,5);
+        row.innerHTML = `
+          <div class="itLeft">
+            <div class="itName">${r.customer_name || "—"} <span class="muted">(${r.customer_phone || "—"})</span></div>
+            <div class="muted">${r.reservation_date} · ${time} · ${r.people} pers. · stato: <strong>${r.status || "pending"}</strong></div>
+            <div class="muted">${r.notes || ""}</div>
+          </div>
+          <div class="row" style="justify-content:flex-end;">
+            <select data-act="table" data-id="${r.id}" style="max-width:160px;">
+              <option value="">— tavolo —</option>
+              ${tables.map(t => `<option value="${t.code}" ${r.table_code===t.code?"selected":""}>${t.code}</option>`).join("")}
+            </select>
+            <button class="soft mini" data-act="confirm" data-id="${r.id}">Conferma</button>
+            <button class="soft mini" data-act="arrived" data-id="${r.id}">Arrivato</button>
+            <button class="danger mini" data-act="cancel" data-id="${r.id}">Annulla</button>
+          </div>
+        `;
+
+        row.querySelectorAll("button[data-act], select[data-act]").forEach(el => {
+          el.addEventListener("change", async () => {
+            if(el.tagName !== "SELECT") return;
+            const id = el.dataset.id;
+            const table_code = el.value || null;
+            try{
+              await window.OM.updateReservation(id, { table_code });
+              $("resPanel").textContent = `Assegnato tavolo: ${table_code || "—"}`;
+            }catch(e){
+              alert("Errore: " + (e?.message || e));
+            }
+          });
+
+          el.addEventListener("click", async () => {
+            if(el.tagName === "SELECT") return;
+            const id = el.dataset.id;
+            const act = el.dataset.act;
+            try{
+              if(act === "confirm") await window.OM.updateReservation(id, { status: "confirmed" });
+              if(act === "arrived") await window.OM.updateReservation(id, { status: "arrived" });
+              if(act === "cancel") await window.OM.updateReservation(id, { status: "cancelled" });
+              await refreshReservations();
+            }catch(e){
+              alert("Errore: " + (e?.message || e));
+            }
+          });
         });
-        $("mName").value = ""; $("mCat").value = ""; $("mPrice").value = "";
-        await loadMenuItems();
-        $("menuMsg").textContent = "Aggiunto ✅";
-      }catch(err){
-        console.error(err);
-        $("menuMsg").textContent = err?.message || String(err);
-      }
-    });
 
-    $("mdDay").value = todayISO();
-    $("mdLoad").addEventListener("click", async () => {
-      $("mdMsg").textContent = "Carico...";
+        box.appendChild(row);
+      });
+    }
+
+    $("resRefreshBtn").addEventListener("click", refreshReservations);
+
+    // ---- Menu items admin
+    async function refreshMenuItemsAdmin(){
+      setMsg($("miMsg"), "Carico...", null);
       try{
-        const row = await OM.getMenuDay($("mdDay").value);
-        $("mdText").value = row?.text || "";
-        $("mdImage").value = row?.image_url || "";
-        $("mdMsg").textContent = row ? "OK ✅" : "Nessun menù salvato";
-      }catch(err){
-        console.error(err);
-        $("mdMsg").textContent = err?.message || String(err);
+        // admin: vogliamo anche inactive per poterli riattivare
+        const sb = window.OM.sb();
+        const { data, error } = await sb.from("menu_items").select("*").order("category",{ascending:true}).order("name",{ascending:true});
+        if(error) throw error;
+        renderMenuItemsAdmin(data || []);
+        setMsg($("miMsg"), `OK (${(data||[]).length})`, "ok");
+      }catch(e){
+        setMsg($("miMsg"), "Errore: " + (e?.message || e), "bad");
       }
-    });
-    $("mdSave").addEventListener("click", async () => {
-      $("mdMsg").textContent = "Salvo...";
-      try{
-        await OM.upsertMenuDay({
-          day: $("mdDay").value,
-          text: $("mdText").value || null,
-          image_url: $("mdImage").value || null
-        });
-        $("mdMsg").textContent = "Salvato ✅";
-      }catch(err){
-        console.error(err);
-        $("mdMsg").textContent = err?.message || String(err);
+    }
+
+    function renderMenuItemsAdmin(rows){
+      const box = $("miList");
+      box.innerHTML = "";
+      if(!rows.length){
+        box.innerHTML = `<div class="muted">(nessun piatto)</div>`;
+        return;
       }
-    });
 
-    $("resReload").addEventListener("click", loadReservations);
-    $("resStatus").addEventListener("change", loadReservations);
-    $("resDay").addEventListener("change", loadReservations);
-    $("resSearch").addEventListener("input", () => { clearTimeout(window.__t); window.__t=setTimeout(loadReservations, 350); });
+      rows.forEach(mi => {
+        const row = document.createElement("div");
+        row.className = "itemRow";
+        row.innerHTML = `
+          <div class="itLeft">
+            <div class="itName">${mi.name}</div>
+            <div class="muted">${mi.category || "Altro"} · ${mi.price != null ? `€ ${Number(mi.price).toFixed(2)}` : ""} · ${mi.active ? "✅ attivo" : "⛔ disattivo"}</div>
+          </div>
+          <div class="row" style="justify-content:flex-end;">
+            <button class="soft mini" data-act="edit">Modifica</button>
+            <button class="${mi.active ? "danger" : "primary"} mini" data-act="toggle">
+              ${mi.active ? "Disattiva" : "Attiva"}
+            </button>
+          </div>
+        `;
 
-    $("resDay").value = todayISO();
-
-    $("sendOrderBtn").addEventListener("click", async () => {
-      $("orderMsg").textContent = "Invio in corso...";
-      $("sendOrderBtn").disabled = true;
-
-      try{
-        const items = [];
-        Array.from($("menuForOrders").children).forEach(div => {
-          const qty = div._getQty ? div._getQty() : 0;
-          if(qty > 0){
-            items.push({
-              menu_item_id: div.dataset.menuId,
-              name: div.dataset.name,
-              qty
-            });
+        row.querySelector("[data-act='toggle']").addEventListener("click", async () => {
+          try{
+            await window.OM.setMenuItemActive(mi.id, !mi.active);
+            await refreshMenuItemsAdmin();
+            await refreshMenuForOrders();
+          }catch(e){
+            alert("Errore: " + (e?.message || e));
           }
         });
 
-        if(!items.length){
-          $("orderMsg").textContent = "Seleziona almeno un piatto.";
-          return;
-        }
+        row.querySelector("[data-act='edit']").addEventListener("click", async () => {
+          const name = prompt("Nome piatto:", mi.name);
+          if(name == null) return;
+          const category = prompt("Categoria:", mi.category || "Altro");
+          if(category == null) return;
+          const price = prompt("Prezzo (es. 14.00) — lascia vuoto per null:", mi.price ?? "");
+          if(price == null) return;
 
-        await OM.createOrder({
-          table_code: $("tableSelect").value,
-          note: $("orderNote").value,
-          items
+          try{
+            await window.OM.upsertMenuItem({
+              id: mi.id,
+              name,
+              category,
+              price: price === "" ? null : Number(price),
+              active: mi.active
+            });
+            await refreshMenuItemsAdmin();
+            await refreshMenuForOrders();
+          }catch(e){
+            alert("Errore: " + (e?.message || e));
+          }
         });
 
-        // reset quantità UI
-        Array.from($("menuForOrders").children).forEach(div => {
-          const qtyEl = div.querySelector("[data-qty]");
-          if(qtyEl) qtyEl.textContent = "0";
-          if(div._getQty) div._getQty = (() => 0);
-        });
-        $("orderNote").value = "";
-
-        $("orderMsg").textContent = "Inviato ✅";
-        await loadActiveOrders();
-      }catch(err){
-        console.error(err);
-        $("orderMsg").textContent = err?.message || String(err);
-      }finally{
-        $("sendOrderBtn").disabled = false;
-        setTimeout(()=>$("orderMsg").textContent="", 2000);
-      }
-    });
-
-    // realtime refresh
-    let unsub = null;
-    function setupRealtime(){
-      if(unsub) unsub();
-      unsub = OM.subscribeRealtime((ev) => {
-        // aggiorna solo ciò che serve
-        if(ev.table === "orders" || ev.table === "order_items"){
-          loadActiveOrders().catch(()=>{});
-        }
-        if(ev.table === "reservations"){
-          loadReservations().catch(()=>{});
-        }
-        if(ev.table === "menu_items"){
-          loadMenuItems().catch(()=>{});
-        }
+        box.appendChild(row);
       });
     }
 
-    async function boot(){
-      const ok = await ensureAuth();
-      if(!ok) return;
+    $("miAddBtn").addEventListener("click", async () => {
+      const name = $("miName").value.trim();
+      const category = $("miCategory").value.trim() || "Altro";
+      const price = $("miPrice").value;
+      if(!name){
+        setMsg($("miMsg"), "Inserisci un nome piatto.", "bad");
+        return;
+      }
+      try{
+        await window.OM.upsertMenuItem({
+          name,
+          category,
+          price: price === "" ? null : Number(price),
+          active: true
+        });
+        $("miName").value = "";
+        $("miCategory").value = "";
+        $("miPrice").value = "";
+        await refreshMenuItemsAdmin();
+        await refreshMenuForOrders();
+      }catch(e){
+        setMsg($("miMsg"), "Errore: " + (e?.message || e), "bad");
+      }
+    });
 
-      await loadTables();
-      await loadMenuItems();
-      await loadActiveOrders();
-      await loadReservations();
+    $("miReloadBtn").addEventListener("click", refreshMenuItemsAdmin);
 
-      setupRealtime();
+    // ---- Menu day
+    $("menuDayDate").value = todayISO();
+
+    $("menuDayLoad").addEventListener("click", async () => {
+      const day = $("menuDayDate").value || todayISO();
+      setMsg($("menuDayMsg"), "Carico...", null);
+      try{
+        const row = await window.OM.getMenuDay(day);
+        $("menuDayText").value = row?.text || "";
+        setMsg($("menuDayMsg"), "OK", "ok");
+      }catch(e){
+        setMsg($("menuDayMsg"), "Errore: " + (e?.message || e), "bad");
+      }
+    });
+
+    $("menuDaySave").addEventListener("click", async () => {
+      const day = $("menuDayDate").value || todayISO();
+      const text = $("menuDayText").value;
+      setMsg($("menuDayMsg"), "Salvo...", null);
+      try{
+        await window.OM.saveMenuDay({ dayISO: day, text, image_url: null });
+        setMsg($("menuDayMsg"), "Salvato ✅", "ok");
+      }catch(e){
+        setMsg($("menuDayMsg"), "Errore: " + (e?.message || e), "bad");
+      }
+    });
+
+    // ---- Tables view
+    async function refreshTablesView(){
+      try{
+        const orders = await window.OM.getActiveOrdersWithItems();
+        const busy = new Set((orders||[]).map(o => o.table_code));
+
+        const box = $("tablesView");
+        box.innerHTML = "";
+        tables.forEach(t => {
+          const occ = busy.has(t.code);
+          const row = document.createElement("div");
+          row.className = "itemRow";
+          row.innerHTML = `
+            <div class="itLeft">
+              <div class="itName">${t.code}</div>
+              <div class="muted">${occ ? "🟠 Occupato" : "🟢 Libero"}</div>
+            </div>
+            <div class="row" style="justify-content:flex-end;">
+              <span class="pill">${occ ? "open order" : "free"}</span>
+            </div>
+          `;
+          box.appendChild(row);
+        });
+        setMsg($("tablesMsg"), "OK", "ok");
+      }catch(e){
+        setMsg($("tablesMsg"), "Errore: " + (e?.message || e), "bad");
+      }
     }
 
-    // start
+    // ---- Load for orders tab
+    async function refreshMenuForOrders(){
+      menuItems = await window.OM.listMenuItems({ onlyActive: true });
+      renderMenuPick();
+    }
+
+    async function refreshTables(){
+      tables = await window.OM.listRestaurantTables();
+      const sel = $("tableSel");
+      sel.innerHTML = tables.map(t => `<option value="${t.code}">${t.code}</option>`).join("");
+    }
+
+    async function refreshOrders(){
+      try{
+        const orders = await window.OM.getActiveOrdersWithItems();
+        renderOpenOrdersBox(orders);
+      }catch(e){
+        setMsg($("orderMsg"), "Errore lettura comande: " + (e?.message || e), "bad");
+      }
+    }
+
+    // realtime refresh (leggero)
+    let unsub = null;
+    function startRealtime(){
+      try{
+        unsub?.();
+        unsub = window.OM.subscribeRealtime(async (ev) => {
+          if(ev.table === "order_items" || ev.table === "orders"){
+            await refreshOrders();
+            await refreshTablesView();
+          }
+          if(ev.table === "menu_items"){
+            await refreshMenuForOrders();
+          }
+          if(ev.table === "reservations"){
+            // non ricaricare sempre, solo se sei nel tab prenotazioni
+            // (ma per bozza va bene)
+          }
+        });
+      }catch(e){
+        console.warn("Realtime non attivo:", e?.message || e);
+      }
+    }
+
+    async function boot(){
+      $("resDay").value = todayISO();
+      $("menuDayDate").value = todayISO();
+
+      await refreshTables();
+      await refreshMenuForOrders();
+      await refreshOrders();
+      await refreshMenuItemsAdmin();
+      await refreshTablesView();
+      startRealtime();
+    }
+
+    // initial
     (async () => {
-      const ok = await ensureAuth();
-      if(ok) boot();
-      else $("loginOverlay").classList.remove("hidden");
+      await refreshAuthUI();
+      const session = await window.OM.getSession().catch(()=>null);
+      if(session){
+        await boot();
+      }
     })();
   </script>
 </body>
