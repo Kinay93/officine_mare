@@ -4,38 +4,28 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Officine Mare — Cucina</title>
-  <meta name="description" content="Cucina: gestione comande." />
-  <link rel="icon" href="favicon.ico" />
 
   <style>
     :root{
-      --bgTop:#245b7c;
-      --bgMid:#1b4968;
-      --bgBot:#163e5a;
-
+      --bgTop:#245b7c; --bgMid:#1b4968; --bgBot:#163e5a;
       --paper: rgba(255,255,255,.95);
       --text:#0b2236; --muted: rgba(11,34,54,.68);
       --borderD: rgba(11,34,54,.10);
-      --shadow: 0 22px 70px rgba(0,0,0,.20);
+      --shadow: 0 22px 70px rgba(0,0,0,.22);
       --max: 1600px; --radiusXL: 26px;
-      --headerH: 72px;
       --safeTop: env(safe-area-inset-top, 0px);
-
-      --chipBg: rgba(255,255,255,.10);
-      --chipBd: rgba(255,255,255,.16);
     }
     *{ box-sizing:border-box; }
-    html, body{ height:100%; }
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color:#fff;
-      background:
-        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.14), transparent 62%),
-        radial-gradient(900px 420px at 15% 10%, rgba(255,255,255,.10), transparent 60%),
-        radial-gradient(900px 420px at 85% 14%, rgba(255,255,255,.08), transparent 62%),
-        linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 45%, var(--bgBot) 100%);
       overflow-x:hidden;
+      background:
+        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.18), transparent 60%),
+        radial-gradient(800px 420px at 12% 8%, rgba(255,255,255,.10), transparent 55%),
+        radial-gradient(900px 520px at 88% 14%, rgba(255,255,255,.08), transparent 55%),
+        linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 42%, var(--bgBot) 100%);
     }
 
     #bgImg{
@@ -46,8 +36,8 @@
       object-fit: cover;
       z-index: 0;
       pointer-events: none;
-      opacity: .55;
-      filter: saturate(1.05) contrast(1.03) blur(.5px);
+      opacity: .70;
+      filter: saturate(1.06) contrast(1.04) blur(.45px);
     }
     #overlay{
       position: fixed;
@@ -55,8 +45,8 @@
       z-index: 1;
       pointer-events: none;
       background:
-        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.10), transparent 60%),
-        linear-gradient(to bottom, rgba(22,62,90,.18), rgba(22,62,90,.72));
+        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.12), transparent 60%),
+        linear-gradient(to bottom, rgba(22,62,90,.28), rgba(22,62,90,.80));
     }
 
     .container{
@@ -70,12 +60,12 @@
     header{
       position: sticky; top:0; z-index: 50;
       padding-top: var(--safeTop);
-      background: rgba(20, 70, 95, .78);
+      background: rgba(22,62,90,.78);
       backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255,255,255,.16);
+      border-bottom: 1px solid rgba(255,255,255,.18);
     }
     .header-inner{
-      min-height: var(--headerH);
+      min-height: 74px;
       display:flex;
       align-items:center;
       gap: 12px;
@@ -85,7 +75,7 @@
     .brand{
       font-weight: 950;
       letter-spacing: .8px;
-      font-size: clamp(18px, 2.2vw, 24px);
+      font-size: 20px;
       white-space: nowrap;
       display:flex;
       align-items:center;
@@ -97,13 +87,12 @@
       gap: 10px;
       flex-wrap: wrap;
       align-items:center;
-      justify-content:flex-end;
     }
     .ghost{
       padding: 10px 12px;
       border-radius: 999px;
-      background: var(--chipBg);
-      border: 1px solid var(--chipBd);
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.16);
       color: rgba(255,255,255,.92);
       font-weight: 900;
       cursor: pointer;
@@ -131,7 +120,6 @@
       border: 1px solid rgba(11,34,54,.16);
       cursor:pointer;
       font-weight: 950;
-      white-space: nowrap;
     }
     .primary{
       color:#fff;
@@ -139,9 +127,11 @@
       background: linear-gradient(180deg, rgba(36,91,124,.96), rgba(22,62,90,.98));
       box-shadow: 0 16px 28px rgba(0,0,0,.12);
     }
-    .soft{ background: rgba(36,91,124,.10); color: rgba(11,34,54,.92); }
-    .danger{ background: rgba(180,30,40,.10); color: rgba(140,20,30,.95); border-color: rgba(140,20,30,.18); }
-    .mini{ padding: 8px 10px; border-radius: 999px; font-size: 12px; }
+    .soft{
+      background: rgba(36,91,124,.10);
+      color: rgba(11,34,54,.92);
+    }
+    .mini{ padding: 8px 10px; font-size: 12px; }
 
     .grid{
       display:grid;
@@ -151,7 +141,6 @@
     }
     @media (max-width: 980px){
       .grid{ grid-template-columns: 1fr; }
-      .actions{ margin-left: 0; width:100%; justify-content:flex-start; }
     }
 
     .card{
@@ -169,7 +158,6 @@
     }
     .title{ font-weight: 950; font-size: 18px; margin:0; }
     .muted{ color: var(--muted); font-size: 13px; }
-
     .badge{
       display:inline-flex;
       align-items:center;
@@ -200,7 +188,6 @@
     }
     .itLeft{ min-width: 220px; }
     .itName{ font-weight: 950; font-size: 13px; }
-    .small{ font-size: 12px; }
 
     .lineState{
       display:inline-flex;
@@ -213,7 +200,6 @@
       border: 1px solid rgba(11,34,54,.12);
       background: rgba(36,91,124,.06);
       color: rgba(11,34,54,.90);
-      white-space: nowrap;
     }
     .lineState.ready{
       background: rgba(40,140,80,.16);
@@ -231,22 +217,11 @@
       min-width: 44px;
     }
 
-    .login-overlay{
-      position: fixed; inset:0; z-index: 9999;
-      display:flex; align-items:center; justify-content:center;
-      background: rgba(10,20,30,.55);
-      backdrop-filter: blur(10px);
-      padding: 20px;
-    }
-    .login-card{
-      width: min(560px, 96vw);
-      background: rgba(255,255,255,.96);
-      color: var(--text);
-      border-radius: 26px;
-      border: 1px solid rgba(11,34,54,.10);
-      box-shadow: 0 22px 70px rgba(0,0,0,.28);
-      padding: 18px;
-    }
+    /* login */
+    #loginCard{ max-width: 520px; margin: 0 auto; }
+    .statusLine{ margin-top:10px; font-size:13px; color: rgba(11,34,54,.72); }
+    .statusLine.bad{ color: rgba(160,30,30,.88); font-weight: 900; }
+    .statusLine.ok{ color: rgba(20,110,60,.88); font-weight: 900; }
     .hidden{ display:none !important; }
   </style>
 </head>
@@ -269,33 +244,30 @@
   </header>
 
   <main class="container">
-    <div class="row" style="margin-bottom:12px;">
-      <select id="filter">
-        <option value="open">Aperte</option>
-        <option value="done">Complete</option>
-        <option value="all">Tutte</option>
-      </select>
-      <span class="muted" id="statusMsg"></span>
-    </div>
-
-    <div class="grid" id="ordersGrid"></div>
-  </main>
-
-  <!-- LOGIN -->
-  <div id="loginOverlay" class="login-overlay hidden" aria-modal="true" role="dialog">
-    <div class="login-card">
-      <h2>Accesso cucina</h2>
-      <p class="muted">Email e password (Supabase Auth).</p>
-      <div class="row">
-        <input id="loginEmail" type="email" placeholder="email" />
-        <input id="loginPass" type="password" placeholder="password" />
-      </div>
+    <section class="card" id="loginCard">
+      <h2 class="title">Login cucina</h2>
+      <p class="muted">Accedi con email/password staff.</p>
       <div class="row" style="margin-top:10px;">
+        <input id="loginEmail" type="email" placeholder="kitchen@officinemare.it" style="flex:1; min-width:220px;">
+        <input id="loginPass" type="password" placeholder="••••••••" style="flex:1; min-width:220px;">
         <button class="primary" id="loginBtn">Entra</button>
-        <span class="muted" id="loginMsg"></span>
       </div>
-    </div>
-  </div>
+      <div id="loginMsg" class="statusLine"></div>
+    </section>
+
+    <section id="appWrap" class="hidden">
+      <div class="row" style="margin-bottom:12px;">
+        <select id="filter">
+          <option value="open">Aperte</option>
+          <option value="done">Complete</option>
+          <option value="all">Tutte</option>
+        </select>
+        <span class="muted" id="statusMsg"></span>
+      </div>
+
+      <div class="grid" id="ordersGrid"></div>
+    </section>
+  </main>
 
   <!-- Supabase + config + backend -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -303,16 +275,26 @@
   <script src="backend.js"></script>
 
   <script>
-    const ordersGrid = document.getElementById("ordersGrid");
-    const filterEl = document.getElementById("filter");
-    const statusMsg = document.getElementById("statusMsg");
+    const $ = (id) => document.getElementById(id);
 
-    const soundBtn = document.getElementById("soundBtn");
-    const vibBtn = document.getElementById("vibBtn");
+    const ordersGrid = $("ordersGrid");
+    const filterEl = $("filter");
+    const statusMsg = $("statusMsg");
+
+    const soundBtn = $("soundBtn");
+    const vibBtn = $("vibBtn");
     let soundOn = true;
     let vibOn = true;
 
-    // beep leggero (WebAudio)
+    function setStatus(msg){ statusMsg.textContent = msg || ""; }
+
+    function fmtTime(iso){
+      try{
+        const d = new Date(iso);
+        return d.toLocaleTimeString("it-IT", { hour:"2-digit", minute:"2-digit" });
+      }catch{ return ""; }
+    }
+
     function beep(){
       if(!soundOn) return;
       try{
@@ -343,24 +325,52 @@
       if(vibOn) vibrate();
     });
 
-    function fmtTime(iso){
-      try{
-        const d = new Date(iso);
-        return d.toLocaleTimeString("it-IT", { hour:"2-digit", minute:"2-digit" });
-      }catch{ return ""; }
+    $("refreshBtn").addEventListener("click", poll);
+    filterEl.addEventListener("change", poll);
+
+    async function refreshAuthUI(){
+      const session = await window.OM.getSession().catch(()=>null);
+      if(session){
+        $("loginCard").classList.add("hidden");
+        $("appWrap").classList.remove("hidden");
+      }else{
+        $("loginCard").classList.remove("hidden");
+        $("appWrap").classList.add("hidden");
+      }
     }
 
-    function orderProgress(o){
-      const items = o.order_items || [];
+    $("loginBtn").addEventListener("click", async () => {
+      $("loginMsg").textContent = "Accesso...";
+      $("loginMsg").classList.remove("bad","ok");
+      try{
+        await window.OM.signIn($("loginEmail").value.trim(), $("loginPass").value);
+        $("loginMsg").textContent = "OK ✅";
+        $("loginMsg").classList.add("ok");
+        await refreshAuthUI();
+        await poll();
+        startRealtime();
+      }catch(e){
+        $("loginMsg").textContent = "Errore: " + (e?.message || e);
+        $("loginMsg").classList.add("bad");
+      }
+    });
+
+    $("logoutBtn").addEventListener("click", async () => {
+      try{ await window.OM.signOut(); }catch{}
+      await refreshAuthUI();
+    });
+
+    function orderProgress(order){
+      const items = order.order_items || [];
       const total = items.length;
       const ready = items.filter(it => it.line_status === "ready").length;
       const done = (total > 0 && ready === total);
       return { total, ready, done };
     }
 
-    async function render(){
+    function render(orders){
       const f = filterEl.value;
-      let rows = await OM.getActiveOrdersWithItems();
+      let rows = (orders || []).slice();
 
       if(f !== "all"){
         rows = rows.filter(o => {
@@ -370,7 +380,7 @@
       }
 
       ordersGrid.innerHTML = "";
-      if(rows.length === 0){
+      if(!rows.length){
         ordersGrid.innerHTML = `
           <div class="card">
             <h2 class="title">Nessuna comanda</h2>
@@ -380,7 +390,9 @@
       }
 
       rows.forEach(o => {
+        const items = (o.order_items || []);
         const p = orderProgress(o);
+
         const headerBadge = p.done
           ? `<span class="badge done">Completa (${p.ready}/${p.total})</span>`
           : `<span class="badge open">In lavorazione (${p.ready}/${p.total})</span>`;
@@ -392,22 +404,22 @@
           <div class="topline">
             <div>
               <h2 class="title">Tavolo ${o.table_code}</h2>
-              <div class="muted">Ricevuta alle ${fmtTime(o.created_at)} · ID ${o.id}</div>
+              <div class="muted">Ricevuta alle ${fmtTime(o.created_at)} · ID ${o.id.slice(0,8)}</div>
             </div>
-            <div class="row" style="justify-content:flex-end;">
+            <div class="row">
               ${headerBadge}
-              ${p.done ? `<button class="soft mini" data-act="archive" data-oid="${o.id}">Chiudi comanda</button>` : ``}
+              ${p.done ? `<button class="soft mini" data-act="archive" data-oid="${o.id}">Chiudi (archivia)</button>` : ``}
             </div>
           </div>
 
           <div class="list">
-            ${(o.order_items || []).map(it => {
+            ${items.map(it => {
               const ready = it.line_status === "ready";
               return `
                 <div class="item">
                   <div class="itLeft">
                     <div class="itName">${it.item_name}</div>
-                    <div class="muted small">qty: <strong>${it.qty}</strong></div>
+                    <div class="muted">qty: <strong>${it.qty}</strong> · ${it.served ? "🍽️ Servito" : "Non servito"}</div>
                   </div>
 
                   <div class="row" style="justify-content:flex-end;">
@@ -427,26 +439,17 @@
         card.querySelectorAll("button[data-act]").forEach(btn => {
           btn.addEventListener("click", async () => {
             const act = btn.dataset.act;
-
             try{
-              if(act === "archive"){
-                await OM.archiveOrderIfComplete(btn.dataset.oid);
-                await render();
-                return;
-              }
               if(act === "readyLine"){
-                await OM.setLineReady(btn.dataset.lid, true);
-                await render();
-                return;
+                await window.OM.setLineReady(btn.dataset.lid, true);
+              }else if(act === "undoLine"){
+                await window.OM.setLineReady(btn.dataset.lid, false);
+              }else if(act === "archive"){
+                await window.OM.archiveOrderIfComplete(btn.dataset.oid);
               }
-              if(act === "undoLine"){
-                await OM.setLineReady(btn.dataset.lid, false);
-                await render();
-                return;
-              }
-            }catch(err){
-              console.error(err);
-              alert(err?.message || String(err));
+              await poll();
+            }catch(e){
+              alert("Errore: " + (e?.message || e));
             }
           });
         });
@@ -455,67 +458,44 @@
       });
     }
 
-    // ---- auth gate ----
-    const loginOverlay = document.getElementById("loginOverlay");
-    const loginMsg = document.getElementById("loginMsg");
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-      loginMsg.textContent = "Accesso...";
+    let lastHash = "";
+    async function poll(){
       try{
-        await OM.signIn(document.getElementById("loginEmail").value.trim(), document.getElementById("loginPass").value);
-        const role = await OM.getMyRole();
-        if(!role){
-          loginMsg.textContent = "Utente non registrato come staff (staff_users).";
-          return;
-        }
-        loginOverlay.classList.add("hidden");
-        boot();
-      }catch(err){
-        console.error(err);
-        loginMsg.textContent = err?.message || String(err);
-      }
-    });
-
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
-      try{ await OM.signOut(); }catch{}
-      location.reload();
-    });
-
-    document.getElementById("refreshBtn").addEventListener("click", render);
-    filterEl.addEventListener("change", render);
-
-    let unsub = null;
-    function setupRealtime(){
-      if(unsub) unsub();
-      unsub = OM.subscribeRealtime((ev) => {
-        if(ev.table === "orders" || ev.table === "order_items"){
-          statusMsg.textContent = "Aggiornato ✅";
-          setTimeout(()=>statusMsg.textContent="", 1200);
-          render().catch(()=>{});
+        const orders = await window.OM.getActiveOrdersWithItems();
+        const hash = (orders||[]).map(o => o.id).sort().join("|");
+        if(lastHash && hash !== lastHash){
           beep(); vibrate();
+          setStatus("Nuova comanda arrivata ✅");
+          setTimeout(() => setStatus(""), 1600);
         }
-      });
+        lastHash = hash;
+        render(orders);
+      }catch(e){
+        setStatus("Errore: " + (e?.message || e));
+      }
     }
 
-    async function boot(){
-      await render();
-      setupRealtime();
-      setInterval(() => render().catch(()=>{}), 3500);
+    let unsub = null;
+    function startRealtime(){
+      try{
+        unsub?.();
+        unsub = window.OM.subscribeRealtime(async (ev) => {
+          if(ev.table === "orders" || ev.table === "order_items"){
+            await poll();
+          }
+        });
+      }catch(e){
+        console.warn("Realtime non attivo:", e?.message || e);
+      }
     }
 
     (async () => {
-      const sess = await OM.getSession();
-      if(!sess){
-        loginOverlay.classList.remove("hidden");
-        return;
+      await refreshAuthUI();
+      const session = await window.OM.getSession().catch(()=>null);
+      if(session){
+        await poll();
+        startRealtime();
       }
-      const role = await OM.getMyRole();
-      if(!role){
-        loginOverlay.classList.remove("hidden");
-        loginMsg.textContent = "Utente non registrato come staff (staff_users).";
-        return;
-      }
-      loginOverlay.classList.add("hidden");
-      boot();
     })();
   </script>
 </body>
