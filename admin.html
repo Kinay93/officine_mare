@@ -4,143 +4,168 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Officine Mare — Admin</title>
-
+  <link rel="icon" href="favicon.ico" />
   <style>
     :root{
       --bgTop:#245b7c; --bgMid:#1b4968; --bgBot:#163e5a;
-      --paper: rgba(255,255,255,.95);
-      --text:#0b2236; --muted: rgba(11,34,54,.68);
+      --paper: rgba(255,255,255,.94);
+      --paper2: rgba(255,255,255,.88);
+      --text:#0b2236; --muted: rgba(11,34,54,.62);
       --borderD: rgba(11,34,54,.10);
-      --shadow: 0 22px 70px rgba(0,0,0,.22);
-      --max: 1700px;
-      --radiusXL: 28px;
+      --shadow: 0 26px 80px rgba(0,0,0,.22);
+      --shadowSoft: 0 10px 26px rgba(0,0,0,.10);
+      --radiusXL: 26px;
+      --radiusL: 18px;
       --safeTop: env(safe-area-inset-top, 0px);
-      --headerH: 72px;
+      --headerH: 70px;
+      --max: 1900px;
     }
-
     *{ box-sizing:border-box; }
-    html,body{ height:100%; }
+    html, body{ height:100%; }
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color:#fff;
       overflow-x:hidden;
       background:
-        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.18), transparent 60%),
-        radial-gradient(800px 420px at 12% 8%, rgba(255,255,255,.10), transparent 55%),
-        radial-gradient(900px 520px at 88% 14%, rgba(255,255,255,.08), transparent 55%),
-        linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 45%, var(--bgBot) 100%);
+        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.16), transparent 60%),
+        radial-gradient(860px 520px at 12% 10%, rgba(255,255,255,.10), transparent 55%),
+        radial-gradient(900px 520px at 88% 12%, rgba(255,255,255,.08), transparent 55%),
+        linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 42%, var(--bgBot) 100%);
     }
-
-    /* SFONDO LISCIO: niente rumore/righe */
     #bgImg{
       position: fixed; inset:0;
       width:100vw; height:100dvh;
       object-fit: cover;
-      z-index:0; pointer-events:none;
-      opacity:.75;
-      filter: saturate(1.05) contrast(1.04);
+      z-index:0;
+      opacity:.70;
+      filter: saturate(1.06) contrast(1.04);
+      pointer-events:none;
     }
     #overlay{
-      position: fixed; inset:0;
-      z-index:1; pointer-events:none;
-      background: linear-gradient(to bottom, rgba(22,62,90,.35), rgba(22,62,90,.86));
+      position: fixed; inset:0; z-index:1; pointer-events:none;
+      background: linear-gradient(to bottom, rgba(22,62,90,.18), rgba(22,62,90,.80));
     }
-
     .container{
       width: min(96vw, var(--max));
       margin: 0 auto;
       padding: 0 clamp(12px, 1.8vw, 28px);
       position: relative;
-      z-index:2;
+      z-index: 2;
     }
 
     header{
-      position: sticky;
-      top:0;
-      z-index: 50;
+      position: sticky; top:0; z-index: 50;
       padding-top: var(--safeTop);
-      background: rgba(20,70,95,.72);
-      backdrop-filter: blur(12px);
+      background: rgba(22,62,90,.76);
+      backdrop-filter: blur(14px);
       border-bottom: 1px solid rgba(255,255,255,.16);
     }
-
     .header-inner{
       height: var(--headerH);
-      display:flex;
-      align-items:center;
-      gap: 12px;
+      display:flex; align-items:center; gap: 12px;
       padding: 10px 0;
-      flex-wrap: wrap;
     }
-
     .brand{
       font-weight: 950;
-      letter-spacing: .8px;
+      letter-spacing: .5px;
       font-size: 20px;
       white-space: nowrap;
-      display:flex;
-      align-items:center;
-      gap:10px;
+      display:flex; align-items:center; gap:10px;
+      opacity:.98;
+      text-shadow: 0 1px 0 rgba(0,0,0,.12);
     }
 
     .tabs{
-      display:flex;
-      gap:10px;
-      flex-wrap: wrap;
-      align-items:center;
-      margin-left: 12px;
+      display:flex; gap: 10px; flex-wrap: wrap;
+      margin-left: 10px;
     }
-
-    .tabBtn{
+    .tab{
       padding: 10px 12px;
       border-radius: 999px;
       background: rgba(255,255,255,.10);
-      border: 1px solid rgba(255,255,255,.16);
-      color: rgba(255,255,255,.92);
-      font-weight: 900;
-      cursor:pointer;
+      border: 1px solid rgba(255,255,255,.14);
+      color: rgba(255,255,255,.94);
+      font-weight: 950;
+      cursor: pointer;
+      user-select:none;
+      box-shadow: 0 10px 20px rgba(0,0,0,.10);
     }
-    .tabBtn.active{
+    .tab.active{
       background: rgba(255,255,255,.18);
-      border-color: rgba(255,255,255,.22);
+      border-color: rgba(255,255,255,.26);
     }
-
     .actions{
       margin-left:auto;
       display:flex;
       gap:10px;
-      flex-wrap: wrap;
       align-items:center;
+      flex-wrap: wrap;
     }
-
     .ghost{
       padding: 10px 12px;
       border-radius: 999px;
-      background: rgba(255,255,255,.10);
-      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
       color: rgba(255,255,255,.92);
-      font-weight: 900;
-      cursor:pointer;
-      text-decoration:none;
+      font-weight: 950;
+      cursor: pointer;
+      text-decoration: none;
       display:inline-flex;
       align-items:center;
       gap:8px;
+      box-shadow: 0 10px 20px rgba(0,0,0,.10);
     }
 
-    main{ padding: 18px 0 60px; }
+    /* Mobile drawer */
+    .burger{ display:none; }
+    .drawerOverlay{
+      position: fixed; inset:0;
+      background: rgba(0,0,0,.35);
+      z-index: 80;
+      display:none;
+    }
+    .drawer{
+      position: fixed; top:0; left:0;
+      height:100dvh;
+      width: min(84vw, 350px);
+      background: rgba(22,62,90,.92);
+      border-right: 1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(14px);
+      z-index: 90;
+      transform: translateX(-105%);
+      transition: transform .18s ease;
+      padding-top: calc(var(--safeTop) + 10px);
+    }
+    .drawer.open{ transform: translateX(0); }
+    .drawer .dHead{
+      padding: 14px 14px 10px;
+      font-weight: 950;
+      letter-spacing: .4px;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .drawer .dList{ padding: 10px 14px 14px; display:grid; gap: 10px; }
+    .drawer .dItem{
+      width:100%;
+      text-align:left;
+      padding: 12px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color:#fff;
+      font-weight: 950;
+      cursor:pointer;
+    }
+
+    main{ padding: 18px 0 64px; }
 
     .grid{
       display:grid;
-      grid-template-columns: 1.25fr .75fr;
+      grid-template-columns: 1.12fr .88fr;
       gap: 14px;
       align-items:start;
     }
-    @media (max-width: 1100px){
-      .grid{ grid-template-columns: 1fr; }
-      .tabs{ width:100%; margin-left:0; }
-      .actions{ width:100%; margin-left:0; }
-    }
+    @media (max-width: 1020px){ .grid{ grid-template-columns: 1fr; } }
 
     .card{
       background: var(--paper);
@@ -148,29 +173,30 @@
       border-radius: var(--radiusXL);
       border: 1px solid var(--borderD);
       box-shadow: var(--shadow);
-      padding: 16px;
+      padding: 18px;
       position: relative;
       overflow:hidden;
     }
-    .title{ margin:0 0 6px; font-weight: 950; font-size: 18px; }
-    .muted{ color: var(--muted); font-size: 13px; }
+    .card.slim{ padding: 14px; border-radius: 22px; box-shadow: var(--shadowSoft); }
+    .title{ font-weight: 950; font-size: 18px; margin:0 0 6px; letter-spacing: .2px;}
+    .muted{ color: var(--muted); font-size: 13px; margin:0; line-height: 1.35; }
     .row{ display:flex; gap:10px; flex-wrap: wrap; align-items:center; }
-
+    label{ font-size: 12px; font-weight: 950; color: rgba(11,34,54,.84); display:block; margin: 10px 0 6px; }
     input, select, textarea{
       width:100%;
-      padding: 10px 12px;
+      padding: 12px 12px;
       border-radius: 14px;
-      border: 1px solid rgba(11,34,54,.18);
+      border: 1px solid rgba(11,34,54,.16);
       background: rgba(255,255,255,.98);
       color: var(--text);
       outline:none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
     }
-    textarea{ min-height: 120px; resize: vertical; }
-
+    textarea{ resize: vertical; }
     button{
-      padding: 10px 12px;
+      padding: 11px 12px;
       border-radius: 999px;
-      border: 1px solid rgba(11,34,54,.16);
+      border: 1px solid rgba(11,34,54,.14);
       cursor:pointer;
       font-weight: 950;
     }
@@ -178,84 +204,68 @@
       color:#fff;
       border-color: rgba(0,0,0,.10);
       background: linear-gradient(180deg, rgba(36,91,124,.96), rgba(22,62,90,.98));
-      box-shadow: 0 16px 28px rgba(0,0,0,.12);
+      box-shadow: 0 14px 28px rgba(0,0,0,.14);
     }
     .soft{ background: rgba(36,91,124,.10); color: rgba(11,34,54,.92); }
     .danger{ background: rgba(180,30,40,.10); color: rgba(140,20,30,.95); border-color: rgba(140,20,30,.18); }
+    .mini{ padding: 8px 10px; border-radius: 999px; font-size: 12px; }
 
     .pill{
       display:inline-flex;
       align-items:center;
-      gap:6px;
-      padding: 6px 10px;
+      gap: 6px;
+      padding: 7px 11px;
       border-radius: 999px;
       font-weight: 950;
       font-size: 12px;
-      border: 1px solid rgba(11,34,54,.12);
+      border: 1px solid rgba(11,34,54,.10);
       background: rgba(36,91,124,.08);
       color: rgba(11,34,54,.92);
       white-space: nowrap;
+      box-shadow: 0 8px 18px rgba(0,0,0,.08);
     }
     .pill.pending{ background: rgba(255,180,90,.18); }
-    .pill.confirmed{ background: rgba(40,140,80,.16); }
-    .pill.arrived{ background: rgba(90,160,220,.16); }
+    .pill.arrived{ background: rgba(40,140,80,.16); }
     .pill.cancelled{ background: rgba(180,30,40,.10); color: rgba(140,20,30,.95); }
 
-    .split{
+    .list{ display:grid; gap: 12px; margin-top: 12px; }
+
+    .resCard{
+      border-radius: 22px;
+      border: 1px solid rgba(11,34,54,.09);
+      background: rgba(255,255,255,.98);
+      padding: 12px;
       display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    @media (max-width: 900px){
-      .split{ grid-template-columns: 1fr; }
+      gap: 10px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.06);
     }
 
     .tableGrid{
       display:grid;
-      grid-template-columns: repeat(5, minmax(150px, 1fr));
+      grid-template-columns: repeat(5, minmax(140px, 1fr));
       gap: 10px;
+      margin-top: 10px;
     }
-    @media (max-width: 900px){
-      .tableGrid{ grid-template-columns: repeat(2, minmax(150px, 1fr)); }
-    }
+    @media (max-width: 980px){ .tableGrid{ grid-template-columns: repeat(3, minmax(120px, 1fr)); } }
+    @media (max-width: 560px){ .tableGrid{ grid-template-columns: repeat(2, minmax(120px, 1fr)); } }
 
     .tCard{
-      border-radius: 18px;
+      border-radius: 16px;
       border: 1px solid rgba(11,34,54,.10);
       background: rgba(255,255,255,.98);
       padding: 10px;
-      display:flex;
-      flex-direction: column;
-      gap: 6px;
-      min-height: 74px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.06);
     }
-    .tTop{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-    .tCode{ font-weight: 950; }
-    .tState{ font-size: 12px; color: var(--muted); font-weight: 900; }
-    .tState.open{ color: rgba(20,110,60,.88); }
-    .tState.closed{ color: rgba(140,20,30,.88); }
+    .tName{ font-weight: 950; margin:0; }
+    .tMeta{ margin:4px 0 0; font-size: 12px; color: var(--muted); }
+    .tBusy{ border-color: rgba(180,30,40,.18); background: rgba(180,30,40,.06); }
+    .tFree{ border-color: rgba(40,140,80,.18); background: rgba(40,140,80,.06); }
+    .tClosed{ opacity: .66; }
 
-    .mini{ padding: 8px 10px; font-size: 12px; }
-
-    /* login overlay */
-    .modal{
-      position: fixed; inset:0;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      background: rgba(0,0,0,.55);
-      z-index: 200;
-      padding: 18px;
-    }
-    .modal.show{ display:flex; }
-    .modal .box{
-      width: min(560px, 100%);
-      background: rgba(255,255,255,.96);
-      color: var(--text);
-      border-radius: 24px;
-      padding: 16px;
-      border: 1px solid rgba(11,34,54,.10);
-      box-shadow: 0 22px 70px rgba(0,0,0,.25);
+    @media (max-width: 720px){
+      .tabs{ display:none; }
+      .burger{ display:inline-flex; }
+      .brand{ font-size: 18px; }
     }
   </style>
 </head>
@@ -268,69 +278,94 @@
     <div class="container header-inner">
       <div class="brand">⏱️ Officine Mare — Admin</div>
 
-      <div class="tabs" role="tablist" aria-label="Sezioni admin">
-        <button class="tabBtn active" data-tab="tab-orders">Tavoli & Comande</button>
-        <button class="tabBtn" data-tab="tab-res">Prenotazioni</button>
-        <button class="tabBtn" data-tab="tab-menu">Menù</button>
-        <button class="tabBtn" data-tab="tab-tables">Vista tavoli</button>
+      <div class="tabs" id="tabsDesktop">
+        <div class="tab active" data-tab="orders">Tavoli & Comande</div>
+        <div class="tab" data-tab="reservations">Prenotazioni</div>
+        <div class="tab" data-tab="menu">Menù</div>
+        <div class="tab" data-tab="tables">Vista tavoli</div>
       </div>
 
       <div class="actions">
+        <button class="ghost burger" id="burgerBtn">☰</button>
         <a class="ghost" href="kitchen.html">🍳 Cucina</a>
-        <button class="ghost" id="logoutBtn">🚪 Logout</button>
+        <button class="ghost" id="logoutBtn">Logout</button>
       </div>
     </div>
   </header>
 
-  <main class="container">
+  <div class="drawerOverlay" id="drawerOverlay"></div>
+  <aside class="drawer" id="drawer">
+    <div class="dHead">
+      <span>Menu</span>
+      <button class="ghost" id="drawerClose">✕</button>
+    </div>
+    <div class="dList">
+      <button class="dItem" data-tab="orders">Tavoli & Comande</button>
+      <button class="dItem" data-tab="reservations">Prenotazioni</button>
+      <button class="dItem" data-tab="menu">Menù</button>
+      <button class="dItem" data-tab="tables">Vista tavoli</button>
+      <a class="dItem" href="kitchen.html" style="text-decoration:none; display:block;">🍳 Cucina</a>
+    </div>
+  </aside>
 
+  <main class="container">
     <!-- TAB: ORDERS -->
     <section class="grid" id="tab-orders">
       <div class="card">
         <h2 class="title">Tavoli & Comande</h2>
-        <p class="muted">Scegli un tavolo, aggiungi piatti (da DB), invia in cucina. Lo storico resta su DB. Il “Servito” non è reversibile.</p>
+        <p class="muted">Scegli un tavolo, aggiungi piatti (dal DB), invia in cucina. Il “Servito” NON è reversibile. Puoi chiudere la comanda quando vuoi.</p>
 
         <div class="row" style="margin-top:10px;">
-          <div style="flex:1; min-width:240px;">
-            <div class="muted" style="margin-bottom:6px; font-weight:900;">Tavolo selezionato</div>
-            <select id="orderTableSel"></select>
+          <div style="flex:1; min-width:220px;">
+            <label>Tavolo selezionato</label>
+            <select id="orderTable"></select>
           </div>
-          <div style="flex:2; min-width:240px;">
-            <div class="muted" style="margin-bottom:6px; font-weight:900;">Note comanda (opzionale)</div>
+          <div style="flex:1; min-width:220px;">
+            <label>Note comanda (opzionale)</label>
             <input id="orderNote" placeholder="Es. senza aglio..." />
           </div>
         </div>
 
-        <div id="menuItemsBox" style="margin-top:12px; display:grid; gap:10px;"></div>
+        <div id="menuPickList" class="list" style="margin-top:12px;"></div>
 
         <div class="row" style="margin-top:12px;">
           <button class="primary" id="sendKitchenBtn" style="flex:1;">Invia in cucina</button>
           <button class="soft" id="refreshOrdersBtn">Aggiorna</button>
-          <span class="muted" id="ordersMsg"></span>
         </div>
+
+        <p class="muted" id="ordersMsg" style="margin-top:10px;"></p>
       </div>
 
       <div class="card">
         <h2 class="title">Comande aperte</h2>
-        <p class="muted">Qui vedi lo stato: “Pronto” dalla cucina e “Servito” dalla sala (timer da served_at).</p>
-        <div id="openOrdersBox" style="margin-top:10px; display:grid; gap:10px;"></div>
+        <p class="muted">Stato: “Pronto” dalla cucina e “Servito” dalla sala (timer). La cucina continua a lavorare le altre righe.</p>
+        <div id="openOrdersList" class="list" style="margin-top:12px;"></div>
       </div>
     </section>
 
     <!-- TAB: RESERVATIONS -->
-    <section class="grid" id="tab-res" style="display:none;">
+    <section class="grid" id="tab-reservations" style="display:none;">
       <div class="card">
         <h2 class="title">Prenotazioni</h2>
-        <p class="muted">Qui le confermi/annulli/arrivati e assegni 1 o più tavoli (multi-selezione). Sul DB il primo tavolo va in <code>table_code</code>, gli altri in <code>notes</code> (TAVOLI: ...).</p>
+        <p class="muted">Scegli intervallo: oggi / 7 giorni / 15 giorni. Poi filtra per stato e ricerca.</p>
 
         <div class="row" style="margin-top:10px;">
-          <div style="flex:1; min-width:190px;">
-            <div class="muted" style="margin-bottom:6px; font-weight:900;">Data</div>
-            <input id="resDay" type="date" />
+          <div style="flex:1; min-width:200px;">
+            <label>Intervallo</label>
+            <select id="resRange">
+              <option value="day">Oggi</option>
+              <option value="7">Prossimi 7 giorni</option>
+              <option value="15">Prossimi 15 giorni</option>
+            </select>
           </div>
 
-          <div style="flex:1; min-width:190px;">
-            <div class="muted" style="margin-bottom:6px; font-weight:900;">Stato</div>
+          <div style="flex:1; min-width:200px;">
+            <label>Da (data inizio)</label>
+            <input type="date" id="resFrom" />
+          </div>
+
+          <div style="flex:1; min-width:200px;">
+            <label>Stato</label>
             <select id="resStatus">
               <option value="all">Tutti</option>
               <option value="pending">pending</option>
@@ -341,865 +376,638 @@
           </div>
 
           <div style="flex:2; min-width:240px;">
-            <div class="muted" style="margin-bottom:6px; font-weight:900;">Cerca</div>
-            <input id="resQ" placeholder="nome / telefono / note..." />
+            <label>Cerca</label>
+            <input id="resSearch" placeholder="nome / telefono / note..." />
           </div>
 
-          <button class="soft" id="resRefreshBtn">Aggiorna</button>
-          <span class="muted" id="resMsg"></span>
+          <div style="display:flex; align-items:end;">
+            <button class="soft" id="resRefreshBtn" style="min-width:150px;">Aggiorna</button>
+          </div>
         </div>
 
-        <div id="resList" style="margin-top:12px; display:grid; gap:12px;"></div>
+        <div id="reservationsList" class="list"></div>
       </div>
 
       <div class="card">
         <h2 class="title">Pannello tavoli</h2>
-        <p class="muted">Vista rapida: liberi/occupati/chiusi (chiuso = is_open=false). Occupato se ha una comanda “open”.</p>
+        <p class="muted">Libero/Occupato/Chiuso (occupato se comanda aperta).</p>
         <div class="row" style="margin-top:10px;">
-          <button class="soft" id="tablesRefreshBtn">Aggiorna</button>
-          <button class="soft" id="openAllBtn">Apri tutti</button>
-          <span class="muted" id="tablesMsg"></span>
+          <button class="soft" id="tablesMiniRefresh">Aggiorna</button>
         </div>
-        <div id="tablesMini" class="tableGrid" style="margin-top:12px;"></div>
+        <div id="tablesMiniGrid" class="tableGrid"></div>
       </div>
     </section>
 
     <!-- TAB: MENU -->
     <section class="grid" id="tab-menu" style="display:none;">
       <div class="card">
-        <h2 class="title">Menù del giorno</h2>
-        <p class="muted">Testo menù (salvato su <code>menu_day</code>). Foto la gestiamo dopo con Storage (qui teniamo url).</p>
+        <h2 class="title">Gestione piatti (menu_items)</h2>
+        <p class="muted">Aggiungi/modifica/disattiva i piatti usati per le comande.</p>
 
-        <div class="row" style="margin-top:10px;">
-          <div style="flex:1; min-width:220px;">
-            <div class="muted" style="margin-bottom:6px; font-weight:900;">Giorno</div>
-            <input id="menuDay" type="date" />
+        <div class="row">
+          <div style="flex:2; min-width:220px;">
+            <label>Nome piatto</label>
+            <input id="miName" placeholder="Spaghetti alle vongole" />
           </div>
-          <button class="soft" id="menuLoadBtn">Carica</button>
-        </div>
 
-        <div style="margin-top:10px;">
-          <div class="muted" style="margin-bottom:6px; font-weight:900;">Testo menù</div>
-          <textarea id="menuText" placeholder="Scrivi il menù del giorno..."></textarea>
-        </div>
+          <div style="flex:1; min-width:220px;">
+            <label>Categoria</label>
+            <select id="miCat">
+              <option value="">Seleziona...</option>
+              <option value="antipasto">Antipasto</option>
+              <option value="primo">Primo</option>
+              <option value="secondo">Secondo</option>
+              <option value="contorno">Contorno</option>
+              <option value="vino bianco">Vino bianco</option>
+              <option value="vino rosso">Vino rosso</option>
+              <option value="bevande">Bevande</option>
+              <option value="dolci">Dolci</option>
+              <option value="cocktail">Cocktail</option>
+            </select>
+          </div>
 
-        <div style="margin-top:10px;">
-          <div class="muted" style="margin-bottom:6px; font-weight:900;">Image URL (opzionale)</div>
-          <input id="menuImgUrl" placeholder="https://..." />
+          <div style="flex:1; min-width:140px;">
+            <label>Prezzo</label>
+            <input id="miPrice" type="number" step="0.01" placeholder="14.00" />
+          </div>
         </div>
 
         <div class="row" style="margin-top:12px;">
-          <button class="primary" id="menuSaveBtn">Salva</button>
-          <span class="muted" id="menuMsg"></span>
+          <button class="primary" id="miAddBtn" style="flex:1;">Salva / Aggiungi</button>
+          <button class="soft" id="miRefreshBtn">Aggiorna</button>
         </div>
+
+        <div id="menuItemsList" class="list"></div>
       </div>
 
       <div class="card">
-        <h2 class="title">Piatti (menu_items)</h2>
-        <p class="muted">Qui gestisci i piatti che compaiono per le comande: aggiungi, modifica, disattiva (non cancelliamo).</p>
-
-        <div class="split" style="margin-top:10px;">
-          <div>
-            <div class="muted" style="margin-bottom:6px; font-weight:900;">Nome</div>
-            <input id="miName" placeholder="Spaghetti alle vongole" />
-          </div>
-          <div>
-            <div class="muted" style="margin-bottom:6px; font-weight:900;">Categoria</div>
-            <input id="miCat" placeholder="Primi" />
-          </div>
-        </div>
-
-        <div class="row" style="margin-top:10px;">
-          <div style="flex:1; min-width:200px;">
-            <div class="muted" style="margin-bottom:6px; font-weight:900;">Prezzo</div>
-            <input id="miPrice" type="number" step="0.01" placeholder="14.00" />
-          </div>
-          <button class="primary" id="miAddBtn">Aggiungi</button>
-          <button class="soft" id="miReloadBtn">Ricarica</button>
-          <span class="muted" id="miMsg"></span>
-        </div>
-
-        <div id="miList" style="margin-top:12px; display:grid; gap:10px;"></div>
+        <h2 class="title">Nota</h2>
+        <p class="muted">La foto del “menù del giorno” (pagina cliente) resta come prima. Qui gestisci solo i piatti del DB.</p>
       </div>
     </section>
 
     <!-- TAB: TABLES -->
     <section class="card" id="tab-tables" style="display:none;">
       <h2 class="title">Vista tavoli</h2>
-      <p class="muted">Solo visualizzazione + toggle “aperto/chiuso”. Occupato se comanda aperta. (Puoi aggiungere logica prenotazioni dopo.)</p>
+      <p class="muted">Solo visualizzazione. Occupato se c’è una comanda aperta. Chiuso se is_open=false.</p>
       <div class="row" style="margin-top:10px;">
-        <button class="soft" id="tablesRefreshBtn2">Aggiorna</button>
-        <span class="muted" id="tablesMsg2"></span>
+        <button class="soft" id="tablesViewRefresh">Aggiorna</button>
       </div>
-      <div id="tablesFull" class="tableGrid" style="margin-top:12px;"></div>
+      <div id="tablesViewGrid" class="tableGrid"></div>
     </section>
-
   </main>
 
-  <!-- LOGIN MODAL -->
-  <div class="modal" id="loginModal" aria-hidden="true">
-    <div class="box">
-      <h2 class="title">Login staff</h2>
-      <p class="muted">Accedi con email/password (utente già creato in Supabase Auth + staff_users).</p>
-      <div class="row" style="margin-top:10px;">
-        <input id="loginEmail" type="email" placeholder="email" />
-        <input id="loginPass" type="password" placeholder="password" />
-      </div>
-      <div class="row" style="margin-top:12px;">
-        <button class="primary" id="loginBtn">Accedi</button>
-        <span class="muted" id="loginMsg"></span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
   <script src="backend.js"></script>
 
   <script>
-    // ------------------ UI HELPERS ------------------
-    const $ = (s) => document.querySelector(s);
-    const $$ = (s) => Array.from(document.querySelectorAll(s));
-    const pad = (n) => String(n).padStart(2,"0");
-    const todayISO = () => {
-      const d = new Date();
-      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    };
-    function escapeHtml(s){
-      return String(s ?? "").replace(/[&<>"']/g, (c) => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-      }[c]));
-    }
-    function minutesSince(iso){
-      if(!iso) return null;
-      const t = new Date(iso).getTime();
-      if(!Number.isFinite(t)) return null;
-      return Math.max(0, Math.floor((Date.now() - t) / 60000));
-    }
-
-    // ------------------ AUTH GUARD ------------------
-    const loginModal = $("#loginModal");
-    const loginMsg = $("#loginMsg");
-    async function ensureAuth(){
-      try{
-        const session = await OM.getSession();
-        if(!session){
-          loginModal.classList.add("show");
-          loginModal.setAttribute("aria-hidden","false");
-          return false;
-        }
-        loginModal.classList.remove("show");
-        loginModal.setAttribute("aria-hidden","true");
-        return true;
-      }catch(e){
-        console.error(e);
-        loginModal.classList.add("show");
-        return false;
-      }
-    }
-
-    $("#loginBtn").addEventListener("click", async () => {
-      loginMsg.textContent = "Login...";
-      try{
-        await OM.signIn($("#loginEmail").value.trim(), $("#loginPass").value);
-        loginMsg.textContent = "OK ✅";
-        loginModal.classList.remove("show");
-        await boot();
-      }catch(e){
-        loginMsg.textContent = "Errore: " + (e?.message || e);
-      }
+    // Drawer
+    const drawer = document.getElementById("drawer");
+    const drawerOverlay = document.getElementById("drawerOverlay");
+    document.getElementById("burgerBtn")?.addEventListener("click", () => {
+      drawer.classList.add("open"); drawerOverlay.style.display="block";
     });
+    function closeDrawer(){
+      drawer.classList.remove("open"); drawerOverlay.style.display="none";
+    }
+    drawerOverlay?.addEventListener("click", closeDrawer);
+    document.getElementById("drawerClose")?.addEventListener("click", closeDrawer);
 
-    $("#logoutBtn").addEventListener("click", async () => {
+    // Tabs
+    const tabIds = ["orders","reservations","menu","tables"];
+    const tabsDesktop = document.querySelectorAll("#tabsDesktop .tab");
+    const drawerItems = document.querySelectorAll(".drawer [data-tab]");
+
+    function showTab(name){
+      tabIds.forEach(t => {
+        const el = document.getElementById("tab-" + t);
+        if(el) el.style.display = (t === name) ? "" : "none";
+      });
+      tabsDesktop.forEach(x => x.classList.toggle("active", x.dataset.tab === name));
+      closeDrawer();
+      if(name === "orders") refreshOrders();
+      if(name === "reservations") refreshReservations();
+      if(name === "menu") refreshMenuItems();
+      if(name === "tables") refreshTablesView();
+    }
+    tabsDesktop.forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab)));
+    drawerItems.forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+
+    // Guard
+    async function guard(){
+      try{
+        const s = await OM.getSession();
+        if(!s) location.href = "login.html";
+      }catch{
+        location.href = "login.html";
+      }
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
       try{ await OM.signOut(); }catch{}
-      location.reload();
+      location.href = "login.html";
     });
 
-    // ------------------ TABS ------------------
-    $$(".tabBtn").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        $$(".tabBtn").forEach(b=>b.classList.remove("active"));
-        btn.classList.add("active");
-        const id = btn.dataset.tab;
-        ["tab-orders","tab-res","tab-menu","tab-tables"].forEach(x=>{
-          const el = document.getElementById(x);
-          el.style.display = (x===id) ? "" : "none";
-        });
-      });
-    });
+    // Helpers
+    const fmtTime = (iso) => {
+      try { return new Date(iso).toLocaleTimeString("it-IT", {hour:"2-digit", minute:"2-digit"}); }
+      catch { return ""; }
+    };
+    const minutesSince = (iso) => {
+      try { return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime())/60000)); }
+      catch { return null; }
+    };
+    const pad = n => String(n).padStart(2,"0");
+    const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    const addDaysISO = (baseISO, days) => {
+      const d = new Date(baseISO + "T00:00:00");
+      d.setDate(d.getDate() + Number(days||0));
+      return toISO(d);
+    };
+    const todayISO = () => toISO(new Date());
 
-    // ------------------ STATE ------------------
-    let TABLES = [];       // restaurant_tables
-    let MENU_ITEMS = [];   // menu_items
-    let OPEN_ORDERS = [];  // orders + order_items
-    let RES_LIST = [];     // reservations
+    // Data caches
+    let MENU_ITEMS = [];
+    let TABLES = [];
+    let OPEN_TABLES_SET = new Set();
 
-    // ------------------ TABLES LOAD + RENDER ------------------
-    function tableLabel(t){
-      return `${t.code} (${t.seats || 0} coperti)`;
-    }
+    // ORDERS UI
+    const orderTableSel = document.getElementById("orderTable");
+    const menuPickList = document.getElementById("menuPickList");
+    const sendKitchenBtn = document.getElementById("sendKitchenBtn");
+    const ordersMsg = document.getElementById("ordersMsg");
+    const openOrdersList = document.getElementById("openOrdersList");
 
-    function computeTableState(code){
-      const t = TABLES.find(x=>x.code===code);
-      if(!t) return { state:"unknown", label:"?" };
-      if(!t.is_open) return { state:"closed", label:"Chiuso" };
-
-      const hasOpenOrder = OPEN_ORDERS.some(o => o.table_code === code);
-      if(hasOpenOrder) return { state:"occupied", label:"Occupato" };
-
-      return { state:"free", label:"Libero" };
-    }
-
-    function renderTablesMini(){
-      const box = $("#tablesMini");
-      if(!box) return;
-      box.innerHTML = "";
-      TABLES.forEach(t=>{
-        const st = computeTableState(t.code);
-        const div = document.createElement("div");
-        div.className = "tCard";
-        div.innerHTML = `
-          <div class="tTop">
-            <div class="tCode">${escapeHtml(t.code)}</div>
-            <div class="tState ${t.is_open ? "open" : "closed"}">${t.is_open ? "Aperto" : "Chiuso"}</div>
-          </div>
-          <div class="muted">${escapeHtml(st.label)} · ${escapeHtml(String(t.seats||0))} coperti</div>
-        `;
-        box.appendChild(div);
+    function buildOrderTableSelect(){
+      orderTableSel.innerHTML = "";
+      TABLES.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t.code;
+        opt.textContent = `${t.code} (${t.seats || 0} coperti)`;
+        orderTableSel.appendChild(opt);
       });
     }
 
-    function renderTablesFull(){
-      const box = $("#tablesFull");
-      if(!box) return;
-      box.innerHTML = "";
-      TABLES.forEach(t=>{
-        const st = computeTableState(t.code);
-        const div = document.createElement("div");
-        div.className = "tCard";
-        div.innerHTML = `
-          <div class="tTop">
-            <div class="tCode">${escapeHtml(t.code)}</div>
-            <div class="tState ${t.is_open ? "open" : "closed"}">${t.is_open ? "Aperto" : "Chiuso"}</div>
-          </div>
-          <div class="muted">${escapeHtml(st.label)} · ${escapeHtml(String(t.seats||0))} coperti</div>
-          <div class="row" style="margin-top:6px;">
-            <button class="soft mini" data-act="toggleOpen" data-code="${t.code}">
-              ${t.is_open ? "Chiudi" : "Apri"}
-            </button>
-          </div>
-        `;
-        div.querySelector('button[data-act="toggleOpen"]').addEventListener("click", async ()=>{
-          try{
-            await OM.setTableOpen(t.code, !t.is_open);
-            await loadTables();
-            renderTablesMini();
-            renderTablesFull();
-          }catch(e){
-            alert("Errore: " + (e?.message || e));
-          }
-        });
-        box.appendChild(div);
-      });
-    }
-
-    async function loadTables(){
-      TABLES = await OM.listRestaurantTables();
-    }
-
-    // ------------------ MENU ITEMS (per comande) ------------------
-    function cartKeyForTable(code){ return "om_cart_" + code; }
-    function loadCart(code){
-      try{ return JSON.parse(localStorage.getItem(cartKeyForTable(code)) || "{}"); }catch{ return {}; }
-    }
-    function saveCart(code, obj){
-      localStorage.setItem(cartKeyForTable(code), JSON.stringify(obj || {}));
-    }
-
-    function renderMenuItemsForOrder(){
-      const box = $("#menuItemsBox");
-      const tableCode = $("#orderTableSel").value;
-      const cart = loadCart(tableCode);
-
-      box.innerHTML = "";
-      if(!MENU_ITEMS.length){
-        box.innerHTML = `<div class="muted">Nessun piatto attivo in menu_items. Vai su tab “Menù” e aggiungili.</div>`;
-        return;
-      }
-
-      // raggruppa per categoria
-      const byCat = {};
-      MENU_ITEMS.forEach(mi=>{
-        const c = mi.category || "Altro";
-        byCat[c] = byCat[c] || [];
-        byCat[c].push(mi);
+    function buildMenuPick(){
+      menuPickList.innerHTML = "";
+      const grouped = {};
+      MENU_ITEMS.forEach(it => {
+        const cat = (it.category || "altro").toLowerCase();
+        if(!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(it);
       });
 
-      Object.keys(byCat).sort().forEach(cat=>{
-        const wrap = document.createElement("div");
-        wrap.className = "card";
-        wrap.style.boxShadow = "none";
-        wrap.style.borderRadius = "18px";
-        wrap.style.padding = "12px";
-        wrap.innerHTML = `<div class="title" style="font-size:15px;">${escapeHtml(cat)}</div>`;
-        const list = document.createElement("div");
-        list.style.display = "grid";
-        list.style.gap = "10px";
-        list.style.marginTop = "8px";
-
-        byCat[cat].forEach(mi=>{
-          const qty = Number(cart[mi.id] || 0);
-          const item = document.createElement("div");
-          item.className = "tCard";
-          item.style.flexDirection = "row";
-          item.style.alignItems = "center";
-          item.style.justifyContent = "space-between";
-          item.innerHTML = `
-            <div style="min-width:0;">
-              <div style="font-weight:950;">${escapeHtml(mi.name)}</div>
-              <div class="muted">${mi.price != null ? ("€ " + Number(mi.price).toFixed(2)) : ""}</div>
+      Object.keys(grouped).sort().forEach(cat => {
+        const card = document.createElement("div");
+        card.className = "card slim";
+        card.innerHTML = `<div class="title" style="font-size:14px; margin-bottom:8px; text-transform:capitalize;">${cat}</div>`;
+        grouped[cat].forEach(it => {
+          const row = document.createElement("div");
+          row.className = "resCard";
+          row.style.gridTemplateColumns = "1fr auto";
+          row.style.alignItems = "center";
+          row.innerHTML = `
+            <div>
+              <div style="font-weight:950;">${it.name}</div>
+              <div class="muted">${(it.price!=null)?("€ "+Number(it.price).toFixed(2)):""}</div>
             </div>
             <div class="row" style="justify-content:flex-end;">
               <button class="soft mini" data-act="dec">-</button>
-              <span class="pill" style="min-width:44px; justify-content:center;">${qty}</span>
+              <div class="pill" data-qty style="min-width:56px; justify-content:center;">0</div>
               <button class="primary mini" data-act="inc">+</button>
             </div>
           `;
-          const [decBtn, incBtn] = item.querySelectorAll("button");
-          decBtn.addEventListener("click", ()=>{
-            const c = loadCart(tableCode);
-            c[mi.id] = Math.max(0, Number(c[mi.id]||0) - 1);
-            saveCart(tableCode, c);
-            renderMenuItemsForOrder();
+          let qty = 0;
+          const qtyEl = row.querySelector("[data-qty]");
+          row.querySelectorAll("button[data-act]").forEach(btn => {
+            btn.addEventListener("click", () => {
+              if(btn.dataset.act === "inc") qty++;
+              if(btn.dataset.act === "dec") qty = Math.max(0, qty-1);
+              qtyEl.textContent = String(qty);
+              row.dataset.qty = String(qty);
+            });
           });
-          incBtn.addEventListener("click", ()=>{
-            const c = loadCart(tableCode);
-            c[mi.id] = Math.min(99, Number(c[mi.id]||0) + 1);
-            saveCart(tableCode, c);
-            renderMenuItemsForOrder();
-          });
-          list.appendChild(item);
+          row.dataset.menuItemId = it.id;
+          row.dataset.itemName = it.name;
+          row.dataset.price = it.price ?? "";
+          row.dataset.qty = "0";
+          card.appendChild(row);
         });
-
-        wrap.appendChild(list);
-        box.appendChild(wrap);
+        menuPickList.appendChild(card);
       });
     }
 
-    async function loadMenuItems(){
-      MENU_ITEMS = await OM.listMenuItems({ activeOnly:true });
+    async function refreshOrders(){
+      ordersMsg.textContent = "";
+      try{
+        if(!TABLES.length) TABLES = await OM.listRestaurantTables();
+        if(!MENU_ITEMS.length) MENU_ITEMS = await OM.listMenuItems({ activeOnly:true });
+        OPEN_TABLES_SET = await OM.getOpenOrdersTableCodes();
+
+        buildOrderTableSelect();
+        buildMenuPick();
+
+        const orders = await OM.getActiveOrdersWithItems();
+        renderOpenOrders(orders);
+      }catch(e){
+        ordersMsg.textContent = "Errore: " + (e?.message || e);
+      }
     }
 
-    // ------------------ ORDERS LOAD + RENDER ------------------
-    async function loadOpenOrders(){
-      OPEN_ORDERS = await OM.getActiveOrdersWithItems();
-    }
-
-    function renderOpenOrders(){
-      const box = $("#openOrdersBox");
-      box.innerHTML = "";
-      if(!OPEN_ORDERS.length){
-        box.innerHTML = `<div class="muted">(nessuna comanda)</div>`;
+    function renderOpenOrders(orders){
+      openOrdersList.innerHTML = "";
+      if(!orders.length){
+        openOrdersList.innerHTML = `<div class="muted">(nessuna comanda)</div>`;
         return;
       }
 
-      OPEN_ORDERS.forEach(o=>{
-        const items = (o.order_items || []).slice().sort((a,b)=> String(a.created_at||"").localeCompare(String(b.created_at||"")));
-        const allReady = items.length && items.every(x=>x.line_status === "ready");
-        const allServed = items.length && items.every(x=>x.served);
+      orders.forEach(o => {
+        const items = (o.order_items || []);
+        const allReady = items.length && items.every(x => x.line_status === "ready");
+        const allServed = items.length && items.every(x => x.served);
 
         const card = document.createElement("div");
-        card.className = "tCard";
-        card.style.gap = "10px";
-        card.style.padding = "12px";
-
+        card.className = "resCard";
         card.innerHTML = `
-          <div class="tTop">
-            <div class="tCode">Tavolo ${escapeHtml(o.table_code)}</div>
-            <div class="pill ${allReady ? "confirmed" : "pending"}">
-              ${allReady ? "TUTTO PRONTO" : "In lavorazione"}
+          <div class="row" style="justify-content:space-between;">
+            <div>
+              <div class="title" style="margin:0;">Tavolo ${o.table_code}</div>
+              <div class="muted">Creata alle ${fmtTime(o.created_at)} · ${o.id}</div>
+            </div>
+            <div class="row">
+              <span class="pill ${allReady ? "arrived":"pending"}">${allReady ? "TUTTO PRONTO" : "In lavorazione"}</span>
+              <button class="danger mini" data-act="close">Chiudi comanda</button>
             </div>
           </div>
-
-          <div style="display:grid; gap:8px;">
-            ${items.map(it=>{
-              const m = it.served_at ? minutesSince(it.served_at) : null;
-              const timer = it.served ? ` · servito ${m} min fa` : "";
-              const ready = it.line_status === "ready";
-              return `
-                <div class="tCard" style="flex-direction:row; align-items:center; justify-content:space-between; padding:10px;">
-                  <div style="min-width:0;">
-                    <div style="font-weight:950;">${escapeHtml(it.item_name)} <span class="muted">x${it.qty}</span></div>
-                    <div class="muted">${ready ? "Pronto" : "Da fare"}${it.served ? timer : ""}</div>
-                  </div>
-                  <div class="row" style="justify-content:flex-end;">
-                    <span class="pill ${ready ? "confirmed" : "pending"}">${ready ? "Pronto" : "Da fare"}</span>
-                    <span class="pill ${it.served ? "arrived" : ""}">${it.served ? "Servito" : "Non servito"}</span>
-                    ${(!it.served && ready)
-                      ? `<button class="primary mini" data-act="served" data-line="${it.id}">Segna servito</button>`
-                      : ``
-                    }
-                  </div>
-                </div>
-              `;
-            }).join("")}
-          </div>
-
-          <div class="row" style="justify-content:flex-end;">
-            <span class="muted">${allServed ? "Tutte servite ✅" : "Servi quando pronto"}</span>
-            <button class="danger mini" data-act="close" data-order="${o.id}" ${allReady ? "" : ""}>
-              Chiudi comanda
-            </button>
-          </div>
+          <div class="list" style="margin-top:10px;" data-items></div>
+          <div class="muted" style="margin-top:8px;">${allServed ? "Tutte servite ✅" : "Servi quando pronto"}</div>
         `;
 
-        // served (non reversibile)
-        card.querySelectorAll('button[data-act="served"]').forEach(btn=>{
-          btn.addEventListener("click", async ()=>{
+        const itemsWrap = card.querySelector("[data-items]");
+
+        items.forEach(it => {
+          const mins = it.served_at ? minutesSince(it.served_at) : null;
+          const line = document.createElement("div");
+          line.className = "resCard";
+          line.style.gridTemplateColumns = "1fr auto";
+          line.style.alignItems = "center";
+          line.innerHTML = `
+            <div>
+              <div style="font-weight:950;">${it.item_name} ×${it.qty}</div>
+              <div class="muted">
+                ${it.line_status === "ready" ? "Pronto" : "Da fare"}
+                ${it.served_at ? " · servito " + mins + " min fa" : ""}
+              </div>
+            </div>
+            <div class="row" style="justify-content:flex-end;">
+              <span class="pill ${it.line_status === "ready" ? "arrived":"pending"}">${it.line_status === "ready" ? "Pronto" : "Da fare"}</span>
+              ${
+                it.served
+                  ? `<span class="pill arrived">Servito</span>`
+                  : `<button class="primary mini" data-act="serve" data-lid="${it.id}">Servito</button>`
+              }
+            </div>
+          `;
+          itemsWrap.appendChild(line);
+        });
+
+        card.querySelectorAll("button[data-act='serve']").forEach(btn => {
+          btn.addEventListener("click", async () => {
             try{
-              await OM.setLineServed(btn.dataset.line);
-              await loadOpenOrders();
-              renderOpenOrders();
-              renderTablesMini();
-              renderTablesFull();
+              btn.disabled = true;
+              await OM.setLineServed(btn.dataset.lid);
+              await refreshOrders();
+            }catch(e){
+              alert("Errore servito: " + (e?.message || e));
+              btn.disabled = false;
+            }
+          });
+        });
+
+        card.querySelector("button[data-act='close']").addEventListener("click", async () => {
+          if(!confirm("Chiudere la comanda? (rimane nel DB ma non è più attiva)")) return;
+          try{
+            await OM.closeOrder(o.id);
+            await refreshOrders();
+          }catch(e){
+            alert("Errore chiusura: " + (e?.message || e));
+          }
+        });
+
+        openOrdersList.appendChild(card);
+      });
+    }
+
+    sendKitchenBtn.addEventListener("click", async () => {
+      try{
+        ordersMsg.textContent = "Invio in corso...";
+        const table_code = orderTableSel.value;
+        const note = document.getElementById("orderNote").value;
+
+        const rows = Array.from(menuPickList.querySelectorAll("[data-menu-item-id]"));
+        const items = rows
+          .map(r => ({
+            menu_item_id: r.dataset.menuItemId,
+            item_name: r.dataset.itemName,
+            price: r.dataset.price ? Number(r.dataset.price) : null,
+            qty: Number(r.dataset.qty || "0"),
+          }))
+          .filter(x => x.qty > 0);
+
+        if(!table_code) throw new Error("Seleziona un tavolo.");
+        if(!items.length) throw new Error("Seleziona almeno 1 piatto.");
+
+        await OM.createOrder({ table_code, note, items });
+        ordersMsg.textContent = "Comanda inviata ✅";
+        await refreshOrders();
+      }catch(e){
+        ordersMsg.textContent = "Errore: " + (e?.message || e);
+      }
+    });
+
+    document.getElementById("refreshOrdersBtn").addEventListener("click", refreshOrders);
+
+    // RESERVATIONS UI (range)
+    const resRange = document.getElementById("resRange");
+    const resFrom = document.getElementById("resFrom");
+    const resStatus = document.getElementById("resStatus");
+    const resSearch = document.getElementById("resSearch");
+    const reservationsList = document.getElementById("reservationsList");
+
+    resFrom.value = todayISO();
+    resRange.value = "day";
+
+    function computeRange(){
+      const fromISO = resFrom.value || todayISO();
+      if(resRange.value === "day") return { fromISO, toISO: fromISO };
+      if(resRange.value === "7") return { fromISO, toISO: addDaysISO(fromISO, 7) };
+      if(resRange.value === "15") return { fromISO, toISO: addDaysISO(fromISO, 15) };
+      return { fromISO, toISO: fromISO };
+    }
+
+    async function refreshReservations(){
+      try{
+        if(!TABLES.length) TABLES = await OM.listRestaurantTables();
+        OPEN_TABLES_SET = await OM.getOpenOrdersTableCodes();
+        await renderTablesMini();
+
+        const { fromISO, toISO } = computeRange();
+        const data = await OM.listReservationsRange({
+          fromISO,
+          toISO,
+          status: resStatus.value,
+          q: resSearch.value
+        });
+
+        reservationsList.innerHTML = "";
+        if(!data.length){
+          reservationsList.innerHTML = `<div class="muted">(nessuna prenotazione per i filtri selezionati)</div>`;
+          return;
+        }
+
+        for(const r of data){
+          const assigned = await OM.getReservationTables(r.id);
+
+          const pillClass =
+            r.status === "arrived" ? "arrived" :
+            r.status === "cancelled" ? "cancelled" :
+            "pending";
+
+          const card = document.createElement("div");
+          card.className = "resCard";
+
+          card.innerHTML = `
+            <div class="row" style="justify-content:space-between;">
+              <div>
+                <div class="title" style="margin:0;">${r.customer_name} <span class="muted">(${r.people} pers.)</span></div>
+                <div class="muted">${r.reservation_date} · ${String(r.reservation_time).slice(0,5)} · ${r.customer_phone || ""}</div>
+                ${r.notes ? `<div class="muted">Note: ${r.notes}</div>` : ``}
+              </div>
+              <span class="pill ${pillClass}">${r.status}</span>
+            </div>
+
+            <div class="row" style="align-items:flex-end;">
+              <div style="flex:2; min-width:260px;">
+                <label>Tavoli (multi)</label>
+                <select multiple size="5" data-tables style="height:auto;"></select>
+                <div class="muted" style="margin-top:6px;">
+                  Desktop: Ctrl/Cmd per selezioni multiple. Mobile: tocchi multipli.
+                </div>
+              </div>
+              <div style="flex:1; min-width:200px;">
+                <button class="soft" data-act="assign" style="width:100%;">Assegna</button>
+                <button class="primary" data-act="confirm" style="margin-top:8px; width:100%;">Conferma</button>
+                <button class="soft" data-act="arrived" style="margin-top:8px; width:100%;">Arrivato</button>
+                <button class="danger" data-act="cancel" style="margin-top:8px; width:100%;">Annulla</button>
+              </div>
+            </div>
+          `;
+
+          const sel = card.querySelector("select[data-tables]");
+          TABLES.forEach(t => {
+            const opt = document.createElement("option");
+            opt.value = t.code;
+            opt.textContent = `${t.code} (${t.seats || 0})`;
+            if(assigned.includes(t.code)) opt.selected = true;
+            sel.appendChild(opt);
+          });
+
+          card.querySelector("[data-act='assign']").addEventListener("click", async () => {
+            try{
+              const chosen = Array.from(sel.selectedOptions).map(o => o.value);
+              await OM.setReservationTables(r.id, chosen);
+              await refreshReservations();
+            }catch(e){
+              alert("Errore assegnazione: " + (e?.message || e));
+            }
+          });
+
+          card.querySelector("[data-act='confirm']").addEventListener("click", async () => {
+            try{ await OM.updateReservation(r.id, { status:"confirmed" }); await refreshReservations(); }
+            catch(e){ alert("Errore conferma: " + (e?.message || e)); }
+          });
+
+          card.querySelector("[data-act='arrived']").addEventListener("click", async () => {
+            try{ await OM.updateReservation(r.id, { status:"arrived" }); await refreshReservations(); }
+            catch(e){ alert("Errore arrived: " + (e?.message || e)); }
+          });
+
+          card.querySelector("[data-act='cancel']").addEventListener("click", async () => {
+            if(!confirm("Annullare la prenotazione?")) return;
+            try{ await OM.updateReservation(r.id, { status:"cancelled" }); await refreshReservations(); }
+            catch(e){ alert("Errore annulla: " + (e?.message || e)); }
+          });
+
+          reservationsList.appendChild(card);
+        }
+      }catch(e){
+        reservationsList.innerHTML = `<div class="muted">Errore: ${e?.message || e}</div>`;
+      }
+    }
+
+    document.getElementById("resRefreshBtn").addEventListener("click", refreshReservations);
+    [resRange, resFrom, resStatus].forEach(el => el.addEventListener("change", refreshReservations));
+    resSearch.addEventListener("input", () => { clearTimeout(window.__rsT); window.__rsT = setTimeout(refreshReservations, 250); });
+
+    // Tables mini + view
+    const tablesMiniGrid = document.getElementById("tablesMiniGrid");
+    const tablesViewGrid = document.getElementById("tablesViewGrid");
+
+    async function renderTablesMini(){
+      if(!TABLES.length) TABLES = await OM.listRestaurantTables();
+      OPEN_TABLES_SET = await OM.getOpenOrdersTableCodes();
+      tablesMiniGrid.innerHTML = "";
+      TABLES.forEach(t => {
+        const busy = OPEN_TABLES_SET.has(t.code);
+        const cls = busy ? "tBusy" : "tFree";
+        const closed = (t.is_open === false);
+        const el = document.createElement("div");
+        el.className = `tCard ${cls} ${closed ? "tClosed":""}`;
+        el.innerHTML = `
+          <div class="tName">${t.code}</div>
+          <div class="tMeta">${closed ? "Chiuso" : (busy ? "Occupato" : "Libero")}</div>
+          <div class="tMeta">${t.seats || 0} coperti</div>
+        `;
+        tablesMiniGrid.appendChild(el);
+      });
+    }
+
+    async function refreshTablesView(){
+      try{
+        if(!TABLES.length) TABLES = await OM.listRestaurantTables();
+        OPEN_TABLES_SET = await OM.getOpenOrdersTableCodes();
+        tablesViewGrid.innerHTML = "";
+        TABLES.forEach(t => {
+          const busy = OPEN_TABLES_SET.has(t.code);
+          const cls = busy ? "tBusy" : "tFree";
+          const closed = (t.is_open === false);
+          const el = document.createElement("div");
+          el.className = `tCard ${cls} ${closed ? "tClosed":""}`;
+          el.innerHTML = `
+            <div class="tName">${t.code}</div>
+            <div class="tMeta">${closed ? "Chiuso" : (busy ? "Occupato" : "Libero")}</div>
+            <div class="tMeta">${t.seats || 0} coperti</div>
+          `;
+          tablesViewGrid.appendChild(el);
+        });
+      }catch(e){
+        tablesViewGrid.innerHTML = `<div class="muted">Errore: ${e?.message || e}</div>`;
+      }
+    }
+
+    document.getElementById("tablesMiniRefresh").addEventListener("click", renderTablesMini);
+    document.getElementById("tablesViewRefresh").addEventListener("click", refreshTablesView);
+
+    // Menu items CRUD
+    const miName = document.getElementById("miName");
+    const miCat = document.getElementById("miCat");
+    const miPrice = document.getElementById("miPrice");
+    const menuItemsList = document.getElementById("menuItemsList");
+    const miAddBtn = document.getElementById("miAddBtn");
+
+    async function refreshMenuItems(){
+      try{
+        MENU_ITEMS = await OM.listMenuItems({ activeOnly:false });
+        menuItemsList.innerHTML = "";
+        if(!MENU_ITEMS.length){
+          menuItemsList.innerHTML = `<div class="muted">(nessun piatto)</div>`;
+          return;
+        }
+        MENU_ITEMS.forEach(it => {
+          const card = document.createElement("div");
+          card.className = "resCard";
+          card.style.gridTemplateColumns = "1fr auto";
+          card.style.alignItems = "center";
+          card.innerHTML = `
+            <div>
+              <div style="font-weight:950;">${it.name}</div>
+              <div class="muted">${it.category || ""} · ${it.price!=null?("€ "+Number(it.price).toFixed(2)):""} · ${it.active ? "attivo" : "disattivo"}</div>
+            </div>
+            <div class="row" style="justify-content:flex-end;">
+              <button class="soft mini" data-act="edit">Modifica</button>
+              <button class="${it.active ? "danger" : "primary"} mini" data-act="toggle">${it.active ? "Disattiva" : "Attiva"}</button>
+            </div>
+          `;
+          card.querySelector("[data-act='edit']").addEventListener("click", () => {
+            miName.value = it.name || "";
+            miCat.value = (it.category || "").toLowerCase();
+            miPrice.value = it.price != null ? String(it.price) : "";
+            miAddBtn.dataset.editId = it.id;
+            miAddBtn.textContent = "Salva modifiche";
+            showTab("menu");
+          });
+          card.querySelector("[data-act='toggle']").addEventListener("click", async () => {
+            try{
+              await OM.setMenuItemActive(it.id, !it.active);
+              await refreshMenuItems();
+              MENU_ITEMS = await OM.listMenuItems({ activeOnly:true });
+              buildMenuPick();
             }catch(e){
               alert("Errore: " + (e?.message || e));
             }
           });
+          menuItemsList.appendChild(card);
         });
-
-        // close order (chiude comanda del tavolo)
-        card.querySelector('button[data-act="close"]').addEventListener("click", async ()=>{
-          if(!confirm("Chiudere la comanda? (Non sparisce dallo storico DB)")) return;
-          try{
-            await OM.closeOrder(o.id);
-            await loadOpenOrders();
-            renderOpenOrders();
-            renderTablesMini();
-            renderTablesFull();
-          }catch(e){
-            alert("Errore: " + (e?.message || e));
-          }
-        });
-
-        box.appendChild(card);
-      });
-    }
-
-    // ------------------ RESERVATIONS LOAD + RENDER ------------------
-    function parseSelectedTables(selectEl){
-      return Array.from(selectEl.selectedOptions).map(o=>o.value).filter(Boolean);
-    }
-
-    function reservationBadge(status){
-      const s = String(status || "pending");
-      const cls = ["pending","confirmed","arrived","cancelled"].includes(s) ? s : "pending";
-      return `<span class="pill ${cls}">${escapeHtml(s)}</span>`;
-    }
-
-    function renderReservations(){
-      const box = $("#resList");
-      box.innerHTML = "";
-
-      if(!RES_LIST.length){
-        box.innerHTML = `<div class="muted">(nessuna prenotazione per i filtri selezionati)</div>`;
-        return;
-      }
-
-      RES_LIST.forEach(r=>{
-        const card = document.createElement("div");
-        card.className = "tCard";
-        card.style.padding = "12px";
-        card.style.gap = "10px";
-
-        const when = `${r.reservation_date} · ${String(r.reservation_time||"").slice(0,5)}`;
-        const tablesHint = (r.notes || "").match(/TAVOLI:\s*([^\n]*)/i);
-        const multiInNotes = tablesHint ? tablesHint[1] : "";
-        const current = uniq([r.table_code].filter(Boolean).concat(multiInNotes ? multiInNotes.split(",") : []));
-
-        card.innerHTML = `
-          <div class="tTop">
-            <div style="min-width:0;">
-              <div style="font-weight:950;">${escapeHtml(r.customer_name)} <span class="muted">(${r.people} pers.)</span></div>
-              <div class="muted">${escapeHtml(when)} · ${escapeHtml(r.customer_phone || "")}</div>
-              ${r.notes ? `<div class="muted">Note: ${escapeHtml(r.notes)}</div>` : ``}
-            </div>
-            ${reservationBadge(r.status)}
-          </div>
-
-          <div class="split">
-            <div>
-              <div class="muted" style="margin-bottom:6px; font-weight:900;">Tavoli (multi)</div>
-              <select multiple size="5" data-res-tables="${r.id}">
-                ${TABLES.map(t=>`<option value="${t.code}" ${current.includes(t.code) ? "selected" : ""}>${escapeHtml(tableLabel(t))}</option>`).join("")}
-              </select>
-              <div class="muted" style="margin-top:6px;">
-                Suggerimento: Ctrl/Cmd per selezioni multiple (desktop). Su mobile: tocchi multipli.
-              </div>
-            </div>
-
-            <div>
-              <div class="row" style="justify-content:flex-end; margin-top:22px;">
-                <button class="soft" data-act="assign" data-id="${r.id}">Assegna</button>
-                <button class="primary" data-act="confirm" data-id="${r.id}">Conferma</button>
-                <button class="soft" data-act="arrived" data-id="${r.id}">Arrivato</button>
-                <button class="danger" data-act="cancel" data-id="${r.id}">Annulla</button>
-                <button class="soft" data-act="sms" data-id="${r.id}">Conferma + SMS</button>
-              </div>
-            </div>
-          </div>
-        `;
-
-        // handlers
-        const sel = card.querySelector(`select[data-res-tables="${r.id}"]`);
-
-        card.querySelector('button[data-act="assign"]').addEventListener("click", async ()=>{
-          try{
-            const codes = parseSelectedTables(sel);
-            if(!codes.length) return alert("Seleziona almeno 1 tavolo.");
-            await OM.assignReservationTables(r.id, codes);
-            $("#resMsg").textContent = "Assegnazione salvata ✅";
-            await refreshReservations();
-            await refreshTablesPanel();
-          }catch(e){
-            alert("Errore assegnazione: " + (e?.message || e));
-          }
-        });
-
-        card.querySelector('button[data-act="confirm"]').addEventListener("click", async ()=>{
-          try{
-            await OM.updateReservation(r.id, { status:"confirmed" });
-            await refreshReservations();
-            await refreshTablesPanel();
-          }catch(e){
-            alert("Errore: " + (e?.message || e));
-          }
-        });
-
-        card.querySelector('button[data-act="arrived"]').addEventListener("click", async ()=>{
-          try{
-            await OM.updateReservation(r.id, { status:"arrived" });
-            await refreshReservations();
-            await refreshTablesPanel();
-          }catch(e){
-            alert("Errore: " + (e?.message || e));
-          }
-        });
-
-        card.querySelector('button[data-act="cancel"]').addEventListener("click", async ()=>{
-          if(!confirm("Annullare questa prenotazione?")) return;
-          try{
-            await OM.updateReservation(r.id, { status:"cancelled" });
-            await refreshReservations();
-            await refreshTablesPanel();
-          }catch(e){
-            alert("Errore: " + (e?.message || e));
-          }
-        });
-
-        card.querySelector('button[data-act="sms"]').addEventListener("click", async ()=>{
-          // per ora: prepara messaggio e prova Edge Function, se non c'è -> fallback sms:
-          const phone = (r.customer_phone || "").trim();
-          const msg = `Officine Mare: prenotazione confermata per ${r.customer_name} (${r.people} pers.) il ${r.reservation_date} alle ${String(r.reservation_time||"").slice(0,5)}.`;
-          try{
-            await OM.updateReservation(r.id, { status:"confirmed" });
-            try{
-              await OM.sendSMS({ to: phone, message: msg });
-              alert("Confermata + SMS inviato ✅");
-            }catch{
-              // fallback: sms: link
-              const url = `sms:${encodeURIComponent(phone)}?body=${encodeURIComponent(msg)}`;
-              window.location.href = url;
-              alert("Confermata ✅ (SMS in fallback: apertura app SMS)");
-            }
-            await refreshReservations();
-          }catch(e){
-            alert("Errore: " + (e?.message || e));
-          }
-        });
-
-        box.appendChild(card);
-      });
-    }
-
-    async function refreshReservations(){
-      const day = $("#resDay").value;
-      const status = $("#resStatus").value;
-      const q = $("#resQ").value;
-
-      $("#resMsg").textContent = "Carico...";
-      try{
-        RES_LIST = await OM.listReservations({ dayISO: day, status, q });
-        $("#resMsg").textContent = `OK (${RES_LIST.length})`;
-        renderReservations();
       }catch(e){
-        $("#resMsg").textContent = "Errore: " + (e?.message || e);
-        console.error(e);
+        menuItemsList.innerHTML = `<div class="muted">Errore: ${e?.message || e}</div>`;
       }
     }
 
-    async function refreshTablesPanel(){
-      await loadTables();
-      await loadOpenOrders();
-      renderTablesMini();
-      renderTablesFull();
-    }
-
-    // ------------------ MENU TAB ------------------
-    async function menuLoad(){
-      const day = $("#menuDay").value;
-      $("#menuMsg").textContent = "Carico...";
+    miAddBtn.addEventListener("click", async () => {
       try{
-        const row = await OM.getMenuDay(day);
-        $("#menuText").value = row?.text || "";
-        $("#menuImgUrl").value = row?.image_url || "";
-        $("#menuMsg").textContent = "OK";
+        const id = miAddBtn.dataset.editId || null;
+        const payload = {
+          id,
+          name: miName.value,
+          category: miCat.value,
+          price: miPrice.value ? Number(miPrice.value) : null,
+          active: true
+        };
+        if(!payload.name.trim()) throw new Error("Nome piatto obbligatorio.");
+        if(!payload.category) throw new Error("Seleziona la categoria.");
+        await OM.upsertMenuItem(payload);
+
+        miName.value = ""; miCat.value = ""; miPrice.value = "";
+        delete miAddBtn.dataset.editId;
+        miAddBtn.textContent = "Salva / Aggiungi";
+
+        await refreshMenuItems();
+        MENU_ITEMS = await OM.listMenuItems({ activeOnly:true });
+        buildMenuPick();
       }catch(e){
-        $("#menuMsg").textContent = "Errore: " + (e?.message || e);
-      }
-    }
-    async function menuSave(){
-      const day = $("#menuDay").value;
-      $("#menuMsg").textContent = "Salvo...";
-      try{
-        await OM.setMenuDay(day, { text: $("#menuText").value, image_url: $("#menuImgUrl").value });
-        $("#menuMsg").textContent = "Salvato ✅";
-      }catch(e){
-        $("#menuMsg").textContent = "Errore: " + (e?.message || e);
-      }
-    }
-
-    async function menuItemsReload(){
-      $("#miMsg").textContent = "Carico...";
-      try{
-        MENU_ITEMS = await OM.listMenuItems({ activeOnly:false });
-        $("#miMsg").textContent = `OK (${MENU_ITEMS.length})`;
-        renderMenuItemsAdmin();
-        // ricarica anche per comande
-        const active = MENU_ITEMS.filter(x=>x.active);
-        MENU_ITEMS = active;
-        renderMenuItemsForOrder();
-      }catch(e){
-        $("#miMsg").textContent = "Errore: " + (e?.message || e);
-      }
-    }
-
-    function renderMenuItemsAdmin(){
-      const box = $("#miList");
-      box.innerHTML = "";
-      if(!MENU_ITEMS.length){
-        box.innerHTML = `<div class="muted">(nessun piatto)</div>`;
-        return;
-      }
-
-      MENU_ITEMS.forEach(mi=>{
-        const div = document.createElement("div");
-        div.className = "tCard";
-        div.style.flexDirection = "row";
-        div.style.alignItems = "center";
-        div.style.justifyContent = "space-between";
-        div.innerHTML = `
-          <div style="min-width:0;">
-            <div style="font-weight:950;">${escapeHtml(mi.name)} ${mi.active ? "" : `<span class="pill cancelled">disattivo</span>`}</div>
-            <div class="muted">${escapeHtml(mi.category||"")} ${mi.price!=null ? "· € "+Number(mi.price).toFixed(2) : ""}</div>
-          </div>
-          <div class="row" style="justify-content:flex-end;">
-            <button class="soft mini" data-act="edit">Modifica</button>
-            <button class="${mi.active ? "danger" : "soft"} mini" data-act="toggle">
-              ${mi.active ? "Disattiva" : "Attiva"}
-            </button>
-          </div>
-        `;
-
-        div.querySelector('button[data-act="toggle"]').addEventListener("click", async ()=>{
-          try{
-            await OM.setMenuItemActive(mi.id, !mi.active);
-            await menuItemsReload();
-          }catch(e){
-            alert("Errore: " + (e?.message || e));
-          }
-        });
-
-        div.querySelector('button[data-act="edit"]').addEventListener("click", async ()=>{
-          const name = prompt("Nome", mi.name);
-          if(name==null) return;
-          const cat = prompt("Categoria", mi.category||"") ?? "";
-          const price = prompt("Prezzo (es 14.00)", mi.price!=null ? String(mi.price) : "") ?? "";
-          try{
-            await OM.updateMenuItem(mi.id, {
-              name: name.trim(),
-              category: cat.trim() || null,
-              price: price.trim() ? Number(price) : null
-            });
-            await menuItemsReload();
-          }catch(e){
-            alert("Errore: " + (e?.message || e));
-          }
-        });
-
-        box.appendChild(div);
-      });
-    }
-
-    $("#miAddBtn").addEventListener("click", async ()=>{
-      $("#miMsg").textContent = "Aggiungo...";
-      try{
-        await OM.createMenuItem({
-          name: $("#miName").value.trim(),
-          category: $("#miCat").value.trim(),
-          price: $("#miPrice").value
-        });
-        $("#miName").value = "";
-        $("#miCat").value = "";
-        $("#miPrice").value = "";
-        await menuItemsReload();
-      }catch(e){
-        $("#miMsg").textContent = "Errore: " + (e?.message || e);
+        alert("Errore salvataggio: " + (e?.message || e));
       }
     });
+    document.getElementById("miRefreshBtn").addEventListener("click", refreshMenuItems);
 
-    $("#miReloadBtn").addEventListener("click", menuItemsReload);
-    $("#menuLoadBtn").addEventListener("click", menuLoad);
-    $("#menuSaveBtn").addEventListener("click", menuSave);
-
-    // ------------------ ORDERS TAB (send to kitchen) ------------------
-    function renderTableSelect(){
-      const sel = $("#orderTableSel");
-      const prev = sel.value;
-      sel.innerHTML = TABLES
-        .filter(t=>t.is_open) // solo tavoli aperti per inviare comande
-        .map(t => `<option value="${t.code}">${escapeHtml(tableLabel(t))}</option>`)
-        .join("");
-
-      if(prev && Array.from(sel.options).some(o=>o.value===prev)) sel.value = prev;
-
-      if(!sel.value && sel.options.length) sel.value = sel.options[0].value;
-    }
-
-    $("#orderTableSel").addEventListener("change", ()=>{
-      renderMenuItemsForOrder();
-    });
-
-    $("#sendKitchenBtn").addEventListener("click", async ()=>{
-      const table_code = $("#orderTableSel").value;
-      const note = $("#orderNote").value;
-      const cart = loadCart(table_code);
-
-      const items = Object.entries(cart)
-        .map(([menu_item_id, qty])=>{
-          const mi = MENU_ITEMS.find(x=>x.id===menu_item_id);
-          return mi ? { menu_item_id, item_name: mi.name, qty: Number(qty||0) } : null;
-        })
-        .filter(Boolean)
-        .filter(it=>it.qty>0);
-
-      $("#ordersMsg").textContent = "Invio in corso...";
-      try{
-        await OM.createOrder({ table_code, note, items });
-        saveCart(table_code, {}); // reset SOLO del tavolo corrente
-        $("#orderNote").value = "";
-        $("#ordersMsg").textContent = "Inviato ✅";
-        await loadOpenOrders();
-        renderOpenOrders();
-        renderMenuItemsForOrder();
-        renderTablesMini();
-        renderTablesFull();
-      }catch(e){
-        $("#ordersMsg").textContent = "Errore: " + (e?.message || e);
-      }
-    });
-
-    $("#refreshOrdersBtn").addEventListener("click", async ()=>{
-      $("#ordersMsg").textContent = "Aggiorno...";
-      try{
-        await loadOpenOrders();
-        renderOpenOrders();
-        $("#ordersMsg").textContent = "OK";
-        renderTablesMini();
-        renderTablesFull();
-      }catch(e){
-        $("#ordersMsg").textContent = "Errore: " + (e?.message || e);
-      }
-    });
-
-    // ------------------ RES tab controls ------------------
-    $("#resRefreshBtn").addEventListener("click", refreshReservations);
-    $("#tablesRefreshBtn").addEventListener("click", refreshTablesPanel);
-    $("#tablesRefreshBtn2").addEventListener("click", refreshTablesPanel);
-
-    $("#openAllBtn").addEventListener("click", async ()=>{
-      $("#tablesMsg").textContent = "Apro...";
-      try{
-        for(const t of TABLES){
-          if(!t.is_open) await OM.setTableOpen(t.code, true);
-        }
-        await refreshTablesPanel();
-        $("#tablesMsg").textContent = "Tutti aperti ✅";
-      }catch(e){
-        $("#tablesMsg").textContent = "Errore: " + (e?.message || e);
-      }
-    });
-
-    // ------------------ REALTIME (auto refresh) ------------------
+    // Realtime
     let unsub = null;
-    function startRealtime(){
-      if(unsub) { try{ unsub(); }catch{} unsub=null; }
-      unsub = OM.subscribeRealtime(async (ev)=>{
-        // refresh mirati
-        if(ev.table === "reservations"){
-          // se siamo nella tab prenotazioni, aggiorna
-          if($("#tab-res").style.display !== "none"){
-            await refreshReservations();
-            await refreshTablesPanel();
-          }
-        }
-        if(ev.table === "orders" || ev.table === "order_items"){
-          await loadOpenOrders();
-          renderOpenOrders();
-          renderTablesMini();
-          renderTablesFull();
-        }
-        if(ev.table === "menu_items"){
-          await loadMenuItems();
-          renderMenuItemsForOrder();
-        }
-        if(ev.table === "restaurant_tables"){
-          await loadTables();
-          renderTableSelect();
-          renderTablesMini();
-          renderTablesFull();
-        }
-      });
+    async function startRealtime(){
+      try{
+        if(unsub) unsub();
+        unsub = OM.subscribeRealtime(() => {
+          clearTimeout(window.__rtT);
+          window.__rtT = setTimeout(() => {
+            const visible = tabIds.find(t => document.getElementById("tab-"+t).style.display !== "none");
+            if(visible === "orders") refreshOrders();
+            if(visible === "reservations") refreshReservations();
+            if(visible === "tables") refreshTablesView();
+          }, 300);
+        });
+      }catch{}
     }
 
-    // ------------------ BOOT ------------------
-    async function boot(){
-      const ok = await ensureAuth();
-      if(!ok) return;
-
-      // init date inputs
-      $("#resDay").value = todayISO();
-      $("#menuDay").value = todayISO();
-
-      await loadTables();
-      await loadMenuItems();
-      await loadOpenOrders();
-
-      renderTableSelect();
-      renderMenuItemsForOrder();
-      renderOpenOrders();
-
-      renderTablesMini();
-      renderTablesFull();
-
-      await refreshReservations();
-
-      startRealtime();
-    }
-
-    // start
-    boot();
+    // Init
+    (async function init(){
+      await guard();
+      TABLES = await OM.listRestaurantTables();
+      MENU_ITEMS = await OM.listMenuItems({ activeOnly:true });
+      buildOrderTableSelect();
+      buildMenuPick();
+      await refreshOrders();
+      await startRealtime();
+    })();
   </script>
 </body>
 </html>
