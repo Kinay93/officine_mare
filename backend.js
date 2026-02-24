@@ -74,7 +74,7 @@
     return data;
   }
 
-  async function listBookings({ dayISO, status, q } = {}) {
+  async function listBookings({ dayISO, status, q, fromISO, toISO } = {}) {
     const sb = getClient();
     await requireAuth();
 
@@ -85,6 +85,9 @@
       .order("ora", { ascending: true });
 
     if (dayISO) query = query.eq("data", dayISO);
+    if (fromISO) query = query.gte("data", fromISO);
+    if (toISO) query = query.lte("data", toISO);
+
     if (status && status !== "all") query = query.eq("status", status);
 
     if (q && q.trim()) {
@@ -115,9 +118,8 @@
       .insert({
         table_code,
         note: note || null,
-        // status admin: "open" | "closed"
-        status: "open",
-        kitchen_closed_at: null,
+        status: "open",           // admin chiude con "closed"
+        kitchen_closed_at: null,  // cucina chiude con timestamp
       })
       .select()
       .single();
@@ -129,7 +131,7 @@
       name: it.name,
       qty: Number(it.qty || 1),
       price: it.price != null ? Number(it.price) : null,
-      line_status: "todo", // todo | ready
+      line_status: "todo",
       served: false,
       ready_at: null,
       served_at: null,
@@ -143,7 +145,6 @@
     return order;
   }
 
-  // Admin: vede ordini finché non chiude conto (status != closed)
   async function getOrdersForAdmin() {
     const sb = getClient();
     await requireAuth();
@@ -158,7 +159,6 @@
     return data || [];
   }
 
-  // Kitchen: vede ordini finché non chiude per cucina (kitchen_closed_at is null) e finché admin non ha chiuso conto
   async function getOrdersForKitchen() {
     const sb = getClient();
     await requireAuth();
@@ -193,7 +193,7 @@
     return data;
   }
 
-  // Admin: una volta servito NON si torna indietro (come hai chiesto)
+  // Admin: served non reversibile
   async function setLineServed(lineId) {
     const sb = getClient();
     await requireAuth();
@@ -203,8 +203,8 @@
       .select("served")
       .eq("id", lineId)
       .single();
-
     if (e0) throw e0;
+
     if (current?.served) return current;
 
     const { data, error } = await sb
@@ -218,12 +218,11 @@
     return data;
   }
 
-  // Kitchen: chiude SOLO per cucina (sparisce in kitchen, resta in admin)
   async function closeOrderForKitchen(orderId) {
     const sb = getClient();
     await requireAuth();
 
-    // chiudibile solo se TUTTE le righe sono ready
+    // chiudibile solo se tutto READY
     const { data: items, error: e1 } = await sb
       .from("order_items")
       .select("id,line_status")
@@ -245,7 +244,6 @@
     return data;
   }
 
-  // Admin: chiude conto (sparisce anche da kitchen)
   async function closeOrderForAdmin(orderId) {
     const sb = getClient();
     await requireAuth();
@@ -303,8 +301,6 @@
     updateBooking,
 
     createOrder,
-
-    // nuove “view”
     getOrdersForAdmin,
     getOrdersForKitchen,
 
