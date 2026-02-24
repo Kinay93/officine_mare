@@ -1,4 +1,4 @@
-// backend.js (Supabase v2) — allineato al tuo schema reale
+// backend.js (Supabase v2) — allineato allo schema reale
 (function () {
   if (!window.supabase) {
     console.error("Supabase JS non caricato. Aggiungi lo script CDN @supabase/supabase-js v2.");
@@ -105,44 +105,29 @@
     return data || [];
   }
 
-  async function getOpenOrdersTableCodes() {
+  // ✅ NUOVO: apri/chiudi tavolo
+  async function setRestaurantTableOpen(code, is_open) {
     const sb = getClient();
     await requireAuth();
     const { data, error } = await sb
-      .from("orders")
-      .select("table_code")
-      .eq("status", "open");
+      .from("restaurant_tables")
+      .update({ is_open: !!is_open })
+      .eq("code", code)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async function getOpenOrdersTableCodes() {
+    const sb = getClient();
+    await requireAuth();
+    const { data, error } = await sb.from("orders").select("table_code").eq("status", "open");
     if (error) throw error;
     return new Set((data || []).map(x => x.table_code));
   }
 
   // ---------- RESERVATIONS ----------
-  async function listReservations({ dayISO, status, q } = {}) {
-    const sb = getClient();
-    await requireAuth();
-
-    let query = sb
-      .from("reservations")
-      .select("*")
-      .order("reservation_date", { ascending: true })
-      .order("reservation_time", { ascending: true });
-
-    if (dayISO) query = query.eq("reservation_date", dayISO);
-    if (status && status !== "all") query = query.eq("status", status);
-
-    if (q && q.trim()) {
-      const term = q.trim();
-      query = query.or(
-        `customer_name.ilike.%${term}%,customer_phone.ilike.%${term}%,notes.ilike.%${term}%`
-      );
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return data || [];
-  }
-
-  // ✅ Nuovo: range (oggi/7/15)
   async function listReservationsRange({ fromISO, toISO, status, q } = {}) {
     const sb = getClient();
     await requireAuth();
@@ -204,6 +189,51 @@
     }
 
     return codes;
+  }
+
+  // ✅ NUOVO: gruppi tavoli prenotati (per filtrare dropdown comande)
+  // Ritorna array: [{ reservation, tables:[...sorted] }]
+  async function getReservedTableGroups({ fromISO, toISO, statuses } = {}) {
+    const sb = getClient();
+    await requireAuth();
+
+    const sts = (statuses && statuses.length) ? statuses : ["confirmed", "arrived"];
+
+    const { data: res, error: e1 } = await sb
+      .from("reservations")
+      .select("id,reservation_date,reservation_time,people,customer_name,customer_phone,status,notes,table_code")
+      .gte("reservation_date", fromISO)
+      .lte("reservation_date", toISO)
+      .in("status", sts)
+      .order("reservation_date", { ascending: true })
+      .order("reservation_time", { ascending: true });
+
+    if (e1) throw e1;
+
+    if (!res?.length) return [];
+
+    const resIds = res.map(r => r.id);
+    const { data: links, error: e2 } = await sb
+      .from("reservation_tables")
+      .select("reservation_id,table_code")
+      .in("reservation_id", resIds);
+
+    if (e2) throw e2;
+
+    const map = new Map();
+    res.forEach(r => map.set(r.id, { reservation: r, tables: [] }));
+    (links || []).forEach(l => {
+      const obj = map.get(l.reservation_id);
+      if (obj) obj.tables.push(l.table_code);
+    });
+
+    // Se non ci sono link, usa eventualmente reservations.table_code (fallback)
+    for (const obj of map.values()) {
+      if (!obj.tables.length && obj.reservation?.table_code) obj.tables = [obj.reservation.table_code];
+      obj.tables = Array.from(new Set(obj.tables)).sort();
+    }
+
+    return Array.from(map.values());
   }
 
   // ---------- ORDERS ----------
@@ -272,7 +302,6 @@
     return data;
   }
 
-  // ✅ Servito NON reversibile (admin)
   async function setLineServed(lineId) {
     const sb = getClient();
     await requireAuth();
@@ -340,6 +369,7 @@
       .channel("om-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "reservations" }, (payload) => onEvent({ table: "reservations", ...payload }))
       .on("postgres_changes", { event: "*", schema: "public", table: "reservation_tables" }, (payload) => onEvent({ table: "reservation_tables", ...payload }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "restaurant_tables" }, (payload) => onEvent({ table: "restaurant_tables", ...payload }))
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, (payload) => onEvent({ table: "orders", ...payload }))
       .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, (payload) => onEvent({ table: "order_items", ...payload }))
       .subscribe();
@@ -350,10 +380,21 @@
   window.OM = {
     sb: getClient,
     signIn, signOut, getSession, requireAuth, getMyRole,
+
     listMenuItems, upsertMenuItem, setMenuItemActive,
-    listRestaurantTables, getOpenOrdersTableCodes,
-    listReservations, listReservationsRange, updateReservation, getReservationTables, setReservationTables,
+
+    listRestaurantTables,
+    setRestaurantTableOpen,
+    getOpenOrdersTableCodes,
+
+    listReservationsRange,
+    updateReservation,
+    getReservationTables,
+    setReservationTables,
+    getReservedTableGroups,
+
     createOrder, getActiveOrdersWithItems, setLineReady, setLineServed, closeOrder, archiveOrderIfComplete,
+
     subscribeRealtime,
   };
 })();
