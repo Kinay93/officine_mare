@@ -9,13 +9,11 @@
     :root{
       --bgTop:#245b7c; --bgMid:#1b4968; --bgBot:#163e5a;
       --paper: rgba(255,255,255,.94);
-      --paper2: rgba(255,255,255,.88);
       --text:#0b2236; --muted: rgba(11,34,54,.62);
       --borderD: rgba(11,34,54,.10);
       --shadow: 0 26px 80px rgba(0,0,0,.22);
       --shadowSoft: 0 10px 26px rgba(0,0,0,.10);
       --radiusXL: 26px;
-      --radiusL: 18px;
       --safeTop: env(safe-area-inset-top, 0px);
       --headerH: 70px;
       --max: 1900px;
@@ -36,8 +34,15 @@
     #bgImg{ position: fixed; inset:0; width:100vw; height:100dvh; object-fit: cover; z-index:0; opacity:.70; filter:saturate(1.06) contrast(1.04); pointer-events:none; }
     #overlay{ position: fixed; inset:0; z-index:1; pointer-events:none; background: linear-gradient(to bottom, rgba(22,62,90,.18), rgba(22,62,90,.80)); }
     .container{ width: min(96vw, var(--max)); margin: 0 auto; padding: 0 clamp(12px, 1.8vw, 28px); position: relative; z-index: 2; }
-    header{ position: sticky; top:0; z-index: 50; padding-top: var(--safeTop); background: rgba(22,62,90,.76); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(255,255,255,.16); }
-    .header-inner{ height: var(--headerH); display:flex; align-items:center; gap: 12px; padding: 10px 0; }
+
+    header{
+      position: sticky; top:0; z-index: 50;
+      padding-top: var(--safeTop);
+      background: rgba(22,62,90,.76);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,255,255,.16);
+    }
+    .header-inner{ height: var(--headerH); display:flex; align-items:center; gap: 12px; padding: 10px 0; flex-wrap: wrap; }
     .brand{ font-weight: 950; letter-spacing: .5px; font-size: 20px; white-space: nowrap; display:flex; align-items:center; gap:10px; opacity:.98; }
     .tabs{ display:flex; gap: 10px; flex-wrap: wrap; margin-left: 10px; }
     .tab{ padding: 10px 12px; border-radius: 999px; background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.14); color: rgba(255,255,255,.94); font-weight: 950; cursor: pointer; user-select:none; box-shadow: 0 10px 20px rgba(0,0,0,.10); }
@@ -45,10 +50,11 @@
     .actions{ margin-left:auto; display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
     .ghost{ padding: 10px 12px; border-radius: 999px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); color: rgba(255,255,255,.92); font-weight: 950; cursor: pointer; text-decoration: none; display:inline-flex; align-items:center; gap:8px; box-shadow: 0 10px 20px rgba(0,0,0,.10); }
 
-    .burger{ display:none; }
+    /* ✅ MOBILE DRAWER */
+    .burger{ display:inline-flex; }
     .drawerOverlay{ position: fixed; inset:0; background: rgba(0,0,0,.35); z-index: 80; display:none; }
     .drawer{
-      position: fixed; top:0; left:0; height:100dvh; width: min(84vw, 350px);
+      position: fixed; top:0; left:0; height:100dvh; width: min(84vw, 360px);
       background: rgba(22,62,90,.92); border-right: 1px solid rgba(255,255,255,.14);
       backdrop-filter: blur(14px); z-index: 90;
       transform: translateX(-105%); transition: transform .18s ease;
@@ -140,11 +146,12 @@
     }
     .tName{ font-weight: 950; margin:0; display:flex; justify-content:space-between; align-items:center; gap:10px;}
     .tMeta{ margin:0; font-size: 12px; color: var(--muted); }
-    .tBusy{ border-color: rgba(180,30,40,.18); background: rgba(180,30,40,.06); }
-    .tFree{ border-color: rgba(40,140,80,.18); background: rgba(40,140,80,.06); }
-    .tClosed{ opacity: .72; }
 
-    /* checkbox list for tables */
+    .tClosed{ opacity: .70; }
+    .tOccupied{ border-color: rgba(180,30,40,.18); background: rgba(180,30,40,.06); }
+    .tReserved{ border-color: rgba(255,180,90,.30); background: rgba(255,180,90,.12); }
+    .tFree{ border-color: rgba(40,140,80,.18); background: rgba(40,140,80,.06); }
+
     .checks{
       display:grid;
       grid-template-columns: repeat(3, minmax(120px, 1fr));
@@ -164,10 +171,9 @@
     .chk input{ width: 18px; height: 18px; }
     .chk strong{ font-weight: 950; }
 
-    @media (max-width: 720px){
+    /* desktop tabs hidden on small */
+    @media (max-width: 760px){
       .tabs{ display:none; }
-      .burger{ display:inline-flex; }
-      .brand{ font-size: 18px; }
     }
   </style>
 </head>
@@ -216,7 +222,8 @@
       <div class="card">
         <h2 class="title">Tavoli & Comande</h2>
         <p class="muted">
-          Qui puoi inviare comande <b>solo</b> per tavoli prenotati (nel range scelto) e, se una prenotazione ha più tavoli, comparirà solo il primo tavolo del gruppo.
+          Invia comande solo per tavoli <b>prenotati</b> nel range selezionato.
+          Se una prenotazione ha più tavoli, qui compare solo il <b>primo</b>.
         </p>
 
         <div class="row" style="margin-top:10px;">
@@ -242,8 +249,8 @@
       </div>
 
       <div class="card">
-        <h2 class="title">Comande aperte</h2>
-        <p class="muted">“Servito” non è reversibile. Puoi chiudere una comanda quando vuoi.</p>
+        <h2 class="title">Comande aperte (conto)</h2>
+        <p class="muted">“Servito” non è reversibile. Puoi chiudere il conto quando vuoi (libera il tavolo).</p>
         <div id="openOrdersList" class="list" style="margin-top:12px;"></div>
       </div>
     </section>
@@ -252,7 +259,7 @@
     <section class="grid" id="tab-reservations" style="display:none;">
       <div class="card">
         <h2 class="title">Prenotazioni</h2>
-        <p class="muted">Intervallo: oggi / 7 giorni / 15 giorni. Assegna tavoli con checkbox (mobile friendly).</p>
+        <p class="muted">Intervallo: oggi / 7 giorni / 15 giorni. Assegna tavoli con checkbox.</p>
 
         <div class="row" style="margin-top:10px;">
           <div style="flex:1; min-width:200px;">
@@ -295,7 +302,7 @@
 
       <div class="card">
         <h2 class="title">Pannello tavoli</h2>
-        <p class="muted">Libero/Occupato/Chiuso (occupato se comanda aperta). Qui vedi lo stato rapido.</p>
+        <p class="muted">Stato: Chiuso / Occupato / Prenotato / Libero (in base al range selezionato).</p>
         <div class="row" style="margin-top:10px;">
           <button class="soft" id="tablesMiniRefresh">Aggiorna</button>
         </div>
@@ -347,14 +354,14 @@
 
       <div class="card">
         <h2 class="title">Nota</h2>
-        <p class="muted">La foto del menù del giorno resta gestita altrove (menu_day / storage).</p>
+        <p class="muted">La foto del menù del giorno resta gestita su <b>menu_day</b> (image_url o text).</p>
       </div>
     </section>
 
     <!-- TAB: TABLES -->
     <section class="card" id="tab-tables" style="display:none;">
       <h2 class="title">Vista tavoli (apri/chiudi)</h2>
-      <p class="muted">Qui puoi cambiare is_open. Occupato se c’è una comanda aperta.</p>
+      <p class="muted">Cambia is_open. Occupato se c’è un conto aperto.</p>
       <div class="row" style="margin-top:10px;">
         <button class="soft" id="tablesViewRefresh">Aggiorna</button>
       </div>
@@ -371,10 +378,10 @@
     // Drawer
     const drawer = document.getElementById("drawer");
     const drawerOverlay = document.getElementById("drawerOverlay");
-    document.getElementById("burgerBtn")?.addEventListener("click", () => { drawer.classList.add("open"); drawerOverlay.style.display="block"; });
+    document.getElementById("burgerBtn").addEventListener("click", () => { drawer.classList.add("open"); drawerOverlay.style.display="block"; });
     function closeDrawer(){ drawer.classList.remove("open"); drawerOverlay.style.display="none"; }
-    drawerOverlay?.addEventListener("click", closeDrawer);
-    document.getElementById("drawerClose")?.addEventListener("click", closeDrawer);
+    drawerOverlay.addEventListener("click", closeDrawer);
+    document.getElementById("drawerClose").addEventListener("click", closeDrawer);
 
     // Tabs
     const tabIds = ["orders","reservations","menu","tables"];
@@ -399,12 +406,8 @@
 
     // Guard
     async function guard(){
-      try{
-        const s = await OM.getSession();
-        if(!s) location.href = "login.html";
-      }catch{
-        location.href = "login.html";
-      }
+      const s = await OM.getSession();
+      if(!s) location.href = "login.html";
     }
 
     document.getElementById("logoutBtn").addEventListener("click", async () => {
@@ -426,12 +429,13 @@
     const addDaysISO = (baseISO, days) => { const d = new Date(baseISO + "T00:00:00"); d.setDate(d.getDate() + Number(days||0)); return toISO(d); };
     const todayISO = () => toISO(new Date());
 
-    // Data caches
+    // Caches
     let MENU_ITEMS = [];
     let TABLES = [];
     let OPEN_TABLES_SET = new Set();
+    let RESERVED_TABLES_SET = new Set(); // ✅ tables assigned to reservations in range (not cancelled)
 
-    // Reservation range controls (shared for filtering "prenotati")
+    // Reservation filters
     const resRange = document.getElementById("resRange");
     const resFrom = document.getElementById("resFrom");
     const resStatus = document.getElementById("resStatus");
@@ -449,7 +453,20 @@
       return { fromISO, toISO: fromISO };
     }
 
-    // ============ ORDERS: dropdown SOLO prenotati ============
+    async function computeReservedTablesSet(){
+      const { fromISO, toISO } = computeRange();
+      const groups = await OM.getReservedTableGroups({
+        fromISO,
+        toISO,
+        statuses: ["pending","confirmed","arrived"] // non cancelled
+      });
+
+      const s = new Set();
+      groups.forEach(g => (g.tables||[]).forEach(t => s.add(t)));
+      RESERVED_TABLES_SET = s;
+    }
+
+    // ORDERS
     const orderTableSel = document.getElementById("orderTable");
     const orderTableHint = document.getElementById("orderTableHint");
     const menuPickList = document.getElementById("menuPickList");
@@ -457,24 +474,22 @@
     const ordersMsg = document.getElementById("ordersMsg");
     const openOrdersList = document.getElementById("openOrdersList");
 
-    // cache: dropdown entries from reservations
-    let RESERVED_PRIMARY_TABLES = []; // [{table_code, label, reservation_id, tables:[...]}]
+    let RESERVED_PRIMARY_TABLES = [];
 
     async function buildOrderTableSelectReservedOnly(){
       orderTableSel.innerHTML = "";
       orderTableHint.textContent = "";
 
       const { fromISO, toISO } = computeRange();
-
-      // prendo solo prenotazioni confermate/arrivate nel range
       const groups = await OM.getReservedTableGroups({ fromISO, toISO, statuses: ["confirmed","arrived"] });
 
       RESERVED_PRIMARY_TABLES = [];
       for(const g of groups){
         if(!g.tables?.length) continue;
-        const primary = g.tables[0]; // ✅ solo primo tavolo del multi
-        const label = `${primary} · ${g.reservation.customer_name} · ${g.reservation.reservation_date} ${String(g.reservation.reservation_time).slice(0,5)} · (${g.tables.length} tavoli)`;
-        RESERVED_PRIMARY_TABLES.push({ table_code: primary, label, reservation_id: g.reservation.id, tables: g.tables });
+        const primary = g.tables[0];
+        const r = g.reservation;
+        const label = `${primary} · ${r.customer_name} · ${r.reservation_date} ${String(r.reservation_time).slice(0,5)} · (${g.tables.length} tavoli)`;
+        RESERVED_PRIMARY_TABLES.push({ table_code: primary, label, reservation_id: r.id, tables: g.tables });
       }
 
       if(!RESERVED_PRIMARY_TABLES.length){
@@ -510,6 +525,7 @@
         const card = document.createElement("div");
         card.className = "card slim";
         card.innerHTML = `<div class="title" style="font-size:14px; margin-bottom:8px; text-transform:capitalize;">${cat}</div>`;
+
         grouped[cat].forEach(it => {
           const row = document.createElement("div");
           row.className = "resCard";
@@ -536,12 +552,14 @@
               row.dataset.qty = String(qty);
             });
           });
+
           row.dataset.menuItemId = it.id;
           row.dataset.itemName = it.name;
           row.dataset.price = it.price ?? "";
           row.dataset.qty = "0";
           card.appendChild(row);
         });
+
         menuPickList.appendChild(card);
       });
     }
@@ -551,15 +569,17 @@
       try{
         if(!TABLES.length) TABLES = await OM.listRestaurantTables();
         if(!MENU_ITEMS.length) MENU_ITEMS = await OM.listMenuItems({ activeOnly:true });
+
         OPEN_TABLES_SET = await OM.getOpenOrdersTableCodes();
+        await computeReservedTablesSet();
 
-        // ✅ dropdown tavoli solo prenotati (range selezionato)
         await buildOrderTableSelectReservedOnly();
-
         buildMenuPick();
 
-        const orders = await OM.getActiveOrdersWithItems();
+        const orders = await OM.getAdminOpenOrdersWithItems();
         renderOpenOrders(orders);
+
+        await renderTablesMini(); // keep status updated
       }catch(e){
         ordersMsg.textContent = "Errore: " + (e?.message || e);
       }
@@ -587,7 +607,7 @@
             </div>
             <div class="row">
               <span class="pill ${allReady ? "arrived":"pending"}">${allReady ? "TUTTO PRONTO" : "In lavorazione"}</span>
-              <button class="danger mini" data-act="close">Chiudi comanda</button>
+              <button class="danger mini" data-act="close">Chiudi conto</button>
             </div>
           </div>
           <div class="list" style="margin-top:10px;" data-items></div>
@@ -622,6 +642,7 @@
           itemsWrap.appendChild(line);
         });
 
+        // serve (non reversibile)
         card.querySelectorAll("button[data-act='serve']").forEach(btn => {
           btn.addEventListener("click", async () => {
             try{
@@ -635,8 +656,9 @@
           });
         });
 
+        // close admin (libera tavolo)
         card.querySelector("button[data-act='close']").addEventListener("click", async () => {
-          if(!confirm("Chiudere la comanda?")) return;
+          if(!confirm("Chiudere il conto/comanda? (libera il tavolo)")) return;
           try{
             await OM.closeOrder(o.id);
             await refreshOrders();
@@ -679,17 +701,17 @@
 
     document.getElementById("refreshOrdersBtn").addEventListener("click", refreshOrders);
 
-    // ============ RESERVATIONS: checkbox tavoli ============
+    // RESERVATIONS
     async function refreshReservations(){
       try{
         if(!TABLES.length) TABLES = await OM.listRestaurantTables();
         OPEN_TABLES_SET = await OM.getOpenOrdersTableCodes();
+        await computeReservedTablesSet();
         await renderTablesMini();
 
         const { fromISO, toISO } = computeRange();
         const data = await OM.listReservationsRange({
-          fromISO,
-          toISO,
+          fromISO, toISO,
           status: resStatus.value,
           q: resSearch.value
         });
@@ -697,7 +719,6 @@
         reservationsList.innerHTML = "";
         if(!data.length){
           reservationsList.innerHTML = `<div class="muted">(nessuna prenotazione per i filtri selezionati)</div>`;
-          // aggiorna anche dropdown prenotati
           await buildOrderTableSelectReservedOnly();
           return;
         }
@@ -739,17 +760,22 @@
 
           const checksWrap = card.querySelector("[data-checks]");
 
-          // tavoli disponibili = quelli open (is_open=true)
           TABLES.forEach(t => {
+            const checked = assigned.includes(t.code);
+            const disabled = (t.is_open === false);
+
+            let stateTxt = "Libero";
+            if(t.is_open === false) stateTxt = "Chiuso";
+            else if(OPEN_TABLES_SET.has(t.code)) stateTxt = "Occupato (conto aperto)";
+            else if(RESERVED_TABLES_SET.has(t.code)) stateTxt = "Prenotato";
+
             const wrap = document.createElement("label");
             wrap.className = "chk";
-            const checked = assigned.includes(t.code);
-            const disabled = (t.is_open === false); // chiusi non selezionabili
             wrap.innerHTML = `
               <input type="checkbox" value="${t.code}" ${checked ? "checked":""} ${disabled ? "disabled":""} />
               <div>
                 <strong>${t.code}</strong>
-                <div class="muted">${(t.is_open===false) ? "Chiuso" : (OPEN_TABLES_SET.has(t.code) ? "Occupato (comanda aperta)" : "Libero")}</div>
+                <div class="muted">${stateTxt}</div>
               </div>
             `;
             checksWrap.appendChild(wrap);
@@ -760,42 +786,48 @@
               const chosen = Array.from(checksWrap.querySelectorAll("input[type=checkbox]:checked")).map(i => i.value);
               await OM.setReservationTables(r.id, chosen);
               await refreshReservations();
-              // aggiorna dropdown prenotati
-              await buildOrderTableSelectReservedOnly();
+              await refreshOrders();
             }catch(e){
               alert("Errore assegnazione: " + (e?.message || e));
             }
           });
 
           card.querySelector("[data-act='confirm']").addEventListener("click", async () => {
-            try{ await OM.updateReservation(r.id, { status:"confirmed" }); await refreshReservations(); await buildOrderTableSelectReservedOnly(); }
-            catch(e){ alert("Errore conferma: " + (e?.message || e)); }
+            try{
+              await OM.updateReservation(r.id, { status:"confirmed" });
+              await refreshReservations(); await refreshOrders();
+            }catch(e){ alert("Errore conferma: " + (e?.message || e)); }
           });
 
           card.querySelector("[data-act='arrived']").addEventListener("click", async () => {
-            try{ await OM.updateReservation(r.id, { status:"arrived" }); await refreshReservations(); await buildOrderTableSelectReservedOnly(); }
-            catch(e){ alert("Errore arrived: " + (e?.message || e)); }
+            try{
+              await OM.updateReservation(r.id, { status:"arrived" });
+              await refreshReservations(); await refreshOrders();
+            }catch(e){ alert("Errore arrived: " + (e?.message || e)); }
           });
 
           card.querySelector("[data-act='cancel']").addEventListener("click", async () => {
             if(!confirm("Annullare la prenotazione?")) return;
-            try{ await OM.updateReservation(r.id, { status:"cancelled" }); await refreshReservations(); await buildOrderTableSelectReservedOnly(); }
-            catch(e){ alert("Errore annulla: " + (e?.message || e)); }
+            try{
+              await OM.updateReservation(r.id, { status:"cancelled" });
+              await refreshReservations(); await refreshOrders();
+            }catch(e){ alert("Errore annulla: " + (e?.message || e)); }
           });
 
           reservationsList.appendChild(card);
         }
 
-        // aggiorna dropdown tavoli prenotati
         await buildOrderTableSelectReservedOnly();
-
       }catch(e){
         reservationsList.innerHTML = `<div class="muted">Errore: ${e?.message || e}</div>`;
       }
     }
 
     document.getElementById("resRefreshBtn").addEventListener("click", refreshReservations);
-    [resRange, resFrom, resStatus].forEach(el => el.addEventListener("change", async () => { await refreshReservations(); await refreshOrders(); }));
+    [resRange, resFrom, resStatus].forEach(el => el.addEventListener("change", async () => {
+      await refreshReservations();
+      await refreshOrders();
+    }));
     resSearch.addEventListener("input", () => { clearTimeout(window.__rsT); window.__rsT = setTimeout(refreshReservations, 250); });
 
     // Tables mini + view
@@ -803,40 +835,48 @@
     const tablesViewGrid = document.getElementById("tablesViewGrid");
     const tablesMsg = document.getElementById("tablesMsg");
 
+    function tableStateClass(t){
+      if(t.is_open === false) return "tClosed";
+      if(OPEN_TABLES_SET.has(t.code)) return "tOccupied";
+      if(RESERVED_TABLES_SET.has(t.code)) return "tReserved";
+      return "tFree";
+    }
+    function tableStateText(t){
+      if(t.is_open === false) return "Chiuso";
+      if(OPEN_TABLES_SET.has(t.code)) return "Occupato (conto aperto)";
+      if(RESERVED_TABLES_SET.has(t.code)) return "Prenotato";
+      return "Libero";
+    }
+
     async function renderTablesMini(){
       if(!TABLES.length) TABLES = await OM.listRestaurantTables();
       OPEN_TABLES_SET = await OM.getOpenOrdersTableCodes();
+      await computeReservedTablesSet();
+
       tablesMiniGrid.innerHTML = "";
       TABLES.forEach(t => {
-        const busy = OPEN_TABLES_SET.has(t.code);
-        const cls = busy ? "tBusy" : "tFree";
-        const closed = (t.is_open === false);
         const el = document.createElement("div");
-        el.className = `tCard ${cls} ${closed ? "tClosed":""}`;
+        el.className = `tCard ${tableStateClass(t)}`;
         el.innerHTML = `
           <div class="tName">${t.code}</div>
-          <p class="tMeta">${closed ? "Chiuso" : (busy ? "Occupato" : "Libero")}</p>
+          <p class="tMeta">${tableStateText(t)}</p>
           <p class="tMeta">${t.seats || 0} coperti</p>
         `;
         tablesMiniGrid.appendChild(el);
       });
     }
 
-    // ✅ Vista tavoli con toggle open/closed
     async function refreshTablesView(){
       try{
         tablesMsg.textContent = "";
         TABLES = await OM.listRestaurantTables();
         OPEN_TABLES_SET = await OM.getOpenOrdersTableCodes();
+        await computeReservedTablesSet();
 
         tablesViewGrid.innerHTML = "";
         TABLES.forEach(t => {
-          const busy = OPEN_TABLES_SET.has(t.code);
-          const cls = busy ? "tBusy" : "tFree";
-          const closed = (t.is_open === false);
-
           const el = document.createElement("div");
-          el.className = `tCard ${cls} ${closed ? "tClosed":""}`;
+          el.className = `tCard ${tableStateClass(t)}`;
           el.innerHTML = `
             <div class="tName">
               <span>${t.code}</span>
@@ -845,7 +885,7 @@
                 Aperto
               </label>
             </div>
-            <p class="tMeta">${closed ? "Chiuso" : (busy ? "Occupato (comanda aperta)" : "Libero")}</p>
+            <p class="tMeta">${tableStateText(t)}</p>
             <p class="tMeta">${t.seats || 0} coperti</p>
           `;
 
@@ -854,10 +894,10 @@
             try{
               chk.disabled = true;
               await OM.setRestaurantTableOpen(t.code, chk.checked);
-              TABLES = await OM.listRestaurantTables();
               await refreshTablesView();
               await renderTablesMini();
               await refreshReservations();
+              await refreshOrders();
             }catch(e){
               alert("Errore apertura tavolo: " + (e?.message || e));
               chk.disabled = false;
@@ -874,7 +914,7 @@
     document.getElementById("tablesMiniRefresh").addEventListener("click", renderTablesMini);
     document.getElementById("tablesViewRefresh").addEventListener("click", refreshTablesView);
 
-    // Menu items CRUD
+    // MENU CRUD
     const miName = document.getElementById("miName");
     const miCat = document.getElementById("miCat");
     const miPrice = document.getElementById("miPrice");
@@ -941,6 +981,7 @@
         };
         if(!payload.name.trim()) throw new Error("Nome piatto obbligatorio.");
         if(!payload.category) throw new Error("Seleziona la categoria.");
+
         await OM.upsertMenuItem(payload);
 
         miName.value = ""; miCat.value = ""; miPrice.value = "";
@@ -968,7 +1009,7 @@
             if(visible === "orders") refreshOrders();
             if(visible === "reservations") refreshReservations();
             if(visible === "tables") refreshTablesView();
-          }, 300);
+          }, 350);
         });
       }catch{}
     }
