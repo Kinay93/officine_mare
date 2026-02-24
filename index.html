@@ -16,6 +16,7 @@
       --shadowSoft: 0 10px 26px rgba(0,0,0,.10);
       --radiusXL: 26px;
       --max: 1200px;
+      --safeTop: env(safe-area-inset-top, 0px);
     }
     *{ box-sizing:border-box; }
     html, body{ height:100%; }
@@ -42,27 +43,35 @@
       position: fixed; inset:0; z-index:1; pointer-events:none;
       background: linear-gradient(to bottom, rgba(22,62,90,.18), rgba(22,62,90,.82));
     }
+    header{
+      position: sticky; top:0; z-index:50;
+      padding-top: var(--safeTop);
+      background: rgba(22,62,90,.72);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,255,255,.16);
+    }
     .container{
       width: min(94vw, var(--max));
       margin: 0 auto;
-      padding: 18px 0 56px;
       position: relative;
       z-index: 2;
     }
-
-    .hero{
-      display:flex; justify-content:center; align-items:center;
-      padding: 18px 0 8px;
+    .headInner{
+      padding: 12px 0;
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .brand{
       font-weight: 950;
       letter-spacing: .6px;
-      font-size: clamp(30px, 4.2vw, 56px);
-      text-shadow: 0 2px 0 rgba(0,0,0,.10);
+      font-size: clamp(22px, 3vw, 34px);
+      white-space: nowrap;
     }
-
-    .pillRow{
+    .navPills{
       display:flex; gap:10px; flex-wrap: wrap;
-      justify-content:center;
-      margin: 10px 0 18px;
+      margin-left:auto;
     }
     .pill{
       padding: 10px 14px;
@@ -73,7 +82,13 @@
       font-weight: 950;
       cursor:pointer;
       box-shadow: 0 10px 22px rgba(0,0,0,.10);
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
     }
+
+    main{ padding: 18px 0 56px; }
 
     .grid{
       display:grid;
@@ -83,6 +98,7 @@
     }
     @media (max-width: 900px){
       .grid{ grid-template-columns: 1fr; }
+      .navPills{ margin-left:0; }
     }
 
     .card{
@@ -96,6 +112,34 @@
     }
     .title{ font-weight: 950; font-size: 18px; margin:0 0 6px; }
     .muted{ color: var(--muted); font-size: 13px; margin:0; line-height: 1.35; }
+
+    .menuBox{
+      margin-top: 12px;
+      border-radius: 20px;
+      border: 1px dashed rgba(11,34,54,.18);
+      background: rgba(255,255,255,.72);
+      min-height: 320px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding: 14px;
+      box-shadow: var(--shadowSoft);
+    }
+    .menuBox img{
+      max-width: 100%;
+      max-height: 560px;
+      border-radius: 16px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.20);
+    }
+    .menuText{
+      width:100%;
+      white-space: pre-wrap;
+      text-align:left;
+      color: rgba(11,34,54,.92);
+      font-weight: 700;
+      line-height: 1.35;
+    }
 
     label{ font-size: 12px; font-weight: 950; color: rgba(11,34,54,.84); display:block; margin: 10px 0 6px; }
     input, select, textarea{
@@ -131,57 +175,51 @@
       width: 100%;
     }
 
-    .menuBox{
-      border-radius: 20px;
-      border: 1px dashed rgba(11,34,54,.18);
-      background: rgba(255,255,255,.72);
-      height: 320px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
+    .foot{
+      margin-top: 18px;
       text-align:center;
-      padding: 14px;
-      box-shadow: var(--shadowSoft);
+      color: rgba(255,255,255,.90);
+      padding-bottom: 18px;
     }
-    .menuBox img{
-      max-width: 100%;
-      max-height: 100%;
-      border-radius: 16px;
-      box-shadow: 0 16px 40px rgba(0,0,0,.20);
-    }
+    .foot small{ opacity:.9; }
   </style>
 </head>
 <body>
   <img id="bgImg" src="mare.png" alt="" aria-hidden="true">
   <div id="overlay" aria-hidden="true"></div>
 
-  <div class="container">
-    <div class="hero">— Officine Mare —</div>
-
-    <div class="pillRow">
-      <button class="pill" onclick="document.getElementById('menuCard').scrollIntoView({behavior:'smooth'})">🟠 Oggi: menù del giorno disponibile</button>
-      <button class="pill" onclick="document.getElementById('contacts').scrollIntoView({behavior:'smooth'})">📍 Contatti in fondo</button>
-      <a class="pill" href="login.html" style="text-decoration:none; display:inline-flex; align-items:center;">🔒 Staff</a>
+  <header>
+    <div class="container headInner">
+      <div class="brand">— Officine Mare —</div>
+      <div class="navPills">
+        <button class="pill" id="goMenu">🟠 Oggi: menù del giorno</button>
+        <button class="pill" id="goContacts">📍 Contatti</button>
+        <a class="pill" href="login.html">🔒 Staff</a>
+      </div>
     </div>
+  </header>
 
+  <main class="container">
     <div class="grid">
       <div class="card" id="menuCard">
         <h2 class="title">Menù del giorno</h2>
-        <p class="muted">Foto o testo: viene mostrato qui automaticamente (da Supabase). Se non c’è ancora, resta lo spazio vuoto.</p>
+        <p class="muted">Foto o testo: viene mostrato automaticamente (da Supabase). Se non è stato caricato, resta lo spazio vuoto.</p>
+
         <div class="menuBox" id="menuBox">
           <div>
             <div style="font-weight:950;">Spazio foto menù</div>
             <div class="muted">(admin carica su DB/storage)</div>
           </div>
         </div>
+
         <div style="margin-top:12px;">
-          <button class="soft" onclick="alert('Info: Il menù del giorno viene caricato dallo staff.')">Info</button>
+          <button class="soft" id="infoBtn">Info</button>
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" id="bookCard">
         <h2 class="title">Prenota un tavolo</h2>
-        <p class="muted">Orari prenotazioni: <b>12:00–14:30</b> e <b>19:00–22:30</b>. Lunedì chiuso.</p>
+        <p class="muted">Orari: <b>12:00–14:30</b> e <b>19:00–22:30</b>. Lunedì chiuso.</p>
 
         <label>Nome</label>
         <input id="name" placeholder="Mario Rossi" />
@@ -195,17 +233,24 @@
             <input id="date" type="date" />
           </div>
           <div style="flex:1; min-width:180px;">
-            <label>Ora</label>
-            <input id="time" type="time" />
+            <label>Turno</label>
+            <select id="turn">
+              <option value="">Seleziona</option>
+              <option value="pranzo">Pranzo (12:00–14:30)</option>
+              <option value="cena">Cena (19:00–22:30)</option>
+            </select>
           </div>
         </div>
+
+        <label>Ora</label>
+        <select id="time">
+          <option value="">Seleziona prima la data/turno</option>
+        </select>
 
         <div class="row">
           <div style="flex:1; min-width:160px;">
             <label>Persone</label>
-            <select id="people">
-              ${Array.from({length:20}, (_,i)=>`<option value="${i+1}">${i+1}</option>`).join("")}
-            </select>
+            <select id="people"></select>
           </div>
           <div style="flex:1; min-width:160px;">
             <label>Email (opzionale)</label>
@@ -225,10 +270,11 @@
       </div>
     </div>
 
-    <div id="contacts" style="margin-top:18px; text-align:center;" class="muted">
-      <p><b>Officine Mare</b> · Contatti: (metti qui telefono/indirizzo)</p>
+    <div class="foot" id="contacts">
+      <p style="margin:0;"><b>Officine Mare</b></p>
+      <small>Inserisci qui indirizzo · telefono · orari · social</small>
     </div>
-  </div>
+  </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
@@ -237,15 +283,138 @@
     const { createClient } = window.supabase;
     const sb = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 
+    const menuBox = document.getElementById("menuBox");
     const msg = document.getElementById("msg");
+
     const pad = n => String(n).padStart(2,"0");
     const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    document.getElementById("date").value = toISO(new Date());
+    const todayISO = () => toISO(new Date());
+
+    // scroll buttons
+    document.getElementById("goMenu").addEventListener("click", () => document.getElementById("menuCard").scrollIntoView({behavior:"smooth"}));
+    document.getElementById("goContacts").addEventListener("click", () => document.getElementById("contacts").scrollIntoView({behavior:"smooth"}));
+    document.getElementById("infoBtn").addEventListener("click", () => alert("Il menù del giorno viene caricato dallo staff."));
+
+    // people select
+    const peopleSel = document.getElementById("people");
+    for(let i=1;i<=20;i++){
+      const opt=document.createElement("option");
+      opt.value=String(i);
+      opt.textContent=String(i);
+      peopleSel.appendChild(opt);
+    }
+    peopleSel.value="2";
+
+    // init date
+    const dateEl = document.getElementById("date");
+    dateEl.value = todayISO();
+
+    // hours generation
+    const turnEl = document.getElementById("turn");
+    const timeSel = document.getElementById("time");
+
+    function genTimes(startH, startM, endH, endM, stepMin){
+      const out=[];
+      const start = startH*60+startM;
+      const end = endH*60+endM;
+      for(let t=start; t<=end; t+=stepMin){
+        const hh = Math.floor(t/60), mm=t%60;
+        out.push(`${pad(hh)}:${pad(mm)}`);
+      }
+      return out;
+    }
+
+    function rebuildTimes(){
+      const turno = turnEl.value;
+      timeSel.innerHTML = "";
+      if(!dateEl.value || !turno){
+        const o=document.createElement("option");
+        o.value=""; o.textContent="Seleziona prima la data/turno";
+        timeSel.appendChild(o);
+        return;
+      }
+
+      const times = (turno==="pranzo")
+        ? genTimes(12,0,14,30,10)
+        : genTimes(19,0,22,30,10);
+
+      const ph=document.createElement("option");
+      ph.value=""; ph.textContent="Seleziona";
+      timeSel.appendChild(ph);
+
+      times.forEach(t=>{
+        const o=document.createElement("option");
+        o.value=t; o.textContent=t;
+        timeSel.appendChild(o);
+      });
+    }
+    dateEl.addEventListener("change", rebuildTimes);
+    turnEl.addEventListener("change", rebuildTimes);
+
+    // Load menu_day (se esiste nel tuo DB)
+    async function loadMenuDay(){
+      try{
+        // prova prima "oggi", se non c'è prendi l'ultimo disponibile
+        const today = todayISO();
+
+        let { data, error } = await sb
+          .from("menu_day")
+          .select("*")
+          .eq("day", today)
+          .order("created_at", { ascending:false })
+          .limit(1);
+
+        if(error) throw error;
+
+        let row = (data && data[0]) ? data[0] : null;
+
+        if(!row){
+          const r2 = await sb
+            .from("menu_day")
+            .select("*")
+            .order("day", { ascending:false })
+            .limit(1);
+          if(r2.error) throw r2.error;
+          row = (r2.data && r2.data[0]) ? r2.data[0] : null;
+        }
+
+        if(!row){
+          // lascia placeholder
+          return;
+        }
+
+        // mostra immagine se presente, altrimenti testo
+        menuBox.innerHTML = "";
+        if(row.image_url){
+          const img = document.createElement("img");
+          img.src = row.image_url;
+          img.alt = "Menù del giorno";
+          menuBox.appendChild(img);
+        }else if(row.text){
+          const div = document.createElement("div");
+          div.className = "menuText";
+          div.textContent = row.text;
+          menuBox.appendChild(div);
+        }else{
+          menuBox.innerHTML = `
+            <div>
+              <div style="font-weight:950;">Menù non disponibile</div>
+              <div class="muted">Lo staff non ha ancora caricato foto o testo.</div>
+            </div>
+          `;
+        }
+      }catch(e){
+        // non blocco la pagina cliente
+        console.warn("Menu load error:", e?.message || e);
+      }
+    }
 
     document.getElementById("clearBtn").addEventListener("click", () => {
-      ["name","phone","time","email","notes"].forEach(id => document.getElementById(id).value = "");
-      document.getElementById("people").value = "2";
-      msg.textContent = "";
+      ["name","phone","email","notes"].forEach(id => document.getElementById(id).value = "");
+      document.getElementById("turn").value="";
+      rebuildTimes();
+      document.getElementById("people").value="2";
+      msg.textContent="";
     });
 
     document.getElementById("sendBtn").addEventListener("click", async () => {
@@ -253,18 +422,24 @@
       try{
         const name = document.getElementById("name").value.trim();
         const phone = document.getElementById("phone").value.trim();
-        const date = document.getElementById("date").value;
-        const time = document.getElementById("time").value;
-        const people = Number(document.getElementById("people").value || 1);
+        const date = dateEl.value;
+        const turno = turnEl.value;
+        const time = timeSel.value;
+        const people = Number(peopleSel.value || 1);
         const email = document.getElementById("email").value.trim();
         const notes = document.getElementById("notes").value.trim();
 
         if(!name) throw new Error("Inserisci il nome.");
         if(!phone) throw new Error("Inserisci il telefono.");
         if(!date) throw new Error("Seleziona la data.");
+        if(!turno) throw new Error("Seleziona il turno.");
         if(!time) throw new Error("Seleziona l'ora.");
 
-        const finalNotes = [notes, email ? `Email: ${email}` : ""].filter(Boolean).join(" | ");
+        // nel tuo schema non c'è customer_email → lo metto nelle note
+        const finalNotes = [notes, email ? `Email: ${email}` : "", `Turno: ${turno}`]
+          .filter(Boolean).join(" | ");
+
+        msg.textContent = "Invio in corso...";
 
         const payload = {
           reservation_date: date,
@@ -277,7 +452,6 @@
           table_code: null
         };
 
-        msg.textContent = "Invio in corso...";
         const { error } = await sb.from("reservations").insert(payload);
         if(error) throw error;
 
@@ -286,6 +460,10 @@
         msg.textContent = "Errore: " + (e?.message || e);
       }
     });
+
+    // init
+    rebuildTimes();
+    loadMenuDay();
   </script>
 </body>
 </html>
