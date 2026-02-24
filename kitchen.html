@@ -4,16 +4,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Officine Mare — Cucina</title>
-
+  <link rel="icon" href="favicon.ico" />
   <style>
     :root{
-      --paper: rgba(255,255,255,.95);
-      --text:#0b2236; --muted: rgba(11,34,54,.68);
+      --bgTop:#245b7c; --bgMid:#1b4968; --bgBot:#163e5a;
+      --paper: rgba(255,255,255,.94);
+      --text:#0b2236; --muted: rgba(11,34,54,.62);
       --borderD: rgba(11,34,54,.10);
-      --shadow: 0 22px 70px rgba(0,0,0,.20);
+      --shadow: 0 26px 80px rgba(0,0,0,.22);
+      --shadowSoft: 0 10px 26px rgba(0,0,0,.10);
       --radiusXL: 26px;
-      --max: 1600px;
       --safeTop: env(safe-area-inset-top, 0px);
+      --headerH: 70px;
+      --max: 1500px;
     }
     *{ box-sizing:border-box; }
     html, body{ height:100%; }
@@ -22,66 +25,67 @@
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color:#fff;
       overflow-x:hidden;
-      background:#0f3c56;
+      background:
+        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.16), transparent 60%),
+        linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 42%, var(--bgBot) 100%);
     }
-
     #bgImg{
-      position:fixed; inset:0;
-      width:100vw; height:100vh;
-      object-fit:cover;
-      opacity:.70;
-      filter:saturate(1.05) contrast(1.04);
+      position: fixed; inset:0;
+      width:100vw; height:100dvh;
+      object-fit: cover;
       z-index:0;
+      opacity:.70;
+      filter: saturate(1.06) contrast(1.04);
       pointer-events:none;
     }
     #overlay{
-      position:fixed; inset:0; z-index:1; pointer-events:none;
-      background: linear-gradient(180deg, rgba(10,40,60,.35), rgba(10,40,60,.78));
+      position: fixed; inset:0; z-index:1; pointer-events:none;
+      background: linear-gradient(to bottom, rgba(22,62,90,.18), rgba(22,62,90,.80));
     }
-
     .container{
-      width:min(96vw, var(--max));
-      margin:0 auto;
+      width: min(96vw, var(--max));
+      margin: 0 auto;
       padding: 0 clamp(12px, 1.8vw, 28px);
-      position:relative;
-      z-index:2;
+      position: relative;
+      z-index: 2;
     }
-
     header{
-      position:sticky; top:0; z-index:50;
+      position: sticky; top:0; z-index: 50;
       padding-top: var(--safeTop);
-      background: rgba(15,60,86,.78);
-      backdrop-filter: blur(12px);
+      background: rgba(22,62,90,.76);
+      backdrop-filter: blur(14px);
       border-bottom: 1px solid rgba(255,255,255,.16);
     }
     .header-inner{
-      display:flex; align-items:center; gap:12px;
+      height: var(--headerH);
+      display:flex; align-items:center; gap: 12px;
       padding: 10px 0;
       flex-wrap: wrap;
     }
-    .brand{ font-weight:950; font-size: 18px; white-space:nowrap; }
-    .actions{ margin-left:auto; display:flex; gap:10px; flex-wrap:wrap; }
+    .brand{
+      font-weight: 950;
+      letter-spacing: .5px;
+      font-size: 20px;
+      white-space: nowrap;
+      display:flex; align-items:center; gap:10px;
+      opacity:.98;
+    }
     .ghost{
-      padding:10px 12px;
-      border-radius:999px;
-      background: rgba(255,255,255,.10);
-      border:1px solid rgba(255,255,255,.16);
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
       color: rgba(255,255,255,.92);
-      font-weight:900;
-      cursor:pointer;
-      text-decoration:none;
-      display:inline-flex; align-items:center; gap:8px;
+      font-weight: 950;
+      cursor: pointer;
+      text-decoration: none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      box-shadow: 0 10px 20px rgba(0,0,0,.10);
     }
-
-    main{ padding: 18px 0 50px; }
-
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(2, minmax(280px, 1fr));
-      gap: 14px;
-      align-items:start;
-    }
-    @media (max-width: 980px){ .grid{ grid-template-columns: 1fr; } }
+    .actions{ margin-left:auto; display:flex; gap:10px; flex-wrap: wrap; align-items:center; }
+    main{ padding: 18px 0 64px; }
 
     .card{
       background: var(--paper);
@@ -89,26 +93,53 @@
       border-radius: var(--radiusXL);
       border: 1px solid var(--borderD);
       box-shadow: var(--shadow);
-      padding: 16px;
+      padding: 18px;
       overflow:hidden;
     }
-    .title{ font-weight:950; font-size: 18px; margin:0; }
-    .muted{ color: var(--muted); font-size: 13px; }
+    .title{ font-weight: 950; font-size: 18px; margin:0 0 6px; }
+    .muted{ color: var(--muted); font-size: 13px; margin:0; line-height: 1.35; }
 
-    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-
+    .row{ display:flex; gap:10px; flex-wrap: wrap; align-items:center; }
     select{
-      padding: 10px 12px;
+      width: 220px;
+      padding: 12px 12px;
       border-radius: 14px;
-      border: 1px solid rgba(11,34,54,.18);
+      border: 1px solid rgba(11,34,54,.16);
       background: rgba(255,255,255,.98);
       color: var(--text);
       outline:none;
     }
+
+    .list{ display:grid; gap: 12px; margin-top: 14px; }
+
+    .orderCard{
+      border-radius: 22px;
+      border: 1px solid rgba(11,34,54,.09);
+      background: rgba(255,255,255,.98);
+      padding: 12px;
+      box-shadow: var(--shadowSoft);
+      display:grid;
+      gap: 10px;
+    }
+
+    .pill{
+      display:inline-flex; align-items:center; gap: 6px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-weight: 950; font-size: 12px;
+      border: 1px solid rgba(11,34,54,.10);
+      background: rgba(36,91,124,.08);
+      color: rgba(11,34,54,.92);
+      white-space: nowrap;
+    }
+    .pill.todo{ background: rgba(255,180,90,.18); }
+    .pill.ready{ background: rgba(40,140,80,.16); }
+    .pill.served{ background: rgba(36,91,124,.10); }
+
     button{
       padding: 10px 12px;
       border-radius: 999px;
-      border: 1px solid rgba(11,34,54,.16);
+      border: 1px solid rgba(11,34,54,.14);
       cursor:pointer;
       font-weight: 950;
     }
@@ -116,93 +147,46 @@
       color:#fff;
       border-color: rgba(0,0,0,.10);
       background: linear-gradient(180deg, rgba(36,91,124,.96), rgba(22,62,90,.98));
-      box-shadow: 0 16px 28px rgba(0,0,0,.12);
+      box-shadow: 0 14px 28px rgba(0,0,0,.14);
     }
-    .soft{
-      background: rgba(36,91,124,.10);
-      color: rgba(11,34,54,.92);
-    }
-    .mini{ padding: 8px 10px; border-radius:999px; font-size:12px; }
+    .soft{ background: rgba(36,91,124,.10); color: rgba(11,34,54,.92); }
+    .mini{ padding: 8px 10px; font-size: 12px; }
 
-    .list{ margin-top: 10px; display:grid; gap: 8px; }
-    .item{
-      border-radius: 16px;
-      border: 1px solid rgba(11,34,54,.10);
-      background: rgba(255,255,255,.98);
-      padding: 10px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
-    .itName{ font-weight: 950; font-size: 13px; }
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      gap: 6px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-weight: 950;
-      font-size: 12px;
-      border: 1px solid rgba(11,34,54,.12);
-      background: rgba(36,91,124,.08);
-      color: rgba(11,34,54,.92);
-      white-space: nowrap;
-    }
-    .badge.open{ background: rgba(255,180,90,.18); }
-    .badge.done{ background: rgba(40,140,80,.16); }
-    .badge.served{ background: rgba(70,110,180,.16); }
-
-    .lineState{
-      display:inline-flex;
-      align-items:center;
-      gap: 6px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-weight: 950;
-      font-size: 12px;
-      border: 1px solid rgba(11,34,54,.12);
-      background: rgba(36,91,124,.06);
-      color: rgba(11,34,54,.90);
-    }
-    .lineState.ready{
-      background: rgba(40,140,80,.16);
-      border-color: rgba(40,140,80,.25);
-    }
-    .lineState.served{
-      background: rgba(70,110,180,.16);
-      border-color: rgba(70,110,180,.20);
+    @media (max-width: 560px){
+      select{ width: 100%; }
+      .actions{ margin-left:0; width:100%; }
     }
   </style>
 </head>
-
 <body>
   <img id="bgImg" src="mare.png" alt="" aria-hidden="true">
   <div id="overlay" aria-hidden="true"></div>
 
   <header>
     <div class="container header-inner">
-      <div class="brand">🍳 Officine Mare — Cucina</div>
+      <div class="brand">🔎 Officine Mare — Cucina</div>
       <div class="actions">
         <button class="ghost" id="soundBtn">🔔 Suono: ON</button>
-        <button class="ghost" id="vibBtn">📳 Vibra: ON</button>
+        <button class="ghost" id="vibeBtn">📳 Vibra: ON</button>
         <button class="ghost" id="refreshBtn">Aggiorna</button>
-        <a class="ghost" href="admin.html">↩️ Admin</a>
+        <a class="ghost" href="admin.html">↩ Admin</a>
+      </div>
+      <div class="row" style="width:100%; margin-top:6px;">
+        <select id="filterSel">
+          <option value="open">Aperte</option>
+          <option value="archived">Chiuse</option>
+        </select>
       </div>
     </div>
   </header>
 
   <main class="container">
-    <div class="row" style="margin-bottom:12px;">
-      <select id="filter">
-        <option value="open">Aperte</option>
-        <option value="done">Complete</option>
-        <option value="all">Tutte</option>
-      </select>
-      <span class="muted" id="statusMsg"></span>
+    <div class="card">
+      <h2 class="title">Comande</h2>
+      <p class="muted">Puoi mettere “Pronto” riga per riga. Anche se alcune righe sono “Servito”, le altre restano gestibili.</p>
+      <div id="ordersList" class="list"></div>
+      <p class="muted" id="msg" style="margin-top:12px;"></p>
     </div>
-
-    <div class="grid" id="ordersGrid"></div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -210,198 +194,197 @@
   <script src="backend.js"></script>
 
   <script>
-    const ordersGrid = document.getElementById("ordersGrid");
-    const filterEl = document.getElementById("filter");
-    const statusMsg = document.getElementById("statusMsg");
+    // Guard
+    async function guard(){
+      try{
+        const s = await OM.getSession();
+        if(!s) location.href = "login.html";
+      }catch{ location.href = "login.html"; }
+    }
 
+    // Notifiche (best effort)
+    let soundOn = true, vibeOn = true;
     const soundBtn = document.getElementById("soundBtn");
-    const vibBtn = document.getElementById("vibBtn");
-    const refreshBtn = document.getElementById("refreshBtn");
-
-    let soundOn = true;
-    let vibOn = true;
-
-    function fmtTime(iso){
-      try{
-        const d = new Date(iso);
-        return d.toLocaleTimeString("it-IT", { hour:"2-digit", minute:"2-digit" });
-      }catch{ return ""; }
-    }
-    function minutesAgo(iso){
-      if(!iso) return null;
-      const t = new Date(iso).getTime();
-      if(!t) return null;
-      return Math.max(0, Math.floor((Date.now() - t)/60000));
-    }
-
-    function beep(){
-      if(!soundOn) return;
-      try{
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = "sine";
-        o.frequency.value = 740;
-        g.gain.value = 0.06;
-        o.connect(g); g.connect(ctx.destination);
-        o.start();
-        setTimeout(() => { o.stop(); ctx.close(); }, 160);
-      }catch{}
-    }
-    function vibrate(){
-      if(!vibOn) return;
-      try{ navigator.vibrate?.([120, 80, 120]); }catch{}
-    }
-
+    const vibeBtn = document.getElementById("vibeBtn");
     soundBtn.addEventListener("click", () => {
       soundOn = !soundOn;
       soundBtn.textContent = soundOn ? "🔔 Suono: ON" : "🔕 Suono: OFF";
-      if(soundOn) beep();
     });
-    vibBtn.addEventListener("click", () => {
-      vibOn = !vibOn;
-      vibBtn.textContent = vibOn ? "📳 Vibra: ON" : "📴 Vibra: OFF";
-      if(vibOn) vibrate();
+    vibeBtn.addEventListener("click", () => {
+      vibeOn = !vibeOn;
+      vibeBtn.textContent = vibeOn ? "📳 Vibra: ON" : "📴 Vibra: OFF";
     });
 
-    function orderProgress(order){
-      const items = order.order_items || [];
-      const total = items.length;
-      const ready = items.filter(it => it.line_status === "ready").length;
-      const done = total > 0 && ready === total;
-      return { total, ready, done };
+    function ping(){
+      if(vibeOn && navigator.vibrate) navigator.vibrate([120,60,120]);
+      if(soundOn){
+        try{
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.connect(g); g.connect(ctx.destination);
+          o.type = "sine"; o.frequency.value = 880;
+          g.gain.value = 0.08;
+          o.start();
+          setTimeout(() => { o.stop(); ctx.close(); }, 120);
+        }catch{}
+      }
     }
 
-    async function render(){
-      const all = await OM.getActiveOrdersWithItems();
-      const f = filterEl.value;
+    const ordersList = document.getElementById("ordersList");
+    const msg = document.getElementById("msg");
+    const filterSel = document.getElementById("filterSel");
 
-      let rows = all;
+    const fmtTime = (iso) => {
+      try { return new Date(iso).toLocaleTimeString("it-IT", {hour:"2-digit", minute:"2-digit"}); }
+      catch { return ""; }
+    };
+    const minutesSince = (iso) => {
+      try { return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime())/60000)); }
+      catch { return null; }
+    };
 
-      if(f !== "all"){
-        rows = rows.filter(o => {
-          const p = orderProgress(o);
-          return f === "done" ? p.done : !p.done;
-        });
+    async function loadOrders({silent=false} = {}){
+      msg.textContent = "";
+      try{
+        const all = await OM.getActiveOrdersWithItems(); // backend ritorna solo open
+        let orders = all;
+
+        // se vuoi vedere chiuse, per ora le lasciamo non mostrate (open only) come tuo flusso.
+        // (se vuoi anche le archived, serve una funzione backend dedicata; te la aggiungo quando vuoi)
+
+        if(filterSel.value === "archived"){
+          orders = []; // placeholder
+        }
+
+        renderOrders(orders);
+
+        if(!silent){
+          // ping se ci sono nuove comande "recenti" (best-effort)
+          // semplice: se esiste un order creato negli ultimi 20s
+          const now = Date.now();
+          const recent = orders.some(o => (now - new Date(o.created_at).getTime()) < 20000);
+          if(recent) ping();
+        }
+      }catch(e){
+        msg.textContent = "Errore: " + (e?.message || e);
       }
+    }
 
-      ordersGrid.innerHTML = "";
-      if(rows.length === 0){
-        ordersGrid.innerHTML = `
-          <div class="card">
-            <h2 class="title">Nessuna comanda</h2>
-            <p class="muted">Qui compariranno le comande inviate dall’admin.</p>
-          </div>`;
+    function renderOrders(orders){
+      ordersList.innerHTML = "";
+      if(!orders.length){
+        ordersList.innerHTML = `<div class="muted">(nessuna comanda)</div>`;
         return;
       }
 
-      rows.forEach(o => {
-        const p = orderProgress(o);
-        const headerBadge = p.done
-          ? `<span class="badge done">Completa (${p.ready}/${p.total})</span>`
-          : `<span class="badge open">In lavorazione (${p.ready}/${p.total})</span>`;
+      orders.forEach(o => {
+        const items = (o.order_items || []);
+        const total = items.length;
+        const readyCount = items.filter(x => x.line_status === "ready").length;
 
-        const card = document.createElement("div");
-        card.className = "card";
-
-        card.innerHTML = `
-          <div class="row" style="justify-content:space-between; align-items:flex-start;">
+        const box = document.createElement("div");
+        box.className = "orderCard";
+        box.innerHTML = `
+          <div class="row" style="justify-content:space-between;">
             <div>
-              <h2 class="title">Tavolo ${o.table_code}</h2>
+              <div class="title" style="margin:0; font-size:22px;">Tavolo ${o.table_code}</div>
               <div class="muted">Ricevuta alle ${fmtTime(o.created_at)} · ID ${o.id}</div>
             </div>
-            <div class="row">
-              ${headerBadge}
-              ${p.done ? `<button class="soft mini" data-act="archive" data-oid="${o.id}">Archivia</button>` : ``}
-            </div>
+            <span class="pill ${readyCount===total && total>0 ? "ready":"todo"}">
+              ${readyCount===total && total>0 ? "TUTTO PRONTO" : "In lavorazione ("+readyCount+"/"+total+")"}
+            </span>
           </div>
-
-          <div class="list">
-            ${(o.order_items || []).map(it => {
-              const ready = it.line_status === "ready";
-              const served = !!it.served;
-              const mins = served ? minutesAgo(it.served_at) : null;
-
-              return `
-                <div class="item">
-                  <div>
-                    <div class="itName">${it.item_name}</div>
-                    <div class="muted small">qty: <strong>${it.qty}</strong></div>
-                  </div>
-                  <div class="row" style="justify-content:flex-end;">
-                    ${served
-                      ? `<span class="lineState served">Servito ${mins!=null ? `· ${mins} min` : ""}</span>`
-                      : `<span class="lineState ${ready ? "ready" : ""}">${ready ? "Pronto" : "Da fare"}</span>`
-                    }
-                    ${served
-                      ? ``
-                      : (ready
-                        ? `<button class="soft mini" data-act="undo" data-lid="${it.id}">Non pronto</button>`
-                        : `<button class="primary mini" data-act="ready" data-lid="${it.id}">Pronto</button>`)
-                    }
-                  </div>
-                </div>
-              `;
-            }).join("")}
+          <div class="list" data-items></div>
+          <div class="row" style="justify-content:flex-end;">
+            <button class="soft mini" data-act="archive">Chiudi (solo se tutto pronto)</button>
           </div>
         `;
 
-        card.querySelectorAll("button[data-act]").forEach(btn => {
-          btn.addEventListener("click", async () => {
-            const act = btn.dataset.act;
+        const wrap = box.querySelector("[data-items]");
 
+        items.forEach(it => {
+          const servedMins = it.served_at ? minutesSince(it.served_at) : null;
+
+          const row = document.createElement("div");
+          row.className = "orderCard";
+          row.style.padding = "12px";
+          row.style.boxShadow = "none";
+          row.style.borderRadius = "18px";
+          row.innerHTML = `
+            <div class="row" style="justify-content:space-between; align-items:center;">
+              <div>
+                <div style="font-weight:950; font-size:18px;">${it.item_name}</div>
+                <div class="muted">qty: ${it.qty}</div>
+              </div>
+              <div class="row" style="justify-content:flex-end;">
+                <span class="pill ${it.line_status==="ready" ? "ready":"todo"}">${it.line_status==="ready" ? "Pronto" : "Da fare"}</span>
+                ${
+                  it.served
+                    ? `<span class="pill served">Servito · ${servedMins ?? 0} min</span>`
+                    : `<span class="pill served">Non servito</span>`
+                }
+                <button class="${it.line_status==="ready" ? "soft":"primary"} mini" data-act="toggleReady" data-id="${it.id}">
+                  ${it.line_status==="ready" ? "Metti da fare" : "Metti pronto"}
+                </button>
+              </div>
+            </div>
+          `;
+
+          // ✅ FIX: questo bottone è SEMPRE attivo per la riga (non dipende dal fatto che altre righe siano servite)
+          row.querySelector("[data-act='toggleReady']").addEventListener("click", async () => {
             try{
-              if(act === "archive"){
-                await OM.archiveOrderIfComplete(btn.dataset.oid);
-                await render();
-                return;
-              }
-              if(act === "ready"){
-                await OM.setLineReady(btn.dataset.lid, true);
-                await render();
-                return;
-              }
-              if(act === "undo"){
-                await OM.setLineReady(btn.dataset.lid, false);
-                await render();
-                return;
-              }
+              const btn = row.querySelector("[data-act='toggleReady']");
+              btn.disabled = true;
+              const makeReady = (it.line_status !== "ready");
+              await OM.setLineReady(it.id, makeReady);
+              await loadOrders({silent:true});
             }catch(e){
-              alert(e.message || e);
+              alert("Errore: " + (e?.message || e));
             }
           });
+
+          wrap.appendChild(row);
         });
 
-        ordersGrid.appendChild(card);
+        box.querySelector("[data-act='archive']").addEventListener("click", async () => {
+          try{
+            await OM.archiveOrderIfComplete(o.id);
+            await loadOrders({silent:true});
+          }catch(e){
+            alert(e?.message === "ORDER_NOT_COMPLETE"
+              ? "Non puoi chiudere: non è tutto pronto."
+              : ("Errore: " + (e?.message || e))
+            );
+          }
+        });
+
+        ordersList.appendChild(box);
       });
     }
 
-    // realtime: notifica nuova comanda
-    let lastIds = "";
-    async function poll(){
-      const all = await OM.getActiveOrdersWithItems();
-      const ids = all.map(o => o.id).sort().join("|");
-      if(lastIds && ids !== lastIds){
-        beep(); vibrate();
-        statusMsg.textContent = "Nuova comanda arrivata ✅";
-        setTimeout(() => statusMsg.textContent = "", 1500);
-      }
-      lastIds = ids;
-      await render();
+    document.getElementById("refreshBtn").addEventListener("click", () => loadOrders());
+    filterSel.addEventListener("change", () => loadOrders({silent:true}));
+
+    // Realtime ping
+    let unsub = null;
+    async function startRealtime(){
+      try{
+        if(unsub) unsub();
+        unsub = OM.subscribeRealtime((ev) => {
+          // se arrivano nuove righe/ordini, refresh leggero + ping
+          if(ev.table === "orders" || ev.table === "order_items"){
+            clearTimeout(window.__rtk);
+            window.__rtk = setTimeout(() => loadOrders(), 250);
+          }
+        });
+      }catch{}
     }
 
-    refreshBtn.addEventListener("click", poll);
-    filterEl.addEventListener("change", render);
-
-    // auth: se non loggato, rimanda admin (tu usi la stessa utenza staff)
-    (async () => {
-      const s = await OM.getSession();
-      if(!s){ location.href = "admin.html"; return; }
-      OM.subscribeRealtime((ev) => {
-        if(ev.table === "orders" || ev.table === "order_items") poll();
-      });
-      poll();
-      setInterval(poll, 2500);
+    (async function init(){
+      await guard();
+      await loadOrders({silent:true});
+      await startRealtime();
     })();
   </script>
 </body>
