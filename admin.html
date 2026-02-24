@@ -33,138 +33,34 @@
         radial-gradient(900px 520px at 88% 12%, rgba(255,255,255,.08), transparent 55%),
         linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 42%, var(--bgBot) 100%);
     }
-    #bgImg{
-      position: fixed; inset:0;
-      width:100vw; height:100dvh;
-      object-fit: cover;
-      z-index:0;
-      opacity:.70;
-      filter: saturate(1.06) contrast(1.04);
-      pointer-events:none;
-    }
-    #overlay{
-      position: fixed; inset:0; z-index:1; pointer-events:none;
-      background: linear-gradient(to bottom, rgba(22,62,90,.18), rgba(22,62,90,.80));
-    }
-    .container{
-      width: min(96vw, var(--max));
-      margin: 0 auto;
-      padding: 0 clamp(12px, 1.8vw, 28px);
-      position: relative;
-      z-index: 2;
-    }
+    #bgImg{ position: fixed; inset:0; width:100vw; height:100dvh; object-fit: cover; z-index:0; opacity:.70; filter:saturate(1.06) contrast(1.04); pointer-events:none; }
+    #overlay{ position: fixed; inset:0; z-index:1; pointer-events:none; background: linear-gradient(to bottom, rgba(22,62,90,.18), rgba(22,62,90,.80)); }
+    .container{ width: min(96vw, var(--max)); margin: 0 auto; padding: 0 clamp(12px, 1.8vw, 28px); position: relative; z-index: 2; }
+    header{ position: sticky; top:0; z-index: 50; padding-top: var(--safeTop); background: rgba(22,62,90,.76); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(255,255,255,.16); }
+    .header-inner{ height: var(--headerH); display:flex; align-items:center; gap: 12px; padding: 10px 0; }
+    .brand{ font-weight: 950; letter-spacing: .5px; font-size: 20px; white-space: nowrap; display:flex; align-items:center; gap:10px; opacity:.98; }
+    .tabs{ display:flex; gap: 10px; flex-wrap: wrap; margin-left: 10px; }
+    .tab{ padding: 10px 12px; border-radius: 999px; background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.14); color: rgba(255,255,255,.94); font-weight: 950; cursor: pointer; user-select:none; box-shadow: 0 10px 20px rgba(0,0,0,.10); }
+    .tab.active{ background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.26); }
+    .actions{ margin-left:auto; display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
+    .ghost{ padding: 10px 12px; border-radius: 999px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); color: rgba(255,255,255,.92); font-weight: 950; cursor: pointer; text-decoration: none; display:inline-flex; align-items:center; gap:8px; box-shadow: 0 10px 20px rgba(0,0,0,.10); }
 
-    header{
-      position: sticky; top:0; z-index: 50;
-      padding-top: var(--safeTop);
-      background: rgba(22,62,90,.76);
-      backdrop-filter: blur(14px);
-      border-bottom: 1px solid rgba(255,255,255,.16);
-    }
-    .header-inner{
-      height: var(--headerH);
-      display:flex; align-items:center; gap: 12px;
-      padding: 10px 0;
-    }
-    .brand{
-      font-weight: 950;
-      letter-spacing: .5px;
-      font-size: 20px;
-      white-space: nowrap;
-      display:flex; align-items:center; gap:10px;
-      opacity:.98;
-      text-shadow: 0 1px 0 rgba(0,0,0,.12);
-    }
-
-    .tabs{
-      display:flex; gap: 10px; flex-wrap: wrap;
-      margin-left: 10px;
-    }
-    .tab{
-      padding: 10px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.10);
-      border: 1px solid rgba(255,255,255,.14);
-      color: rgba(255,255,255,.94);
-      font-weight: 950;
-      cursor: pointer;
-      user-select:none;
-      box-shadow: 0 10px 20px rgba(0,0,0,.10);
-    }
-    .tab.active{
-      background: rgba(255,255,255,.18);
-      border-color: rgba(255,255,255,.26);
-    }
-    .actions{
-      margin-left:auto;
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap: wrap;
-    }
-    .ghost{
-      padding: 10px 12px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.14);
-      color: rgba(255,255,255,.92);
-      font-weight: 950;
-      cursor: pointer;
-      text-decoration: none;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      box-shadow: 0 10px 20px rgba(0,0,0,.10);
-    }
-
-    /* Mobile drawer */
     .burger{ display:none; }
-    .drawerOverlay{
-      position: fixed; inset:0;
-      background: rgba(0,0,0,.35);
-      z-index: 80;
-      display:none;
-    }
+    .drawerOverlay{ position: fixed; inset:0; background: rgba(0,0,0,.35); z-index: 80; display:none; }
     .drawer{
-      position: fixed; top:0; left:0;
-      height:100dvh;
-      width: min(84vw, 350px);
-      background: rgba(22,62,90,.92);
-      border-right: 1px solid rgba(255,255,255,.14);
-      backdrop-filter: blur(14px);
-      z-index: 90;
-      transform: translateX(-105%);
-      transition: transform .18s ease;
+      position: fixed; top:0; left:0; height:100dvh; width: min(84vw, 350px);
+      background: rgba(22,62,90,.92); border-right: 1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(14px); z-index: 90;
+      transform: translateX(-105%); transition: transform .18s ease;
       padding-top: calc(var(--safeTop) + 10px);
     }
     .drawer.open{ transform: translateX(0); }
-    .drawer .dHead{
-      padding: 14px 14px 10px;
-      font-weight: 950;
-      letter-spacing: .4px;
-      display:flex; justify-content:space-between; align-items:center;
-    }
+    .drawer .dHead{ padding: 14px 14px 10px; font-weight: 950; letter-spacing: .4px; display:flex; justify-content:space-between; align-items:center; }
     .drawer .dList{ padding: 10px 14px 14px; display:grid; gap: 10px; }
-    .drawer .dItem{
-      width:100%;
-      text-align:left;
-      padding: 12px 12px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.08);
-      color:#fff;
-      font-weight: 950;
-      cursor:pointer;
-    }
+    .drawer .dItem{ width:100%; text-align:left; padding: 12px 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.08); color:#fff; font-weight: 950; cursor:pointer; }
 
     main{ padding: 18px 0 64px; }
-
-    .grid{
-      display:grid;
-      grid-template-columns: 1.12fr .88fr;
-      gap: 14px;
-      align-items:start;
-    }
+    .grid{ display:grid; grid-template-columns: 1.12fr .88fr; gap: 14px; align-items:start; }
     @media (max-width: 1020px){ .grid{ grid-template-columns: 1fr; } }
 
     .card{
@@ -193,31 +89,16 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
     }
     textarea{ resize: vertical; }
-    button{
-      padding: 11px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(11,34,54,.14);
-      cursor:pointer;
-      font-weight: 950;
-    }
-    .primary{
-      color:#fff;
-      border-color: rgba(0,0,0,.10);
-      background: linear-gradient(180deg, rgba(36,91,124,.96), rgba(22,62,90,.98));
-      box-shadow: 0 14px 28px rgba(0,0,0,.14);
-    }
+    button{ padding: 11px 12px; border-radius: 999px; border: 1px solid rgba(11,34,54,.14); cursor:pointer; font-weight: 950; }
+    .primary{ color:#fff; border-color: rgba(0,0,0,.10); background: linear-gradient(180deg, rgba(36,91,124,.96), rgba(22,62,90,.98)); box-shadow: 0 14px 28px rgba(0,0,0,.14); }
     .soft{ background: rgba(36,91,124,.10); color: rgba(11,34,54,.92); }
     .danger{ background: rgba(180,30,40,.10); color: rgba(140,20,30,.95); border-color: rgba(140,20,30,.18); }
     .mini{ padding: 8px 10px; border-radius: 999px; font-size: 12px; }
 
     .pill{
-      display:inline-flex;
-      align-items:center;
-      gap: 6px;
-      padding: 7px 11px;
-      border-radius: 999px;
-      font-weight: 950;
-      font-size: 12px;
+      display:inline-flex; align-items:center; gap: 6px;
+      padding: 7px 11px; border-radius: 999px;
+      font-weight: 950; font-size: 12px;
       border: 1px solid rgba(11,34,54,.10);
       background: rgba(36,91,124,.08);
       color: rgba(11,34,54,.92);
@@ -229,7 +110,6 @@
     .pill.cancelled{ background: rgba(180,30,40,.10); color: rgba(140,20,30,.95); }
 
     .list{ display:grid; gap: 12px; margin-top: 12px; }
-
     .resCard{
       border-radius: 22px;
       border: 1px solid rgba(11,34,54,.09);
@@ -255,12 +135,34 @@
       background: rgba(255,255,255,.98);
       padding: 10px;
       box-shadow: 0 10px 22px rgba(0,0,0,.06);
+      display:grid;
+      gap: 8px;
     }
-    .tName{ font-weight: 950; margin:0; }
-    .tMeta{ margin:4px 0 0; font-size: 12px; color: var(--muted); }
+    .tName{ font-weight: 950; margin:0; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+    .tMeta{ margin:0; font-size: 12px; color: var(--muted); }
     .tBusy{ border-color: rgba(180,30,40,.18); background: rgba(180,30,40,.06); }
     .tFree{ border-color: rgba(40,140,80,.18); background: rgba(40,140,80,.06); }
-    .tClosed{ opacity: .66; }
+    .tClosed{ opacity: .72; }
+
+    /* checkbox list for tables */
+    .checks{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 720px){ .checks{ grid-template-columns: repeat(2, minmax(120px, 1fr)); } }
+    .chk{
+      display:flex; align-items:center; gap: 10px;
+      border: 1px solid rgba(11,34,54,.10);
+      border-radius: 14px;
+      padding: 10px;
+      background: rgba(255,255,255,.98);
+      box-shadow: 0 10px 22px rgba(0,0,0,.05);
+      user-select:none;
+    }
+    .chk input{ width: 18px; height: 18px; }
+    .chk strong{ font-weight: 950; }
 
     @media (max-width: 720px){
       .tabs{ display:none; }
@@ -313,12 +215,15 @@
     <section class="grid" id="tab-orders">
       <div class="card">
         <h2 class="title">Tavoli & Comande</h2>
-        <p class="muted">Scegli un tavolo, aggiungi piatti (dal DB), invia in cucina. Il “Servito” NON è reversibile. Puoi chiudere la comanda quando vuoi.</p>
+        <p class="muted">
+          Qui puoi inviare comande <b>solo</b> per tavoli prenotati (nel range scelto) e, se una prenotazione ha più tavoli, comparirà solo il primo tavolo del gruppo.
+        </p>
 
         <div class="row" style="margin-top:10px;">
-          <div style="flex:1; min-width:220px;">
-            <label>Tavolo selezionato</label>
+          <div style="flex:1; min-width:260px;">
+            <label>Tavolo selezionato (solo prenotati)</label>
             <select id="orderTable"></select>
+            <div class="muted" id="orderTableHint" style="margin-top:6px;"></div>
           </div>
           <div style="flex:1; min-width:220px;">
             <label>Note comanda (opzionale)</label>
@@ -338,7 +243,7 @@
 
       <div class="card">
         <h2 class="title">Comande aperte</h2>
-        <p class="muted">Stato: “Pronto” dalla cucina e “Servito” dalla sala (timer). La cucina continua a lavorare le altre righe.</p>
+        <p class="muted">“Servito” non è reversibile. Puoi chiudere una comanda quando vuoi.</p>
         <div id="openOrdersList" class="list" style="margin-top:12px;"></div>
       </div>
     </section>
@@ -347,7 +252,7 @@
     <section class="grid" id="tab-reservations" style="display:none;">
       <div class="card">
         <h2 class="title">Prenotazioni</h2>
-        <p class="muted">Scegli intervallo: oggi / 7 giorni / 15 giorni. Poi filtra per stato e ricerca.</p>
+        <p class="muted">Intervallo: oggi / 7 giorni / 15 giorni. Assegna tavoli con checkbox (mobile friendly).</p>
 
         <div class="row" style="margin-top:10px;">
           <div style="flex:1; min-width:200px;">
@@ -390,7 +295,7 @@
 
       <div class="card">
         <h2 class="title">Pannello tavoli</h2>
-        <p class="muted">Libero/Occupato/Chiuso (occupato se comanda aperta).</p>
+        <p class="muted">Libero/Occupato/Chiuso (occupato se comanda aperta). Qui vedi lo stato rapido.</p>
         <div class="row" style="margin-top:10px;">
           <button class="soft" id="tablesMiniRefresh">Aggiorna</button>
         </div>
@@ -402,7 +307,7 @@
     <section class="grid" id="tab-menu" style="display:none;">
       <div class="card">
         <h2 class="title">Gestione piatti (menu_items)</h2>
-        <p class="muted">Aggiungi/modifica/disattiva i piatti usati per le comande.</p>
+        <p class="muted">Categoria a selezione (antipasto/primo/secondo/…)</p>
 
         <div class="row">
           <div style="flex:2; min-width:220px;">
@@ -442,18 +347,19 @@
 
       <div class="card">
         <h2 class="title">Nota</h2>
-        <p class="muted">La foto del “menù del giorno” (pagina cliente) resta come prima. Qui gestisci solo i piatti del DB.</p>
+        <p class="muted">La foto del menù del giorno resta gestita altrove (menu_day / storage).</p>
       </div>
     </section>
 
     <!-- TAB: TABLES -->
     <section class="card" id="tab-tables" style="display:none;">
-      <h2 class="title">Vista tavoli</h2>
-      <p class="muted">Solo visualizzazione. Occupato se c’è una comanda aperta. Chiuso se is_open=false.</p>
+      <h2 class="title">Vista tavoli (apri/chiudi)</h2>
+      <p class="muted">Qui puoi cambiare is_open. Occupato se c’è una comanda aperta.</p>
       <div class="row" style="margin-top:10px;">
         <button class="soft" id="tablesViewRefresh">Aggiorna</button>
       </div>
       <div id="tablesViewGrid" class="tableGrid"></div>
+      <p class="muted" id="tablesMsg" style="margin-top:12px;"></p>
     </section>
   </main>
 
@@ -465,12 +371,8 @@
     // Drawer
     const drawer = document.getElementById("drawer");
     const drawerOverlay = document.getElementById("drawerOverlay");
-    document.getElementById("burgerBtn")?.addEventListener("click", () => {
-      drawer.classList.add("open"); drawerOverlay.style.display="block";
-    });
-    function closeDrawer(){
-      drawer.classList.remove("open"); drawerOverlay.style.display="none";
-    }
+    document.getElementById("burgerBtn")?.addEventListener("click", () => { drawer.classList.add("open"); drawerOverlay.style.display="block"; });
+    function closeDrawer(){ drawer.classList.remove("open"); drawerOverlay.style.display="none"; }
     drawerOverlay?.addEventListener("click", closeDrawer);
     document.getElementById("drawerClose")?.addEventListener("click", closeDrawer);
 
@@ -486,6 +388,7 @@
       });
       tabsDesktop.forEach(x => x.classList.toggle("active", x.dataset.tab === name));
       closeDrawer();
+
       if(name === "orders") refreshOrders();
       if(name === "reservations") refreshReservations();
       if(name === "menu") refreshMenuItems();
@@ -520,11 +423,7 @@
     };
     const pad = n => String(n).padStart(2,"0");
     const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    const addDaysISO = (baseISO, days) => {
-      const d = new Date(baseISO + "T00:00:00");
-      d.setDate(d.getDate() + Number(days||0));
-      return toISO(d);
-    };
+    const addDaysISO = (baseISO, days) => { const d = new Date(baseISO + "T00:00:00"); d.setDate(d.getDate() + Number(days||0)); return toISO(d); };
     const todayISO = () => toISO(new Date());
 
     // Data caches
@@ -532,21 +431,70 @@
     let TABLES = [];
     let OPEN_TABLES_SET = new Set();
 
-    // ORDERS UI
+    // Reservation range controls (shared for filtering "prenotati")
+    const resRange = document.getElementById("resRange");
+    const resFrom = document.getElementById("resFrom");
+    const resStatus = document.getElementById("resStatus");
+    const resSearch = document.getElementById("resSearch");
+    const reservationsList = document.getElementById("reservationsList");
+
+    resFrom.value = todayISO();
+    resRange.value = "day";
+
+    function computeRange(){
+      const fromISO = resFrom.value || todayISO();
+      if(resRange.value === "day") return { fromISO, toISO: fromISO };
+      if(resRange.value === "7") return { fromISO, toISO: addDaysISO(fromISO, 7) };
+      if(resRange.value === "15") return { fromISO, toISO: addDaysISO(fromISO, 15) };
+      return { fromISO, toISO: fromISO };
+    }
+
+    // ============ ORDERS: dropdown SOLO prenotati ============
     const orderTableSel = document.getElementById("orderTable");
+    const orderTableHint = document.getElementById("orderTableHint");
     const menuPickList = document.getElementById("menuPickList");
     const sendKitchenBtn = document.getElementById("sendKitchenBtn");
     const ordersMsg = document.getElementById("ordersMsg");
     const openOrdersList = document.getElementById("openOrdersList");
 
-    function buildOrderTableSelect(){
+    // cache: dropdown entries from reservations
+    let RESERVED_PRIMARY_TABLES = []; // [{table_code, label, reservation_id, tables:[...]}]
+
+    async function buildOrderTableSelectReservedOnly(){
       orderTableSel.innerHTML = "";
-      TABLES.forEach(t => {
+      orderTableHint.textContent = "";
+
+      const { fromISO, toISO } = computeRange();
+
+      // prendo solo prenotazioni confermate/arrivate nel range
+      const groups = await OM.getReservedTableGroups({ fromISO, toISO, statuses: ["confirmed","arrived"] });
+
+      RESERVED_PRIMARY_TABLES = [];
+      for(const g of groups){
+        if(!g.tables?.length) continue;
+        const primary = g.tables[0]; // ✅ solo primo tavolo del multi
+        const label = `${primary} · ${g.reservation.customer_name} · ${g.reservation.reservation_date} ${String(g.reservation.reservation_time).slice(0,5)} · (${g.tables.length} tavoli)`;
+        RESERVED_PRIMARY_TABLES.push({ table_code: primary, label, reservation_id: g.reservation.id, tables: g.tables });
+      }
+
+      if(!RESERVED_PRIMARY_TABLES.length){
         const opt = document.createElement("option");
-        opt.value = t.code;
-        opt.textContent = `${t.code} (${t.seats || 0} coperti)`;
+        opt.value = "";
+        opt.textContent = "Nessun tavolo prenotato nel range selezionato";
+        orderTableSel.appendChild(opt);
+        orderTableSel.disabled = true;
+        orderTableHint.textContent = "Vai su Prenotazioni → conferma/arriva e assegna tavoli.";
+        return;
+      }
+
+      orderTableSel.disabled = false;
+      RESERVED_PRIMARY_TABLES.forEach(x => {
+        const opt = document.createElement("option");
+        opt.value = x.table_code;
+        opt.textContent = x.label;
         orderTableSel.appendChild(opt);
       });
+      orderTableHint.textContent = "Mostro solo tavoli prenotati (solo il primo del gruppo se multi).";
     }
 
     function buildMenuPick(){
@@ -605,7 +553,9 @@
         if(!MENU_ITEMS.length) MENU_ITEMS = await OM.listMenuItems({ activeOnly:true });
         OPEN_TABLES_SET = await OM.getOpenOrdersTableCodes();
 
-        buildOrderTableSelect();
+        // ✅ dropdown tavoli solo prenotati (range selezionato)
+        await buildOrderTableSelectReservedOnly();
+
         buildMenuPick();
 
         const orders = await OM.getActiveOrdersWithItems();
@@ -686,7 +636,7 @@
         });
 
         card.querySelector("button[data-act='close']").addEventListener("click", async () => {
-          if(!confirm("Chiudere la comanda? (rimane nel DB ma non è più attiva)")) return;
+          if(!confirm("Chiudere la comanda?")) return;
           try{
             await OM.closeOrder(o.id);
             await refreshOrders();
@@ -705,6 +655,8 @@
         const table_code = orderTableSel.value;
         const note = document.getElementById("orderNote").value;
 
+        if(!table_code) throw new Error("Nessun tavolo selezionabile (mancano prenotazioni/tavoli assegnati).");
+
         const rows = Array.from(menuPickList.querySelectorAll("[data-menu-item-id]"));
         const items = rows
           .map(r => ({
@@ -715,7 +667,6 @@
           }))
           .filter(x => x.qty > 0);
 
-        if(!table_code) throw new Error("Seleziona un tavolo.");
         if(!items.length) throw new Error("Seleziona almeno 1 piatto.");
 
         await OM.createOrder({ table_code, note, items });
@@ -728,24 +679,7 @@
 
     document.getElementById("refreshOrdersBtn").addEventListener("click", refreshOrders);
 
-    // RESERVATIONS UI (range)
-    const resRange = document.getElementById("resRange");
-    const resFrom = document.getElementById("resFrom");
-    const resStatus = document.getElementById("resStatus");
-    const resSearch = document.getElementById("resSearch");
-    const reservationsList = document.getElementById("reservationsList");
-
-    resFrom.value = todayISO();
-    resRange.value = "day";
-
-    function computeRange(){
-      const fromISO = resFrom.value || todayISO();
-      if(resRange.value === "day") return { fromISO, toISO: fromISO };
-      if(resRange.value === "7") return { fromISO, toISO: addDaysISO(fromISO, 7) };
-      if(resRange.value === "15") return { fromISO, toISO: addDaysISO(fromISO, 15) };
-      return { fromISO, toISO: fromISO };
-    }
-
+    // ============ RESERVATIONS: checkbox tavoli ============
     async function refreshReservations(){
       try{
         if(!TABLES.length) TABLES = await OM.listRestaurantTables();
@@ -763,6 +697,8 @@
         reservationsList.innerHTML = "";
         if(!data.length){
           reservationsList.innerHTML = `<div class="muted">(nessuna prenotazione per i filtri selezionati)</div>`;
+          // aggiorna anche dropdown prenotati
+          await buildOrderTableSelectReservedOnly();
           return;
         }
 
@@ -787,72 +723,85 @@
               <span class="pill ${pillClass}">${r.status}</span>
             </div>
 
-            <div class="row" style="align-items:flex-end;">
-              <div style="flex:2; min-width:260px;">
-                <label>Tavoli (multi)</label>
-                <select multiple size="5" data-tables style="height:auto;"></select>
-                <div class="muted" style="margin-top:6px;">
-                  Desktop: Ctrl/Cmd per selezioni multiple. Mobile: tocchi multipli.
-                </div>
-              </div>
-              <div style="flex:1; min-width:200px;">
-                <button class="soft" data-act="assign" style="width:100%;">Assegna</button>
-                <button class="primary" data-act="confirm" style="margin-top:8px; width:100%;">Conferma</button>
-                <button class="soft" data-act="arrived" style="margin-top:8px; width:100%;">Arrivato</button>
-                <button class="danger" data-act="cancel" style="margin-top:8px; width:100%;">Annulla</button>
-              </div>
+            <div>
+              <label>Tavoli (multi) — selezione con checkbox</label>
+              <div class="checks" data-checks></div>
+              <div class="muted" style="margin-top:6px;">Tocca per selezionare più tavoli (perfetto su mobile).</div>
+            </div>
+
+            <div class="row" style="justify-content:flex-end;">
+              <button class="soft" data-act="assign">Assegna</button>
+              <button class="primary" data-act="confirm">Conferma</button>
+              <button class="soft" data-act="arrived">Arrivato</button>
+              <button class="danger" data-act="cancel">Annulla</button>
             </div>
           `;
 
-          const sel = card.querySelector("select[data-tables]");
+          const checksWrap = card.querySelector("[data-checks]");
+
+          // tavoli disponibili = quelli open (is_open=true)
           TABLES.forEach(t => {
-            const opt = document.createElement("option");
-            opt.value = t.code;
-            opt.textContent = `${t.code} (${t.seats || 0})`;
-            if(assigned.includes(t.code)) opt.selected = true;
-            sel.appendChild(opt);
+            const wrap = document.createElement("label");
+            wrap.className = "chk";
+            const checked = assigned.includes(t.code);
+            const disabled = (t.is_open === false); // chiusi non selezionabili
+            wrap.innerHTML = `
+              <input type="checkbox" value="${t.code}" ${checked ? "checked":""} ${disabled ? "disabled":""} />
+              <div>
+                <strong>${t.code}</strong>
+                <div class="muted">${(t.is_open===false) ? "Chiuso" : (OPEN_TABLES_SET.has(t.code) ? "Occupato (comanda aperta)" : "Libero")}</div>
+              </div>
+            `;
+            checksWrap.appendChild(wrap);
           });
 
           card.querySelector("[data-act='assign']").addEventListener("click", async () => {
             try{
-              const chosen = Array.from(sel.selectedOptions).map(o => o.value);
+              const chosen = Array.from(checksWrap.querySelectorAll("input[type=checkbox]:checked")).map(i => i.value);
               await OM.setReservationTables(r.id, chosen);
               await refreshReservations();
+              // aggiorna dropdown prenotati
+              await buildOrderTableSelectReservedOnly();
             }catch(e){
               alert("Errore assegnazione: " + (e?.message || e));
             }
           });
 
           card.querySelector("[data-act='confirm']").addEventListener("click", async () => {
-            try{ await OM.updateReservation(r.id, { status:"confirmed" }); await refreshReservations(); }
+            try{ await OM.updateReservation(r.id, { status:"confirmed" }); await refreshReservations(); await buildOrderTableSelectReservedOnly(); }
             catch(e){ alert("Errore conferma: " + (e?.message || e)); }
           });
 
           card.querySelector("[data-act='arrived']").addEventListener("click", async () => {
-            try{ await OM.updateReservation(r.id, { status:"arrived" }); await refreshReservations(); }
+            try{ await OM.updateReservation(r.id, { status:"arrived" }); await refreshReservations(); await buildOrderTableSelectReservedOnly(); }
             catch(e){ alert("Errore arrived: " + (e?.message || e)); }
           });
 
           card.querySelector("[data-act='cancel']").addEventListener("click", async () => {
             if(!confirm("Annullare la prenotazione?")) return;
-            try{ await OM.updateReservation(r.id, { status:"cancelled" }); await refreshReservations(); }
+            try{ await OM.updateReservation(r.id, { status:"cancelled" }); await refreshReservations(); await buildOrderTableSelectReservedOnly(); }
             catch(e){ alert("Errore annulla: " + (e?.message || e)); }
           });
 
           reservationsList.appendChild(card);
         }
+
+        // aggiorna dropdown tavoli prenotati
+        await buildOrderTableSelectReservedOnly();
+
       }catch(e){
         reservationsList.innerHTML = `<div class="muted">Errore: ${e?.message || e}</div>`;
       }
     }
 
     document.getElementById("resRefreshBtn").addEventListener("click", refreshReservations);
-    [resRange, resFrom, resStatus].forEach(el => el.addEventListener("change", refreshReservations));
+    [resRange, resFrom, resStatus].forEach(el => el.addEventListener("change", async () => { await refreshReservations(); await refreshOrders(); }));
     resSearch.addEventListener("input", () => { clearTimeout(window.__rsT); window.__rsT = setTimeout(refreshReservations, 250); });
 
     // Tables mini + view
     const tablesMiniGrid = document.getElementById("tablesMiniGrid");
     const tablesViewGrid = document.getElementById("tablesViewGrid");
+    const tablesMsg = document.getElementById("tablesMsg");
 
     async function renderTablesMini(){
       if(!TABLES.length) TABLES = await OM.listRestaurantTables();
@@ -866,33 +815,59 @@
         el.className = `tCard ${cls} ${closed ? "tClosed":""}`;
         el.innerHTML = `
           <div class="tName">${t.code}</div>
-          <div class="tMeta">${closed ? "Chiuso" : (busy ? "Occupato" : "Libero")}</div>
-          <div class="tMeta">${t.seats || 0} coperti</div>
+          <p class="tMeta">${closed ? "Chiuso" : (busy ? "Occupato" : "Libero")}</p>
+          <p class="tMeta">${t.seats || 0} coperti</p>
         `;
         tablesMiniGrid.appendChild(el);
       });
     }
 
+    // ✅ Vista tavoli con toggle open/closed
     async function refreshTablesView(){
       try{
-        if(!TABLES.length) TABLES = await OM.listRestaurantTables();
+        tablesMsg.textContent = "";
+        TABLES = await OM.listRestaurantTables();
         OPEN_TABLES_SET = await OM.getOpenOrdersTableCodes();
+
         tablesViewGrid.innerHTML = "";
         TABLES.forEach(t => {
           const busy = OPEN_TABLES_SET.has(t.code);
           const cls = busy ? "tBusy" : "tFree";
           const closed = (t.is_open === false);
+
           const el = document.createElement("div");
           el.className = `tCard ${cls} ${closed ? "tClosed":""}`;
           el.innerHTML = `
-            <div class="tName">${t.code}</div>
-            <div class="tMeta">${closed ? "Chiuso" : (busy ? "Occupato" : "Libero")}</div>
-            <div class="tMeta">${t.seats || 0} coperti</div>
+            <div class="tName">
+              <span>${t.code}</span>
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:950; color:rgba(11,34,54,.85);">
+                <input type="checkbox" ${t.is_open ? "checked":""} />
+                Aperto
+              </label>
+            </div>
+            <p class="tMeta">${closed ? "Chiuso" : (busy ? "Occupato (comanda aperta)" : "Libero")}</p>
+            <p class="tMeta">${t.seats || 0} coperti</p>
           `;
+
+          const chk = el.querySelector("input[type=checkbox]");
+          chk.addEventListener("change", async () => {
+            try{
+              chk.disabled = true;
+              await OM.setRestaurantTableOpen(t.code, chk.checked);
+              TABLES = await OM.listRestaurantTables();
+              await refreshTablesView();
+              await renderTablesMini();
+              await refreshReservations();
+            }catch(e){
+              alert("Errore apertura tavolo: " + (e?.message || e));
+              chk.disabled = false;
+            }
+          });
+
           tablesViewGrid.appendChild(el);
         });
       }catch(e){
-        tablesViewGrid.innerHTML = `<div class="muted">Errore: ${e?.message || e}</div>`;
+        tablesMsg.textContent = "Errore: " + (e?.message || e);
       }
     }
 
@@ -1003,8 +978,7 @@
       await guard();
       TABLES = await OM.listRestaurantTables();
       MENU_ITEMS = await OM.listMenuItems({ activeOnly:true });
-      buildOrderTableSelect();
-      buildMenuPick();
+      await renderTablesMini();
       await refreshOrders();
       await startRealtime();
     })();
