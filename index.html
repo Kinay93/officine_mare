@@ -70,9 +70,8 @@
 
     #app{ position: relative; z-index: 2; min-height: 100vh; }
 
-    /* ✅ FULL WIDTH: niente “strozzatura” */
     .container{
-      width: min(98vw, var(--max));
+      width: min(96vw, var(--max));
       margin: 0 auto;
       padding: 0 clamp(12px, 1.8vw, 28px);
     }
@@ -142,7 +141,7 @@
       position:absolute;
       left:50%;
       transform:translateX(-50%);
-      width: min(1600px, 96vw);
+      width: min(1400px, 94vw);
       height:64px;
       top:-44px;
       border-radius: 0 0 999px 999px;
@@ -264,8 +263,20 @@
       box-shadow: 0 10px 22px rgba(0,0,0,.10) inset;
       overflow:hidden;
     }
-    .menu-box img{ width:100%; height:100%; object-fit:contain; display:none; }
-    .menu-text{ width:100%; white-space:pre-wrap; text-align:left; font-size:14px; color: rgba(11,34,54,.85); display:none; }
+    .menu-box img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:none;
+    }
+    .menu-text{
+      width:100%;
+      white-space:pre-wrap;
+      text-align:left;
+      font-size:14px;
+      color: rgba(11,34,54,.85);
+      display:none;
+    }
 
     .btn-row{ display:flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; align-items:center; }
     button{
@@ -462,11 +473,13 @@
     </main>
   </div>
 
+  <!-- Supabase + config + backend -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
   <script src="backend.js"></script>
 
   <script>
+    // --- Fix header height (mobile safe)
     function setHeaderRealHeight(){
       const header = document.getElementById("siteHeader");
       if(!header) return;
@@ -482,48 +495,52 @@
     setTimeout(setHeaderRealHeight, 800);
 
     document.getElementById("year").textContent = new Date().getFullYear();
+
     document.getElementById("btnInfo").addEventListener("click", () => {
       document.getElementById("msg").textContent = "Oggi consigliamo crudi e grigliata di mare 🦞";
     });
 
-    // Menu day
-    const pad = (n)=>String(n).padStart(2,"0");
-    const todayISO = ()=>{
-      const d=new Date();
+    // ---- Menu Day load (menu_day)
+    function pad(n){ return String(n).padStart(2,"0"); }
+    function todayISO(){
+      const d = new Date();
       return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    };
+    }
 
     async function loadMenuDay(){
+      const day = todayISO();
       try{
-        const row = await OM.getMenuDay(todayISO());
+        const row = await window.OM.getMenuDay(day);
         const img = document.getElementById("menuImg");
         const txt = document.getElementById("menuText");
         const ph = document.getElementById("menuPlaceholder");
 
-        img.style.display="none";
-        txt.style.display="none";
-        ph.style.display="block";
+        img.style.display = "none";
+        txt.style.display = "none";
+        ph.style.display = "block";
 
         if(!row) return;
+
         if(row.image_url){
-          img.src=row.image_url;
-          img.style.display="block";
-          ph.style.display="none";
+          img.src = row.image_url;
+          img.style.display = "block";
+          ph.style.display = "none";
           return;
         }
         if(row.text){
-          txt.textContent=row.text;
-          txt.style.display="block";
-          ph.style.display="none";
+          txt.textContent = row.text;
+          txt.style.display = "block";
+          ph.style.display = "none";
           return;
         }
       }catch(e){
-        console.warn("menu_day non leggibile:", e?.message || e);
+        // non bloccare la pagina cliente se menu_day non è leggibile per RLS
+        console.warn("Menu day non leggibile:", e?.message || e);
       }
     }
     loadMenuDay();
 
-    // Prenotazioni timeslots + lunedì
+    // --- Prenotazioni: orari dinamici + lunedì chiuso
     const dateEl = document.getElementById("data");
     const turnoEl = document.getElementById("turno");
     const timeEl = document.getElementById("ora");
@@ -533,92 +550,122 @@
 
     const today = new Date();
     dateEl.min = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+
     const STEP_MIN = 10;
 
-    function toMinutes(hhmm){ const [h,m]=hhmm.split(":").map(Number); return h*60+m; }
-    function fromMinutes(min){ const h=Math.floor(min/60); const m=min%60; return `${pad(h)}:${pad(m)}`; }
-    function buildSlots(start,end,step){
-      const out=[];
-      for(let t=toMinutes(start); t<=toMinutes(end); t+=step) out.push(fromMinutes(t));
-      return out;
+    function toMinutes(hhmm){
+      const [h,m] = hhmm.split(":").map(Number);
+      return h*60 + m;
+    }
+    function fromMinutes(min){
+      const h = Math.floor(min/60);
+      const m = min%60;
+      return `${pad(h)}:${pad(m)}`;
+    }
+    function buildSlots(start, end, step){
+      const slots = [];
+      for(let t = toMinutes(start); t <= toMinutes(end); t += step){
+        slots.push(fromMinutes(t));
+      }
+      return slots;
     }
 
     const lunchSlots = buildSlots("12:00","14:30",STEP_MIN);
     const dinnerSlots = buildSlots("19:00","22:30",STEP_MIN);
 
-    function isMonday(dateStr){
-      if(!dateStr) return false;
-      const d = new Date(dateStr + "T00:00:00");
-      return d.getDay()===1;
-    }
-    function setStatus(msg,kind){
+    function setStatus(msg, kind){
       statusEl.textContent = msg || "";
       statusEl.classList.remove("bad","ok");
       if(kind) statusEl.classList.add(kind);
     }
-    function resetTimeSelect(ph){ timeEl.innerHTML=`<option value="">${ph}</option>`; }
+
+    function isMonday(dateStr){
+      if(!dateStr) return false;
+      const d = new Date(dateStr + "T00:00:00");
+      return d.getDay() === 1;
+    }
+
+    function resetTimeSelect(placeholder){
+      timeEl.innerHTML = `<option value="">${placeholder}</option>`;
+    }
 
     function fillTimes(){
-      const d=dateEl.value;
-      const turno=turnoEl.value;
+      const d = dateEl.value;
+      const turno = turnoEl.value;
+
       if(!d){ resetTimeSelect("Seleziona prima la data"); return; }
       if(isMonday(d)){ resetTimeSelect("Lunedì chiuso"); return; }
       if(!turno){ resetTimeSelect("Seleziona prima il turno"); return; }
 
-      const slots = (turno==="pranzo") ? lunchSlots : dinnerSlots;
+      const slots = turno === "pranzo" ? lunchSlots : dinnerSlots;
       timeEl.innerHTML = `<option value="">Seleziona un orario</option>`;
       slots.forEach(t=>{
-        const opt=document.createElement("option");
-        opt.value=t; opt.textContent=t;
+        const opt = document.createElement("option");
+        opt.value = t;
+        opt.textContent = t;
         timeEl.appendChild(opt);
       });
     }
 
     function validateDay(){
-      const d=dateEl.value;
+      const d = dateEl.value;
+
       if(!d){
-        submitBtn.disabled=false; timeEl.disabled=false; turnoEl.disabled=false;
-        setStatus("",null); return;
+        submitBtn.disabled = false;
+        timeEl.disabled = false;
+        turnoEl.disabled = false;
+        setStatus("", null);
+        return;
       }
+
       if(isMonday(d)){
-        submitBtn.disabled=true; timeEl.disabled=true; turnoEl.disabled=true;
-        turnoEl.value=""; fillTimes();
+        submitBtn.disabled = true;
+        timeEl.disabled = true;
+        turnoEl.disabled = true;
+        turnoEl.value = "";
+        fillTimes();
         setStatus("Lunedì chiuso: non è possibile prenotare.", "bad");
         return;
       }
-      submitBtn.disabled=false; timeEl.disabled=false; turnoEl.disabled=false;
+
+      submitBtn.disabled = false;
+      timeEl.disabled = false;
+      turnoEl.disabled = false;
       setStatus("Seleziona data, turno e orario tra quelli disponibili.", null);
     }
 
     validateDay(); fillTimes();
-    dateEl.addEventListener("change", ()=>{ validateDay(); fillTimes(); });
+    dateEl.addEventListener("change", () => { validateDay(); fillTimes(); });
     turnoEl.addEventListener("change", fillTimes);
 
-    document.getElementById("contactForm").addEventListener("submit", async (e)=>{
+    // submit -> reservations
+    document.getElementById("contactForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const fd=new FormData(e.target);
-      const nome=String(fd.get("nome")||"").trim();
-      const tel=String(fd.get("telefono")||"").trim();
-      const dataSel=String(fd.get("data")||"");
-      const turnoSel=String(fd.get("turno")||"");
-      const oraSel=String(fd.get("ora")||"");
-      const persone=Number(fd.get("persone")||1);
-      const email=String(fd.get("email")||"").trim();
-      const note=String(fd.get("note")||"").trim();
+
+      const fd = new FormData(e.target);
+      const nome = String(fd.get("nome") || "").trim();
+      const tel = String(fd.get("telefono") || "").trim();
+      const dataSel = String(fd.get("data") || "");
+      const turnoSel = String(fd.get("turno") || "");
+      const oraSel = String(fd.get("ora") || "");
+      const persone = Number(fd.get("persone") || 1);
+      const email = String(fd.get("email") || "").trim();
+      const note = String(fd.get("note") || "").trim();
 
       if(isMonday(dataSel)){ setStatus("Lunedì chiuso: non è possibile prenotare.", "bad"); return; }
       if(!turnoSel){ setStatus("Seleziona il turno (Pranzo/Cena).", "bad"); return; }
       if(!oraSel){ setStatus("Seleziona un orario valido.", "bad"); return; }
 
+      // reservations.reservation_time è "time": passiamo "HH:MM"
       let notes = note || "";
       if(email) notes = (notes ? notes + "\n" : "") + `Email: ${email}`;
       notes = notes || null;
 
-      submitBtn.disabled=true;
+      submitBtn.disabled = true;
       setStatus("Invio in corso...", null);
 
       try{
-        await OM.createReservation({
+        await window.OM.createReservation({
           customer_name: nome,
           customer_phone: tel,
           reservation_date: dataSel,
@@ -628,15 +675,18 @@
         });
 
         setStatus(`Richiesta inviata ✅ (${nome}, ${persone} persone, ${dataSel} ${oraSel}). Ti ricontattiamo per conferma.`, "ok");
-        e.target.reset(); validateDay(); fillTimes();
+        e.target.reset();
+        validateDay(); fillTimes();
       }catch(err){
         setStatus("Errore invio: " + (err?.message || String(err)), "bad");
       }finally{
-        submitBtn.disabled=false;
+        submitBtn.disabled = false;
       }
     });
 
-    resetBtn.addEventListener("click", ()=> setTimeout(()=>{ validateDay(); fillTimes(); },0));
+    resetBtn.addEventListener("click", () => {
+      setTimeout(() => { validateDay(); fillTimes(); }, 0);
+    });
   </script>
 </body>
 </html>
