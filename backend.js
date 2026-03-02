@@ -1,13 +1,6 @@
 // backend.js
 (function(){
-  // ============================================================
-  // Officine Mare — Backend Supabase (window.supabase) v2
-  // ALLINEATO AL TUO SCHEMA DB
-  // ============================================================
-
-  function assert(cond, msg){
-    if(!cond) throw new Error(msg);
-  }
+  function assert(cond, msg){ if(!cond) throw new Error(msg); }
 
   function getClient(){
     assert(window.supabase && window.supabase.createClient, "Supabase JS non caricato (manca CDN @supabase/supabase-js v2).");
@@ -15,7 +8,7 @@
 
     if(!window.__OM_SB){
       window.__OM_SB = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+        auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true },
         realtime: { params: { eventsPerSecond: 10 } }
       });
     }
@@ -62,16 +55,12 @@
 
   // ---------- UTILS ----------
   const isoNow = () => new Date().toISOString();
-
-  function uniq(arr){
-    return Array.from(new Set(arr));
-  }
+  const uniq = (arr) => Array.from(new Set((arr||[]).filter(Boolean)));
 
   // ============================================================
-  // CLIENT: RESERVATIONS (tabella: reservations)
+  // CLIENT: RESERVATIONS
   // ============================================================
   async function createReservation(payload){
-    // payload: {customer_name, customer_phone, reservation_date, reservation_time, people, notes}
     const sb = getClient();
     const { data, error } = await sb
       .from("reservations")
@@ -83,7 +72,7 @@
   }
 
   // ============================================================
-  // MENU DAY (tabella: menu_day) — leggibile dal cliente se RLS permette
+  // MENU DAY
   // ============================================================
   async function getMenuDay(dayISO){
     const sb = getClient();
@@ -92,13 +81,12 @@
       .select("*")
       .eq("day", dayISO)
       .maybeSingle();
-
     if(error) throw error;
     return data;
   }
 
   // ============================================================
-  // STAFF: TABLES (restaurant_tables)
+  // STAFF: TABLES
   // ============================================================
   async function listRestaurantTables(){
     const sb = getClient();
@@ -108,7 +96,6 @@
       .from("restaurant_tables")
       .select("*")
       .order("code", { ascending: true });
-
     if(error) throw error;
     return data || [];
   }
@@ -121,13 +108,11 @@
       .from("restaurant_tables")
       .update({ is_open: !!isOpen })
       .eq("code", tableCode);
-
     if(error) throw error;
     return true;
   }
 
-  // Tavoli “occupati” = is_open=true (coerente con il tuo flusso: prenotato/assegnato → occupato)
-  // + in admin mostri anche “occupato per comanda aperta” via getOpenOrdersTableCodes()
+  // Tavoli con comanda “ancora visibile in admin”
   async function getOpenOrdersTableCodes(){
     const sb = getClient();
     await requireAuth();
@@ -135,14 +120,14 @@
     const { data, error } = await sb
       .from("orders")
       .select("table_code")
-      .is("admin_closed_at", null); // aperto per admin
+      .is("admin_closed_at", null);
 
     if(error) throw error;
     return new Set((data || []).map(x => x.table_code));
   }
 
   // ============================================================
-  // STAFF: MENU ITEMS (menu_items)
+  // STAFF: MENU ITEMS
   // ============================================================
   async function listMenuItems({ activeOnly=true } = {}){
     const sb = getClient();
@@ -198,13 +183,12 @@
       .eq("id", id)
       .select()
       .single();
-
     if(error) throw error;
     return data;
   }
 
   // ============================================================
-  // STAFF: RESERVATIONS RANGE + CRUD + TABLE ASSIGN
+  // STAFF: RESERVATIONS + TABLE ASSIGN (reservation_tables)
   // ============================================================
   async function listReservationsRange({ fromISO, toISO, status="all", q="" } = {}){
     const sb = getClient();
@@ -240,7 +224,6 @@
       .eq("id", reservationId)
       .select()
       .single();
-
     if(error) throw error;
     return data;
   }
@@ -258,44 +241,33 @@
     return (data || []).map(x => x.table_code);
   }
 
-  // Assegna tavoli (multi). Gestione robusta: prima cancella, poi inserisce.
+  // ✅ robusto: delete + insert
   async function setReservationTables(reservationId, tableCodes){
     const sb = getClient();
     await requireAuth();
 
-    const chosen = uniq((tableCodes || []).filter(Boolean));
+    const chosen = uniq(tableCodes);
 
-    // 1) delete vecchi
     const { error: e1 } = await sb
       .from("reservation_tables")
       .delete()
       .eq("reservation_id", reservationId);
     if(e1) throw e1;
 
-    // 2) insert nuovi
     if(chosen.length){
       const rows = chosen.map(code => ({ reservation_id: reservationId, table_code: code }));
       const { error: e2 } = await sb.from("reservation_tables").insert(rows);
       if(e2) throw e2;
 
-      // 3) marca tavoli come “occupati” (is_open=true)
-      //    (il tuo schema usa is_open per vedere libero/occupato/chiuso)
-      for(const code of chosen){
-        await sb.from("restaurant_tables").update({ is_open: true }).eq("code", code);
-      }
-
-      // 4) compat: salva anche table_code sulla reservations (opzionale) come “primary”
+      // compat: salva primary su reservations.table_code (opzionale)
       await sb.from("reservations").update({ table_code: chosen[0] }).eq("id", reservationId);
     }else{
-      // nessun tavolo assegnato → primary null
       await sb.from("reservations").update({ table_code: null }).eq("id", reservationId);
     }
 
     return true;
   }
 
-  // Per “Tavoli & Comande”: prendo prenotazioni confermate/arrivate nel range,
-  // ritorno gruppi con tavoli ordinati, e primary=primo tavolo
   async function getReservedTableGroups({ fromISO, toISO, statuses=["confirmed","arrived"] } = {}){
     const sb = getClient();
     await requireAuth();
@@ -310,16 +282,13 @@
 
     if(statuses?.length) query = query.in("status", statuses);
 
-    const { data: res, error: e0 } = await query;
-    if(e0) throw e0;
+    const { data: res, error } = await query;
+    if(error) throw error;
 
     const out = [];
     for(const r of (res || [])){
       const tables = await getReservationTables(r.id);
-      out.push({
-        reservation: r,
-        tables: (tables || []).slice().sort()
-      });
+      out.push({ reservation: r, tables: (tables || []).slice().sort() });
     }
     return out;
   }
@@ -327,12 +296,10 @@
   // ============================================================
   // ORDERS + ORDER_ITEMS
   // ============================================================
-  // createOrder: items => [{menu_item_id, item_name, qty, price?}]
   async function createOrder({ table_code, note=null, items }){
     const sb = getClient();
     const session = await requireAuth();
 
-    // orders: {table_code, created_by}
     const { data: order, error: e1 } = await sb
       .from("orders")
       .insert([{
@@ -342,7 +309,6 @@
       }])
       .select()
       .single();
-
     if(e1) throw e1;
 
     const rows = (items || [])
@@ -352,7 +318,6 @@
         menu_item_id: x.menu_item_id || null,
         item_name: x.item_name,
         qty: Number(x.qty),
-        // line_status default todo
         served: false
       }));
 
@@ -361,13 +326,9 @@
     const { error: e2 } = await sb.from("order_items").insert(rows);
     if(e2) throw e2;
 
-    // quando arriva una comanda, quel tavolo è sicuramente “occupato”
-    await sb.from("restaurant_tables").update({ is_open: true }).eq("code", table_code);
-
     return order;
   }
 
-  // Admin: vede ordini finché non chiude conto (admin_closed_at null)
   async function getAdminOpenOrdersWithItems(){
     const sb = getClient();
     await requireAuth();
@@ -382,7 +343,6 @@
     return data || [];
   }
 
-  // Kitchen: vede ordini finché non chiude cucina (kitchen_closed=false)
   async function getKitchenOpenOrdersWithItems(){
     const sb = getClient();
     await requireAuth();
@@ -397,12 +357,11 @@
     return data || [];
   }
 
-  // compat: vecchio nome usato nelle pagine → default admin
+  // compat vecchio nome
   async function getActiveOrdersWithItems(){
     return await getAdminOpenOrdersWithItems();
   }
 
-  // cucina: ready/not ready (non dipende da served)
   async function setLineReady(lineId, ready){
     const sb = getClient();
     await requireAuth();
@@ -422,18 +381,18 @@
     return data;
   }
 
-  // admin: served irreversibile
+  // ✅ servito irreversibile
   async function setLineServed(lineId){
     const sb = getClient();
     await requireAuth();
 
-    // se già servito → no-op
     const { data: cur, error: e0 } = await sb
       .from("order_items")
       .select("served")
       .eq("id", lineId)
       .single();
     if(e0) throw e0;
+
     if(cur?.served) return cur;
 
     const { data, error } = await sb
@@ -447,7 +406,7 @@
     return data;
   }
 
-  // cucina: chiude solo lato cucina quando tutto è ready
+  // ✅ cucina chiude solo cucina (kitchen_closed=true) se tutto pronto
   async function archiveOrderIfComplete(orderId){
     const sb = getClient();
     await requireAuth();
@@ -456,7 +415,6 @@
       .from("order_items")
       .select("id,line_status")
       .eq("order_id", orderId);
-
     if(e1) throw e1;
 
     const allReady = (items || []).length > 0 && items.every(x => x.line_status === "ready");
@@ -473,29 +431,19 @@
     return data;
   }
 
-  // admin: chiude conto/ordine → sparisce da admin, tavolo torna libero
+  // ✅ admin chiude conto (ordine sparisce da admin)
   async function closeOrder(orderId){
     const sb = getClient();
     await requireAuth();
 
-    const { data: o, error: e0 } = await sb
-      .from("orders")
-      .select("id,table_code")
-      .eq("id", orderId)
-      .single();
-    if(e0) throw e0;
-
-    const { data, error: e1 } = await sb
+    const { data, error } = await sb
       .from("orders")
       .update({ admin_closed_at: isoNow(), status: "archived" })
       .eq("id", orderId)
       .select()
       .single();
-    if(e1) throw e1;
 
-    // libera tavolo (ritorna “libero”)
-    await sb.from("restaurant_tables").update({ is_open: false }).eq("code", o.table_code);
-
+    if(error) throw error;
     return data;
   }
 
@@ -516,7 +464,6 @@
     return () => sb.removeChannel(channel);
   }
 
-  // Export globale
   window.OM = {
     sb: getClient,
 
@@ -527,7 +474,7 @@
     createReservation,
     getMenuDay,
 
-    // staff tables
+    // tables
     listRestaurantTables,
     setRestaurantTableOpen,
     getOpenOrdersTableCodes,
@@ -546,13 +493,13 @@
 
     // orders
     createOrder,
-    getActiveOrdersWithItems,          // compat admin
-    getAdminOpenOrdersWithItems,       // esplicita
-    getKitchenOpenOrdersWithItems,     // cucina
+    getActiveOrdersWithItems,
+    getAdminOpenOrdersWithItems,
+    getKitchenOpenOrdersWithItems,
     setLineReady,
     setLineServed,
-    archiveOrderIfComplete,            // cucina close
-    closeOrder,                        // admin close
+    archiveOrderIfComplete,
+    closeOrder,
 
     // realtime
     subscribeRealtime
