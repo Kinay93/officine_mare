@@ -57,7 +57,7 @@
       border-bottom: 1px solid rgba(255,255,255,.16);
     }
     .header-inner{
-      height: var(--headerH);
+      min-height: var(--headerH);
       display:flex; align-items:center; gap: 12px;
       padding: 10px 0;
       flex-wrap: wrap;
@@ -87,6 +87,21 @@
     .actions{ margin-left:auto; display:flex; gap:10px; flex-wrap: wrap; align-items:center; }
     main{ padding: 18px 0 64px; }
 
+    /* ✅ Drawer mobile */
+    .burger{ display:none; }
+    .drawerOverlay{ position: fixed; inset:0; background: rgba(0,0,0,.35); z-index: 80; display:none; }
+    .drawer{
+      position: fixed; top:0; left:0; height:100dvh; width: min(84vw, 350px);
+      background: rgba(22,62,90,.92); border-right: 1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(14px); z-index: 90;
+      transform: translateX(-105%); transition: transform .18s ease;
+      padding-top: calc(var(--safeTop) + 10px);
+    }
+    .drawer.open{ transform: translateX(0); }
+    .drawer .dHead{ padding: 14px 14px 10px; font-weight: 950; letter-spacing: .4px; display:flex; justify-content:space-between; align-items:center; }
+    .drawer .dList{ padding: 10px 14px 14px; display:grid; gap: 10px; }
+    .drawer .dItem{ width:100%; text-align:left; padding: 12px 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.08); color:#fff; font-weight: 950; cursor:pointer; }
+
     .card{
       background: var(--paper);
       color: var(--text);
@@ -101,7 +116,7 @@
 
     .row{ display:flex; gap:10px; flex-wrap: wrap; align-items:center; }
     select{
-      width: 220px;
+      width: 240px;
       padding: 12px 12px;
       border-radius: 14px;
       border: 1px solid rgba(11,34,54,.16);
@@ -152,9 +167,10 @@
     .soft{ background: rgba(36,91,124,.10); color: rgba(11,34,54,.92); }
     .mini{ padding: 8px 10px; font-size: 12px; }
 
-    @media (max-width: 560px){
-      select{ width: 100%; }
-      .actions{ margin-left:0; width:100%; }
+    @media (max-width: 720px){
+      .burger{ display:inline-flex; }
+      .actions{ width:100%; margin-left:0; }
+      select{ width:100%; }
     }
   </style>
 </head>
@@ -165,20 +181,37 @@
   <header>
     <div class="container header-inner">
       <div class="brand">🔎 Officine Mare — Cucina</div>
+
       <div class="actions">
+        <button class="ghost burger" id="burgerBtn">☰</button>
         <button class="ghost" id="soundBtn">🔔 Suono: ON</button>
         <button class="ghost" id="vibeBtn">📳 Vibra: ON</button>
         <button class="ghost" id="refreshBtn">Aggiorna</button>
         <a class="ghost" href="admin.html">↩ Admin</a>
       </div>
+
       <div class="row" style="width:100%; margin-top:6px;">
         <select id="filterSel">
           <option value="open">Aperte</option>
-          <option value="archived">Chiuse</option>
+          <option value="closed">Chiuse cucina</option>
         </select>
       </div>
     </div>
   </header>
+
+  <div class="drawerOverlay" id="drawerOverlay"></div>
+  <aside class="drawer" id="drawer">
+    <div class="dHead">
+      <span>Menu</span>
+      <button class="ghost" id="drawerClose">✕</button>
+    </div>
+    <div class="dList">
+      <a class="dItem" href="admin.html" style="text-decoration:none; display:block;">↩ Admin</a>
+      <button class="dItem" id="drawerRefresh">Aggiorna</button>
+      <button class="dItem" id="drawerSound">🔔 Suono: ON</button>
+      <button class="dItem" id="drawerVibe">📳 Vibra: ON</button>
+    </div>
+  </aside>
 
   <main class="container">
     <div class="card">
@@ -189,11 +222,20 @@
     </div>
   </main>
 
+  <!-- ✅ ORDINE SCRIPT CORRETTO -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
   <script src="backend.js"></script>
 
   <script>
+    // Drawer
+    const drawer = document.getElementById("drawer");
+    const drawerOverlay = document.getElementById("drawerOverlay");
+    document.getElementById("burgerBtn")?.addEventListener("click", () => { drawer.classList.add("open"); drawerOverlay.style.display="block"; });
+    function closeDrawer(){ drawer.classList.remove("open"); drawerOverlay.style.display="none"; }
+    drawerOverlay?.addEventListener("click", closeDrawer);
+    document.getElementById("drawerClose")?.addEventListener("click", closeDrawer);
+
     // Guard
     async function guard(){
       try{
@@ -206,14 +248,19 @@
     let soundOn = true, vibeOn = true;
     const soundBtn = document.getElementById("soundBtn");
     const vibeBtn = document.getElementById("vibeBtn");
-    soundBtn.addEventListener("click", () => {
-      soundOn = !soundOn;
+    const drawerSound = document.getElementById("drawerSound");
+    const drawerVibe = document.getElementById("drawerVibe");
+
+    function syncNotiButtons(){
       soundBtn.textContent = soundOn ? "🔔 Suono: ON" : "🔕 Suono: OFF";
-    });
-    vibeBtn.addEventListener("click", () => {
-      vibeOn = !vibeOn;
       vibeBtn.textContent = vibeOn ? "📳 Vibra: ON" : "📴 Vibra: OFF";
-    });
+      drawerSound.textContent = soundOn ? "🔔 Suono: ON" : "🔕 Suono: OFF";
+      drawerVibe.textContent = vibeOn ? "📳 Vibra: ON" : "📴 Vibra: OFF";
+    }
+    soundBtn.addEventListener("click", () => { soundOn = !soundOn; syncNotiButtons(); });
+    vibeBtn.addEventListener("click", () => { vibeOn = !vibeOn; syncNotiButtons(); });
+    drawerSound.addEventListener("click", () => { soundOn = !soundOn; syncNotiButtons(); });
+    drawerVibe.addEventListener("click", () => { vibeOn = !vibeOn; syncNotiButtons(); });
 
     function ping(){
       if(vibeOn && navigator.vibrate) navigator.vibrate([120,60,120]);
@@ -244,28 +291,27 @@
       catch { return null; }
     };
 
+    let LAST_IDS = new Set();
+
     async function loadOrders({silent=false} = {}){
       msg.textContent = "";
       try{
-        const all = await OM.getActiveOrdersWithItems(); // backend ritorna solo open
-        let orders = all;
-
-        // se vuoi vedere chiuse, per ora le lasciamo non mostrate (open only) come tuo flusso.
-        // (se vuoi anche le archived, serve una funzione backend dedicata; te la aggiungo quando vuoi)
-
-        if(filterSel.value === "archived"){
-          orders = []; // placeholder
+        let orders = [];
+        if(filterSel.value === "open"){
+          orders = await OM.getKitchenOpenOrdersWithItems();
+        }else{
+          // “chiuse cucina”: prendo tutte e filtro client-side (semplice)
+          const all = await OM.getAdminOpenOrdersWithItems(); // fallback se vuoi espandere dopo
+          orders = (all || []).filter(o => o.kitchen_closed === true);
         }
+
+        // ping su nuovi ordini (best effort)
+        const ids = new Set((orders||[]).map(o => o.id));
+        const isNew = [...ids].some(id => !LAST_IDS.has(id));
+        LAST_IDS = ids;
+        if(isNew && !silent) ping();
 
         renderOrders(orders);
-
-        if(!silent){
-          // ping se ci sono nuove comande "recenti" (best-effort)
-          // semplice: se esiste un order creato negli ultimi 20s
-          const now = Date.now();
-          const recent = orders.some(o => (now - new Date(o.created_at).getTime()) < 20000);
-          if(recent) ping();
-        }
       }catch(e){
         msg.textContent = "Errore: " + (e?.message || e);
       }
@@ -297,7 +343,7 @@
           </div>
           <div class="list" data-items></div>
           <div class="row" style="justify-content:flex-end;">
-            <button class="soft mini" data-act="archive">Chiudi (solo se tutto pronto)</button>
+            <button class="soft mini" data-act="archive">Chiudi cucina (solo se tutto pronto)</button>
           </div>
         `;
 
@@ -331,7 +377,7 @@
             </div>
           `;
 
-          // ✅ FIX: questo bottone è SEMPRE attivo per la riga (non dipende dal fatto che altre righe siano servite)
+          // ✅ “Pronto” sempre gestibile anche se altre righe sono servite
           row.querySelector("[data-act='toggleReady']").addEventListener("click", async () => {
             try{
               const btn = row.querySelector("[data-act='toggleReady']");
@@ -347,6 +393,7 @@
           wrap.appendChild(row);
         });
 
+        // ✅ chiude solo cucina
         box.querySelector("[data-act='archive']").addEventListener("click", async () => {
           try{
             await OM.archiveOrderIfComplete(o.id);
@@ -364,15 +411,15 @@
     }
 
     document.getElementById("refreshBtn").addEventListener("click", () => loadOrders());
+    document.getElementById("drawerRefresh").addEventListener("click", () => { closeDrawer(); loadOrders(); });
     filterSel.addEventListener("change", () => loadOrders({silent:true}));
 
-    // Realtime ping
+    // Realtime
     let unsub = null;
     async function startRealtime(){
       try{
         if(unsub) unsub();
         unsub = OM.subscribeRealtime((ev) => {
-          // se arrivano nuove righe/ordini, refresh leggero + ping
           if(ev.table === "orders" || ev.table === "order_items"){
             clearTimeout(window.__rtk);
             window.__rtk = setTimeout(() => loadOrders(), 250);
@@ -383,6 +430,7 @@
 
     (async function init(){
       await guard();
+      syncNotiButtons();
       await loadOrders({silent:true});
       await startRealtime();
     })();
