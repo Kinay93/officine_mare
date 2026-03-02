@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Officine Mare — Login Staff</title>
+
+  <style>
+    :root{
+      --bgTop:#245b7c; --bgMid:#1b4968; --bgBot:#163e5a;
+      --paper: rgba(255,255,255,.94);
+      --text:#0b2236; --muted: rgba(11,34,54,.62);
+      --borderD: rgba(11,34,54,.10);
+      --shadow: 0 26px 80px rgba(0,0,0,.22);
+      --radiusXL: 26px;
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
+
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:
+        radial-gradient(1200px 520px at 50% -170px, rgba(255,255,255,.16), transparent 60%),
+        linear-gradient(180deg, var(--bgTop) 0%, var(--bgMid) 42%, var(--bgBot) 100%);
+    }
+
+    .card{
+      width:min(92vw, 420px);
+      background:var(--paper);
+      color:var(--text);
+      border-radius:var(--radiusXL);
+      padding:28px;
+      box-shadow:var(--shadow);
+      border:1px solid var(--borderD);
+    }
+
+    h1{
+      margin:0 0 6px;
+      font-size:22px;
+      font-weight:950;
+    }
+
+    .muted{
+      color:var(--muted);
+      font-size:14px;
+      margin-bottom:20px;
+    }
+
+    label{
+      font-size:13px;
+      font-weight:900;
+      display:block;
+      margin:14px 0 6px;
+    }
+
+    input{
+      width:100%;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(11,34,54,.18);
+      outline:none;
+      font-size:14px;
+    }
+
+    button{
+      width:100%;
+      margin-top:18px;
+      padding:12px;
+      border-radius:999px;
+      border:none;
+      font-weight:900;
+      cursor:pointer;
+      color:#fff;
+      background:linear-gradient(180deg, rgba(36,91,124,.96), rgba(22,62,90,.98));
+      box-shadow:0 14px 28px rgba(0,0,0,.14);
+    }
+
+    .msg{
+      margin-top:14px;
+      font-size:13px;
+      font-weight:700;
+      min-height:20px;
+    }
+
+    @media (max-width:500px){
+      .card{ padding:22px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card">
+    <h1>🔐 Accesso Staff</h1>
+    <div class="muted">Officine Mare — area riservata</div>
+
+    <form id="loginForm">
+      <label>Email</label>
+      <input type="email" id="email" required autocomplete="username" />
+
+      <label>Password</label>
+      <input type="password" id="password" required autocomplete="current-password" />
+
+      <button type="submit">Accedi</button>
+    </form>
+
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <!-- ORDINE CORRETTO SCRIPT -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="backend.js"></script>
+
+  <script>
+    const form = document.getElementById("loginForm");
+    const msg = document.getElementById("msg");
+
+    async function redirectByRole(){
+      try{
+        const role = await OM.getMyRole();
+
+        if(role === "admin"){
+          location.href = "admin.html";
+        }else if(role === "kitchen"){
+          location.href = "kitchen.html";
+        }else{
+          msg.textContent = "Utente senza ruolo staff.";
+          msg.style.color = "red";
+          await OM.signOut();
+        }
+      }catch(e){
+        msg.textContent = "Errore ruolo: " + (e?.message || e);
+        msg.style.color = "red";
+      }
+    }
+
+    // Se già loggato → redirect automatico
+    (async function(){
+      try{
+        const s = await OM.getSession();
+        if(s) redirectByRole();
+      }catch{}
+    })();
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.textContent = "Accesso in corso...";
+      msg.style.color = "black";
+
+      try{
+        await OM.signIn(
+          document.getElementById("email").value,
+          document.getElementById("password").value
+        );
+        await redirectByRole();
+      }catch(err){
+        msg.textContent = "Credenziali non valide.";
+        msg.style.color = "red";
+      }
+    });
+  </script>
+
+</body>
+</html>
