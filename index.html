@@ -47,20 +47,16 @@
     }
 
     #bgImg{
-      position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100dvh;
+      position: fixed; inset: 0;
+      width: 100vw; height: 100dvh;
       object-fit: cover;
       z-index: 0;
       pointer-events: none;
       opacity: .72;
       filter: saturate(1.06) contrast(1.04) blur(.45px);
     }
-
     #overlay{
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       z-index: 1;
       pointer-events: none;
       background:
@@ -77,15 +73,13 @@
     }
 
     header{
-      position: fixed;
-      top:0; left:0; right:0;
+      position: fixed; top:0; left:0; right:0;
       z-index: 1000;
       padding-top: var(--safeTop);
       background: rgba(22,62,90,.78);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(255,255,255,.18);
     }
-
     .header-inner{
       height: 82px;
       display:grid;
@@ -94,7 +88,6 @@
       gap: 14px;
       padding: 10px 0;
     }
-
     .side-photo{
       height: 64px;
       width: 100%;
@@ -164,7 +157,6 @@
       align-items:end;
       margin-bottom: 22px;
     }
-
     .hero-left h1{ margin:0 0 8px; font-size: clamp(28px, 3.2vw, 46px); }
     .hero-left p{
       margin:0;
@@ -172,7 +164,6 @@
       max-width: 78ch;
       font-size: clamp(14px, 1.2vw, 18px);
     }
-
     .wave-line{
       height: 10px;
       border-radius: 999px;
@@ -180,7 +171,6 @@
       opacity: .85;
       margin: 10px 0 18px;
     }
-
     .hero-right{
       display:flex;
       justify-content:flex-end;
@@ -188,15 +178,14 @@
       flex-wrap: wrap;
       align-items:flex-end;
     }
-
     .chip{
       display:inline-flex;
       align-items:center;
       gap: 10px;
       padding: 10px 14px;
       border-radius: 999px;
-      background: var(--chipBg);
-      border: 1px solid var(--chipBd);
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.18);
       box-shadow: 0 14px 26px rgba(0,0,0,.14);
       color: rgba(255,255,255,.94);
       font-weight: 850;
@@ -219,12 +208,11 @@
       gap: 22px;
       align-items: stretch;
     }
-
     .card{
       background: var(--paper);
       color: var(--text);
       border-radius: var(--radiusXL);
-      border: 1px solid var(--borderD);
+      border: 1px solid rgba(11,34,54,.10);
       box-shadow: var(--shadow);
       padding: 22px;
       display:flex;
@@ -235,8 +223,7 @@
     }
     .card::before{
       content:"";
-      position:absolute;
-      inset:0;
+      position:absolute; inset:0;
       background:
         radial-gradient(900px 240px at 20% 0%, rgba(255,255,255,.55), rgba(255,255,255,0) 55%),
         radial-gradient(700px 220px at 90% 20%, rgba(255,255,255,.35), rgba(255,255,255,0) 60%);
@@ -311,7 +298,6 @@
       color: var(--text);
       outline:none;
     }
-
     .row{ display:flex; gap: 12px; flex-wrap: wrap; align-items:center; }
     .row > *{ flex:1; min-width: 190px; }
 
@@ -334,7 +320,6 @@
       .menu-box{ min-height: 300px; }
       #bgImg{ opacity: .55; }
     }
-
     @media (max-width: 560px){
       .side-photo{ display:none; }
       .header-inner{ grid-template-columns: 1fr; }
@@ -473,9 +458,10 @@
     </main>
   </div>
 
-  <!-- Supabase + config + backend -->
+  <!-- ✅ ORDINE SCRIPT CORRETTO -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
+  <!-- backend.js è un file separato: qui metti <script src="backend.js"></script> -->
   <script src="backend.js"></script>
 
   <script>
@@ -500,7 +486,7 @@
       document.getElementById("msg").textContent = "Oggi consigliamo crudi e grigliata di mare 🦞";
     });
 
-    // ---- Menu Day load (menu_day)
+    // ---- Menu Day load (menu_day.day)
     function pad(n){ return String(n).padStart(2,"0"); }
     function todayISO(){
       const d = new Date();
@@ -511,6 +497,7 @@
       const day = todayISO();
       try{
         const row = await window.OM.getMenuDay(day);
+
         const img = document.getElementById("menuImg");
         const txt = document.getElementById("menuText");
         const ph = document.getElementById("menuPlaceholder");
@@ -534,7 +521,6 @@
           return;
         }
       }catch(e){
-        // non bloccare la pagina cliente se menu_day non è leggibile per RLS
         console.warn("Menu day non leggibile:", e?.message || e);
       }
     }
@@ -569,7 +555,6 @@
       }
       return slots;
     }
-
     const lunchSlots = buildSlots("12:00","14:30",STEP_MIN);
     const dinnerSlots = buildSlots("19:00","22:30",STEP_MIN);
 
@@ -578,17 +563,14 @@
       statusEl.classList.remove("bad","ok");
       if(kind) statusEl.classList.add(kind);
     }
-
     function isMonday(dateStr){
       if(!dateStr) return false;
       const d = new Date(dateStr + "T00:00:00");
       return d.getDay() === 1;
     }
-
     function resetTimeSelect(placeholder){
       timeEl.innerHTML = `<option value="">${placeholder}</option>`;
     }
-
     function fillTimes(){
       const d = dateEl.value;
       const turno = turnoEl.value;
@@ -606,10 +588,8 @@
         timeEl.appendChild(opt);
       });
     }
-
     function validateDay(){
       const d = dateEl.value;
-
       if(!d){
         submitBtn.disabled = false;
         timeEl.disabled = false;
@@ -617,7 +597,6 @@
         setStatus("", null);
         return;
       }
-
       if(isMonday(d)){
         submitBtn.disabled = true;
         timeEl.disabled = true;
@@ -627,7 +606,6 @@
         setStatus("Lunedì chiuso: non è possibile prenotare.", "bad");
         return;
       }
-
       submitBtn.disabled = false;
       timeEl.disabled = false;
       turnoEl.disabled = false;
@@ -646,8 +624,8 @@
       const nome = String(fd.get("nome") || "").trim();
       const tel = String(fd.get("telefono") || "").trim();
       const dataSel = String(fd.get("data") || "");
-      const turnoSel = String(fd.get("turno") || "");
       const oraSel = String(fd.get("ora") || "");
+      const turnoSel = String(fd.get("turno") || "");
       const persone = Number(fd.get("persone") || 1);
       const email = String(fd.get("email") || "").trim();
       const note = String(fd.get("note") || "").trim();
@@ -656,7 +634,6 @@
       if(!turnoSel){ setStatus("Seleziona il turno (Pranzo/Cena).", "bad"); return; }
       if(!oraSel){ setStatus("Seleziona un orario valido.", "bad"); return; }
 
-      // reservations.reservation_time è "time": passiamo "HH:MM"
       let notes = note || "";
       if(email) notes = (notes ? notes + "\n" : "") + `Email: ${email}`;
       notes = notes || null;
