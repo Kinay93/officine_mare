@@ -52,7 +52,7 @@
 
     <section class="page-header">
       <h1>Menu</h1>
-      <p>Gestisci i piatti del ristorante</p>
+      <p>Gestisci i piatti e il menù del giorno</p>
     </section>
 
     <section class="card" style="padding:24px;margin-bottom:22px;">
@@ -76,6 +76,15 @@
       </div>
     </section>
 
+    <section class="card" style="padding:24px;margin-bottom:22px;">
+      <h3 style="margin-top:0;">Menù del giorno</h3>
+      <p style="color:var(--muted);">Inserisci il link immagine del menù aggiornato.</p>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:14px;">
+        <input id="menuDayImage" placeholder="https://... immagine menu del giorno">
+        <button class="btn btn-primary" onclick="saveDayMenu()">Salva menù del giorno</button>
+      </div>
+    </section>
+
     <section id="menuList" class="reservation-list"></section>
 
   </main>
@@ -83,7 +92,7 @@
 
 <script type="module">
 import { requireAuth, logout } from "./js/auth.service.js";
-import { getMenuItems, createMenuItem, toggleMenuItem } from "./js/menu.service.js";
+import { getMenuItems, createMenuItem, deleteMenuItem, saveMenuDay } from "./js/menu.service.js";
 
 await requireAuth();
 
@@ -119,9 +128,7 @@ async function loadMenu(){
         </div>
 
         <div class="reservation-actions" style="margin-top:0;">
-          <button class="btn ${item.active ? 'btn-danger' : 'btn-success'}" onclick="toggleItem('${item.id}', ${!item.active})">
-            ${item.active ? "Disattiva" : "Attiva"}
-          </button>
+          <button class="btn btn-danger" onclick="removeItem('${item.id}')">Elimina</button>
         </div>
       </div>
     </article>
@@ -155,9 +162,16 @@ async function saveItem(){
   loadMenu();
 }
 
-async function toggleItem(id, active){
-  await toggleMenuItem(id, active);
+async function removeItem(id){
+  if(!confirm("Eliminare il piatto?")) return;
+  await deleteMenuItem(id);
   loadMenu();
+}
+
+async function saveDayMenuAction(){
+  const image_url = document.getElementById("menuDayImage").value.trim();
+  await saveMenuDay({ image_url });
+  alert("Menù del giorno salvato");
 }
 
 async function doLogout(){
@@ -168,7 +182,8 @@ async function doLogout(){
 window.openDrawer = openDrawer;
 window.closeDrawer = closeDrawer;
 window.saveItem = saveItem;
-window.toggleItem = toggleItem;
+window.removeItem = removeItem;
+window.saveDayMenu = saveDayMenuAction;
 window.doLogout = doLogout;
 
 loadMenu();
