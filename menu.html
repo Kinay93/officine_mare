@@ -2,6 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Menu - Officine Mare</title>
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/admin.css">
@@ -9,117 +10,149 @@
 </head>
 <body>
 
-<div style="display:flex;min-height:100vh;">
+<div class="admin-shell">
 
-  <aside style="width:260px;background:#0B1F3A;color:white;padding:24px;">
-    <div style="text-align:center;margin-bottom:24px;">
-      <img src="assets/logo.jpg" height="80" onerror="this.src='assets/logo.png'">
-      <h2 style="margin-top:12px;">Officine Mare</h2>
-      <div style="opacity:0.7;">Pannello di gestione</div>
+  <header class="admin-topbar">
+    <div class="brand">
+      <img src="assets/logo.jpg" onerror="this.src='assets/logo.png'">
+      <span>Ristorante</span>
     </div>
+  </header>
 
-    <a class="sidebar-link" href="admin.html">Prenotazioni</a>
-    <a class="sidebar-link active" href="menu.html">Menu</a>
-    <a class="sidebar-link" href="tables.html">Tavoli</a>
-    <a class="sidebar-link" href="orders.html">Ordini</a>
-    <a class="sidebar-link" href="kitchen.html">Cucina</a>
-  </aside>
+  <div class="admin-layout">
 
-  <main style="flex:1;padding:30px;">
-    <div class="page-title">
+    <aside class="admin-sidebar">
       <div>
+        <div class="title">
+          <h2>Officine Mare</h2>
+          <p>Pannello di gestione</p>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="sidebar-link" href="admin.html">📅 Prenotazioni</a>
+          <a class="sidebar-link" href="tables.html">◻️ Tavoli</a>
+          <a class="sidebar-link active" href="menu.html">📖 Menu</a>
+          <a class="sidebar-link" href="orders.html">🍽️ Ordini</a>
+          <a class="sidebar-link" href="kitchen.html">👨‍🍳 Cucina</a>
+        </nav>
+      </div>
+
+      <div>
+        <button class="btn btn-soft" style="width:100%;" onclick="doLogout()">Esci</button>
+      </div>
+    </aside>
+
+    <main class="admin-content">
+
+      <section class="page-header">
         <h1>Menu</h1>
-        <p style="color:#6B7280;margin-top:8px;">Gestisci i piatti del ristorante</p>
-      </div>
-    </div>
+        <p>Gestisci i piatti del ristorante</p>
+      </section>
 
-    <div class="list-card" style="margin-bottom:24px;">
-      <h3>Aggiungi piatto</h3>
+      <section class="card" style="padding:24px; margin-bottom:22px;">
+        <div style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:14px; margin-bottom:14px;">
+          <input id="itemName" placeholder="Nome piatto">
+          <select id="itemCategory">
+            <option value="">Categoria</option>
+            <option value="antipasti">Antipasti</option>
+            <option value="primi">Primi</option>
+            <option value="secondi">Secondi</option>
+            <option value="contorni">Contorni</option>
+            <option value="bevande">Bevande</option>
+            <option value="dolci">Dolci</option>
+          </select>
+          <input id="itemPrice" type="number" step="0.01" placeholder="Prezzo">
+        </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
-        <input id="itemName" placeholder="Nome piatto">
-        <input id="itemCategory" placeholder="Categoria">
-        <input id="itemPrice" type="number" step="0.01" placeholder="Prezzo">
-      </div>
+        <div style="display:grid; grid-template-columns:1fr auto; gap:14px;">
+          <input id="itemDescription" placeholder="Descrizione piatto">
+          <button class="btn btn-primary" onclick="saveItem()">+ Salva piatto</button>
+        </div>
+      </section>
 
-      <div style="margin-top:16px;">
-        <button onclick="addMenuItem()">Salva</button>
-      </div>
-    </div>
+      <section id="menuList" class="reservation-list"></section>
 
-    <div id="menuList"></div>
-  </main>
-
+    </main>
+  </div>
 </div>
 
 <script type="module">
 import { requireAuth, logout } from "./js/auth.service.js";
-import {
-  updateReservationStatus,
-  searchReservations
-} from "./js/reservations.service.js";
-import {
-  getMenuItems,
-  createMenuItem,
-  toggleMenuItem
-} from "./js/menu.service.js";
+import { getMenuItems, createMenuItem, toggleMenuItem } from "./js/menu.service.js";
 
-async function loadMenu() {
+await requireAuth();
+
+async function loadMenu(){
   const items = await getMenuItems();
+  const box = document.getElementById("menuList");
 
-  let html = "";
+  if(!items.length){
+    box.innerHTML = `<div class="empty-card">Nessun piatto presente</div>`;
+    return;
+  }
 
-  items.forEach(item => {
-    html += `
-      <div class="list-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:20px;">
-          <div>
-            <h3 style="margin:0 0 8px 0;">${item.name}</h3>
-            <div style="color:#6B7280;">
-              ${item.category || "-"} · €${Number(item.price || 0).toFixed(2)}
-            </div>
-          </div>
-
-          <div>
-            <button onclick="toggleItem('${item.id}', ${!item.active})">
-              ${item.active ? "Disattiva" : "Attiva"}
-            </button>
+  box.innerHTML = items.map(item => `
+    <article class="reservation-card">
+      <div class="reservation-top">
+        <div>
+          <h3 class="reservation-name">${item.name}</h3>
+          <div class="reservation-meta">
+            <span>📖 ${item.category || "-"}</span>
+            <span>💶 €${Number(item.price || 0).toFixed(2)}</span>
+            ${item.description ? `<span>📝 ${item.description}</span>` : ""}
           </div>
         </div>
-      </div>
-    `;
-  });
 
-  document.getElementById("menuList").innerHTML =
-    html || "<div class='list-card'>Nessun piatto presente</div>";
+        <div class="reservation-actions" style="margin-top:0;">
+          <button class="btn ${item.active ? 'btn-danger' : 'btn-success'}" onclick="toggleItem('${item.id}', ${!item.active})">
+            ${item.active ? "Disattiva" : "Attiva"}
+          </button>
+        </div>
+      </div>
+    </article>
+  `).join("");
 }
 
-async function addMenuItem() {
-  const name = document.getElementById("itemName").value;
+async function saveItem(){
+  const name = document.getElementById("itemName").value.trim();
   const category = document.getElementById("itemCategory").value;
   const price = document.getElementById("itemPrice").value;
+  const description = document.getElementById("itemDescription").value.trim();
+
+  if(!name){
+    alert("Inserisci il nome del piatto");
+    return;
+  }
 
   await createMenuItem({
     name,
     category,
-    price: Number(price),
+    price: Number(price || 0),
+    description,
     active: true
   });
 
   document.getElementById("itemName").value = "";
   document.getElementById("itemCategory").value = "";
   document.getElementById("itemPrice").value = "";
+  document.getElementById("itemDescription").value = "";
 
   loadMenu();
 }
 
-async function toggleItem(id, active) {
+async function toggleItem(id, active){
   await toggleMenuItem(id, active);
   loadMenu();
 }
 
-window.addMenuItem = addMenuItem;
+async function doLogout(){
+  await logout();
+  location.href = "login.html";
+}
+
+window.saveItem = saveItem;
 window.toggleItem = toggleItem;
+window.doLogout = doLogout;
 
 loadMenu();
 </script>
