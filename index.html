@@ -60,11 +60,14 @@ let {error} = await supabase
 .insert({
 
 customer_name:document.getElementById("name").value,
-phone:document.getElementById("phone").value,
-email:document.getElementById("email").value,
+customer_phone:document.getElementById("phone").value,
 reservation_date:document.getElementById("date").value,
 reservation_time:document.getElementById("time").value,
-guests:document.getElementById("people").value
+people:Number(document.getElementById("people").value || 0),
+notes:document.getElementById("email").value
+  ? "Email: " + document.getElementById("email").value
+  : null,
+status:"pending"
 
 })
 
