@@ -2,148 +2,163 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Cucina - Officine Mare</title>
   <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/admin.css">
   <link rel="stylesheet" href="css/kitchen.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
 
-<div style="padding:30px;">
+<div class="admin-shell">
 
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
-    <div>
-      <h1 style="margin:0;">Cucina</h1>
-      <p style="color:#6B7280;">Nuove · In preparazione · Pronte</p>
+  <header class="admin-topbar">
+    <div class="brand">
+      <img src="assets/logo.jpg" onerror="this.src='assets/logo.png'">
+      <span>Cucina</span>
     </div>
-    <div style="display:flex;gap:10px;">
-      <button onclick="loadKitchen()">Aggiorna</button>
-      <button onclick="doLogout()">Logout</button>
-    </div>
+  </header>
+
+  <div class="admin-layout">
+
+    <aside class="admin-sidebar">
+      <div>
+        <div class="title">
+          <h2>Officine Mare</h2>
+          <p>Pannello di gestione</p>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="sidebar-link" href="admin.html">📅 Prenotazioni</a>
+          <a class="sidebar-link" href="tables.html">◻️ Tavoli</a>
+          <a class="sidebar-link" href="menu.html">📖 Menu</a>
+          <a class="sidebar-link" href="orders.html">🍽️ Ordini</a>
+          <a class="sidebar-link active" href="kitchen.html">👨‍🍳 Cucina</a>
+        </nav>
+      </div>
+
+      <div>
+        <button class="btn btn-soft" style="width:100%;" onclick="doLogout()">Esci</button>
+      </div>
+    </aside>
+
+    <main class="admin-content">
+      <section class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap;">
+        <div>
+          <h1>Cucina</h1>
+          <p>Nuove · In preparazione · Pronte</p>
+        </div>
+        <button class="btn btn-soft" onclick="loadKitchen()">Aggiorna</button>
+      </section>
+
+      <section class="kitchen-grid">
+        <div class="kitchen-col">
+          <h2>Nuove</h2>
+          <div id="newOrders"></div>
+        </div>
+        <div class="kitchen-col">
+          <h2>In preparazione</h2>
+          <div id="cookingOrders"></div>
+        </div>
+        <div class="kitchen-col">
+          <h2>Pronte</h2>
+          <div id="readyOrders"></div>
+        </div>
+      </section>
+    </main>
   </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;">
-    <div>
-      <h2>Nuove</h2>
-      <div id="newOrders"></div>
-    </div>
-    <div>
-      <h2>In preparazione</h2>
-      <div id="cookingOrders"></div>
-    </div>
-    <div>
-      <h2>Pronte</h2>
-      <div id="readyOrders"></div>
-    </div>
-  </div>
-
 </div>
 
 <script type="module">
 import { requireAuth, logout } from "./js/auth.service.js";
 import supabase from "./js/supabase-client.js";
-import {
-  getKitchenOrders,
-  setLineReady,
-  closeKitchenOrder,
-  printKitchenOrder
-} from "./js/kitchen-advanced.service.js";
+import { getKitchenOrders, setLineReady, closeKitchenOrder, printKitchenOrder } from "./js/kitchen-advanced.service.js";
 
 await requireAuth();
 
 let lastSeenIds = new Set();
 
-function getOrderStage(order) {
+function getOrderStage(order){
   const items = order.order_items || [];
-  if (!items.length) return "new";
+  if(!items.length) return "new";
 
   const readyCount = items.filter(i => i.line_status === "ready").length;
-
-  if (readyCount === 0) return "new";
-  if (readyCount < items.length) return "cooking";
+  if(readyCount === 0) return "new";
+  if(readyCount < items.length) return "cooking";
   return "ready";
 }
 
-function buildOrderCard(order) {
+function buildOrderCard(order){
   return `
-    <div class="card" style="margin-bottom:16px;">
-      <h3 style="margin-top:0;">Tavolo ${order.table_code || "-"}</h3>
-      <div style="color:#6B7280;margin-bottom:10px;">
-        ${new Date(order.created_at).toLocaleString("it-IT")}
-      </div>
+    <article class="kitchen-card">
+      <h3>Tavolo ${order.table_code || "-"}</h3>
+      <div class="kitchen-time">${new Date(order.created_at).toLocaleString("it-IT")}</div>
 
       ${(order.order_items || []).map(item => `
-        <div style="padding:10px 0;border-bottom:1px solid #eee;">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-            <div>
-              <strong>${item.item_name}</strong> x${item.qty}
-            </div>
-            <div>
-              ${
-                item.line_status === "ready"
-                  ? `<button class="secondary" onclick="toggleReady('${item.id}', false)">Da fare</button>`
-                  : `<button onclick="toggleReady('${item.id}', true)">Pronto</button>`
-              }
-            </div>
+        <div class="kitchen-line">
+          <div>
+            <strong>${item.item_name}</strong> x${item.qty}
+          </div>
+          <div>
+            ${
+              item.line_status === "ready"
+                ? `<button class="btn btn-soft" onclick="toggleReady('${item.id}', false)">Da fare</button>`
+                : `<button class="btn btn-success" onclick="toggleReady('${item.id}', true)">Pronto</button>`
+            }
           </div>
         </div>
       `).join("")}
 
-      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-        <button onclick="printOrderById('${order.id}')">Stampa</button>
-        <button class="secondary" onclick="closeKitchen('${order.id}')">Chiudi cucina</button>
+      <div class="kitchen-actions">
+        <button class="btn btn-primary" onclick="printOrderById('${order.id}')">Stampa</button>
+        <button class="btn btn-danger" onclick="closeKitchen('${order.id}')">Chiudi cucina</button>
       </div>
-    </div>
+    </article>
   `;
 }
 
-async function loadKitchen() {
+async function loadKitchen(){
   const orders = await getKitchenOrders();
 
-  const newBox = [];
-  const cookingBox = [];
-  const readyBox = [];
+  const newHtml = [];
+  const cookingHtml = [];
+  const readyHtml = [];
 
   orders.forEach(order => {
     const stage = getOrderStage(order);
     const html = buildOrderCard(order);
 
-    if (stage === "new") newBox.push(html);
-    else if (stage === "cooking") cookingBox.push(html);
-    else readyBox.push(html);
+    if(stage === "new") newHtml.push(html);
+    else if(stage === "cooking") cookingHtml.push(html);
+    else readyHtml.push(html);
   });
 
-  document.getElementById("newOrders").innerHTML =
-    newBox.join("") || "<div class='card'>Nessuna comanda</div>";
-
-  document.getElementById("cookingOrders").innerHTML =
-    cookingBox.join("") || "<div class='card'>Nessuna comanda</div>";
-
-  document.getElementById("readyOrders").innerHTML =
-    readyBox.join("") || "<div class='card'>Nessuna comanda</div>";
+  document.getElementById("newOrders").innerHTML = newHtml.join("") || `<div class="empty-card">Nessuna comanda</div>`;
+  document.getElementById("cookingOrders").innerHTML = cookingHtml.join("") || `<div class="empty-card">Nessuna comanda</div>`;
+  document.getElementById("readyOrders").innerHTML = readyHtml.join("") || `<div class="empty-card">Nessuna comanda</div>`;
 
   window.currentKitchenOrders = orders;
 }
 
-async function toggleReady(lineId, ready) {
+async function toggleReady(lineId, ready){
   await setLineReady(lineId, ready);
   loadKitchen();
 }
 
-async function closeKitchen(orderId) {
+async function closeKitchen(orderId){
   await closeKitchenOrder(orderId);
   loadKitchen();
 }
 
-function printOrderById(orderId) {
-  const order = (window.currentKitchenOrders || []).find(x => x.id == orderId);
-  if (!order) return;
-  printKitchenOrder(order);
+function printOrderById(orderId){
+  const order = (window.currentKitchenOrders || []).find(x => String(x.id) === String(orderId));
+  if(order) printKitchenOrder(order);
 }
 
-async function doLogout() {
+async function doLogout(){
   await logout();
-  window.location.href = "login.html";
+  location.href = "login.html";
 }
 
 window.loadKitchen = loadKitchen;
@@ -154,31 +169,26 @@ window.doLogout = doLogout;
 
 await loadKitchen();
 
-supabase
-  .channel("kitchen-live")
-  .on(
-    "postgres_changes",
-    { event: "*", schema: "public", table: "orders" },
-    async () => {
-      const orders = await getKitchenOrders();
-
-      const currentIds = new Set(orders.map(o => o.id));
-      const newOrders = orders.filter(o => !lastSeenIds.has(o.id));
-
-      if (newOrders.length) {
-        newOrders.forEach(order => {
-          printKitchenOrder(order);
-        });
-      }
-
-      lastSeenIds = currentIds;
-      loadKitchen();
-    }
-  )
-  .subscribe();
-
 const firstLoad = await getKitchenOrders();
 lastSeenIds = new Set(firstLoad.map(x => x.id));
+
+supabase
+  .channel("kitchen-live")
+  .on("postgres_changes", { event:"*", schema:"public", table:"orders" }, async () => {
+    const orders = await getKitchenOrders();
+    const currentIds = new Set(orders.map(o => o.id));
+    const newOrders = orders.filter(o => !lastSeenIds.has(o.id));
+
+    if(newOrders.length){
+      newOrders.forEach(order => {
+        printKitchenOrder(order);
+      });
+    }
+
+    lastSeenIds = currentIds;
+    loadKitchen();
+  })
+  .subscribe();
 </script>
 
 </body>
