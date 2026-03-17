@@ -14,69 +14,171 @@
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
     <div>
       <h1 style="margin:0;">Cucina</h1>
-      <p style="color:#6B7280;">Comande in lavorazione</p>
+      <p style="color:#6B7280;">Nuove · In preparazione · Pronte</p>
     </div>
-    <a href="admin.html"><button>Torna admin</button></a>
+    <div style="display:flex;gap:10px;">
+      <button onclick="loadKitchen()">Aggiorna</button>
+      <button onclick="doLogout()">Logout</button>
+    </div>
   </div>
 
-  <div id="orders"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;">
+    <div>
+      <h2>Nuove</h2>
+      <div id="newOrders"></div>
+    </div>
+    <div>
+      <h2>In preparazione</h2>
+      <div id="cookingOrders"></div>
+    </div>
+    <div>
+      <h2>Pronte</h2>
+      <div id="readyOrders"></div>
+    </div>
+  </div>
 
 </div>
 
 <script type="module">
 import { requireAuth, logout } from "./js/auth.service.js";
-import {
-  updateReservationStatus,
-  searchReservations
-} from "./js/reservations.service.js";
 import supabase from "./js/supabase-client.js";
+import {
+  getKitchenOrders,
+  setLineReady,
+  closeKitchenOrder,
+  printKitchenOrder
+} from "./js/kitchen-advanced.service.js";
 
-async function loadOrders() {
-  let { data, error } = await supabase
-    .from("orders")
-    .select("*, order_items(*)")
-    .eq("status", "open")
-    .order("created_at", { ascending: false });
+await requireAuth();
 
-  if (error) {
-    console.error(error);
-    return;
-  }
+let lastSeenIds = new Set();
 
-  let html = "";
+function getOrderStage(order) {
+  const items = order.order_items || [];
+  if (!items.length) return "new";
 
-  data.forEach(order => {
-    html += `
-      <div class="card" style="margin-bottom:16px;">
-        <h2 style="margin-top:0;">Tavolo ${order.table_code || "-"}</h2>
-        <div style="color:#6B7280;margin-bottom:12px;">
-          ${new Date(order.created_at).toLocaleString("it-IT")}
-        </div>
-        <div>
-          ${(order.order_items || []).map(item => `
-            <div style="padding:8px 0;border-bottom:1px solid #eee;">
-              ${item.item_name} x${item.qty}
-            </div>
-          `).join("")}
-        </div>
-      </div>
-    `;
-  });
+  const readyCount = items.filter(i => i.line_status === "ready").length;
 
-  document.getElementById("orders").innerHTML =
-    html || "<div class='card'>Nessuna comanda aperta</div>";
+  if (readyCount === 0) return "new";
+  if (readyCount < items.length) return "cooking";
+  return "ready";
 }
 
-loadOrders();
+function buildOrderCard(order) {
+  return `
+    <div class="card" style="margin-bottom:16px;">
+      <h3 style="margin-top:0;">Tavolo ${order.table_code || "-"}</h3>
+      <div style="color:#6B7280;margin-bottom:10px;">
+        ${new Date(order.created_at).toLocaleString("it-IT")}
+      </div>
+
+      ${(order.order_items || []).map(item => `
+        <div style="padding:10px 0;border-bottom:1px solid #eee;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+            <div>
+              <strong>${item.item_name}</strong> x${item.qty}
+            </div>
+            <div>
+              ${
+                item.line_status === "ready"
+                  ? `<button class="secondary" onclick="toggleReady('${item.id}', false)">Da fare</button>`
+                  : `<button onclick="toggleReady('${item.id}', true)">Pronto</button>`
+              }
+            </div>
+          </div>
+        </div>
+      `).join("")}
+
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button onclick="printOrderById('${order.id}')">Stampa</button>
+        <button class="secondary" onclick="closeKitchen('${order.id}')">Chiudi cucina</button>
+      </div>
+    </div>
+  `;
+}
+
+async function loadKitchen() {
+  const orders = await getKitchenOrders();
+
+  const newBox = [];
+  const cookingBox = [];
+  const readyBox = [];
+
+  orders.forEach(order => {
+    const stage = getOrderStage(order);
+    const html = buildOrderCard(order);
+
+    if (stage === "new") newBox.push(html);
+    else if (stage === "cooking") cookingBox.push(html);
+    else readyBox.push(html);
+  });
+
+  document.getElementById("newOrders").innerHTML =
+    newBox.join("") || "<div class='card'>Nessuna comanda</div>";
+
+  document.getElementById("cookingOrders").innerHTML =
+    cookingBox.join("") || "<div class='card'>Nessuna comanda</div>";
+
+  document.getElementById("readyOrders").innerHTML =
+    readyBox.join("") || "<div class='card'>Nessuna comanda</div>";
+
+  window.currentKitchenOrders = orders;
+}
+
+async function toggleReady(lineId, ready) {
+  await setLineReady(lineId, ready);
+  loadKitchen();
+}
+
+async function closeKitchen(orderId) {
+  await closeKitchenOrder(orderId);
+  loadKitchen();
+}
+
+function printOrderById(orderId) {
+  const order = (window.currentKitchenOrders || []).find(x => x.id == orderId);
+  if (!order) return;
+  printKitchenOrder(order);
+}
+
+async function doLogout() {
+  await logout();
+  window.location.href = "login.html";
+}
+
+window.loadKitchen = loadKitchen;
+window.toggleReady = toggleReady;
+window.closeKitchen = closeKitchen;
+window.printOrderById = printOrderById;
+window.doLogout = doLogout;
+
+await loadKitchen();
 
 supabase
-  .channel("kitchen-orders")
+  .channel("kitchen-live")
   .on(
     "postgres_changes",
     { event: "*", schema: "public", table: "orders" },
-    () => loadOrders()
+    async () => {
+      const orders = await getKitchenOrders();
+
+      const currentIds = new Set(orders.map(o => o.id));
+      const newOrders = orders.filter(o => !lastSeenIds.has(o.id));
+
+      if (newOrders.length) {
+        newOrders.forEach(order => {
+          printKitchenOrder(order);
+        });
+      }
+
+      lastSeenIds = currentIds;
+      loadKitchen();
+    }
   )
   .subscribe();
+
+const firstLoad = await getKitchenOrders();
+lastSeenIds = new Set(firstLoad.map(x => x.id));
 </script>
 
 </body>
