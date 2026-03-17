@@ -13,66 +13,77 @@
 <div class="admin-shell">
 
   <header class="admin-topbar">
-    <div class="brand">
-      <img src="assets/logo.jpg" onerror="this.src='assets/logo.png'">
-      <span>Ristorante</span>
+    <div class="topbar-left">
+      <button class="hamburger-btn" onclick="openDrawer()">☰</button>
+      <div class="brand">
+        <img src="assets/logo.png">
+        <span>Ristorante</span>
+      </div>
     </div>
   </header>
 
-  <div class="admin-layout">
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
 
-    <aside class="admin-sidebar">
-      <div>
-        <div class="title">
+  <aside class="drawer" id="drawer">
+    <div>
+      <div class="drawer-head">
+        <div class="drawer-title">
           <h2>Officine Mare</h2>
           <p>Pannello di gestione</p>
         </div>
-
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="admin.html">📅 Prenotazioni</a>
-          <a class="sidebar-link" href="tables.html">◻️ Tavoli</a>
-          <a class="sidebar-link" href="menu.html">📖 Menu</a>
-          <a class="sidebar-link active" href="orders.html">🍽️ Ordini</a>
-          <a class="sidebar-link" href="kitchen.html">👨‍🍳 Cucina</a>
-        </nav>
+        <button class="drawer-close" onclick="closeDrawer()">✕</button>
       </div>
 
+      <nav class="drawer-nav">
+        <a class="drawer-link" href="admin.html">📅 Prenotazioni</a>
+        <a class="drawer-link" href="tables.html">◻️ Tavoli</a>
+        <a class="drawer-link" href="menu.html">📖 Menu</a>
+        <a class="drawer-link active" href="orders.html">🍽️ Ordini</a>
+        <a class="drawer-link" href="kitchen.html">👨‍🍳 Cucina</a>
+      </nav>
+    </div>
+
+    <div>
+      <button class="btn btn-soft" style="width:100%;" onclick="doLogout()">Esci</button>
+    </div>
+  </aside>
+
+  <main class="admin-content">
+
+    <section class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;">
       <div>
-        <button class="btn btn-soft" style="width:100%;" onclick="doLogout()">Esci</button>
+        <h1>Ordini</h1>
+        <p>Prendi ordini e inviali in cucina</p>
       </div>
-    </aside>
 
-    <main class="admin-content">
+      <button class="btn btn-primary" onclick="openModal()">＋ Nuovo ordine</button>
+    </section>
 
-      <section class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap;">
-        <div>
-          <h1>Ordini</h1>
-          <p>Prendi ordini e inviali in cucina</p>
-        </div>
-        <button class="btn btn-primary" onclick="openModal()">＋ Nuovo ordine</button>
-      </section>
+    <section id="ordersList" class="reservation-list"></section>
 
-      <section id="ordersList" class="reservation-list"></section>
-
-    </main>
-  </div>
+  </main>
 </div>
 
-<div id="orderModal" style="display:none; position:fixed; inset:0; background:rgba(10,29,56,0.45); z-index:1000; padding:40px;">
-  <div class="card" style="max-width:960px; margin:0 auto; padding:26px; max-height:90vh; overflow:auto;">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px;">
-      <h2 style="margin:0;">Nuovo ordine</h2>
+<div class="order-modal" id="orderModal">
+  <div class="order-modal-box">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;">
+      <div>
+        <h2 style="margin:0;font-size:22px;">Nuovo ordine</h2>
+        <p style="margin:8px 0 0;color:var(--muted);">Seleziona tavolo e piatti del menu</p>
+      </div>
       <button class="btn btn-soft" onclick="closeModal()">✕</button>
     </div>
 
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
       <select id="orderTable"></select>
-      <input id="orderNote" placeholder="Nota comanda">
+      <input id="orderNote" placeholder="Nota comanda (opzionale)">
     </div>
 
     <div id="menuPicker"></div>
 
-    <div style="margin-top:18px; display:flex; justify-content:flex-end;">
+    <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px;">
+      <button class="btn btn-soft" onclick="closeModal()">Chiudi</button>
       <button class="btn btn-primary" onclick="saveOrder()">Invia in cucina</button>
     </div>
   </div>
@@ -88,12 +99,22 @@ await requireAuth();
 
 let menuItemsCache = [];
 
+function openDrawer(){
+  document.getElementById("drawer").classList.add("open");
+  document.getElementById("drawerOverlay").classList.add("open");
+}
+
+function closeDrawer(){
+  document.getElementById("drawer").classList.remove("open");
+  document.getElementById("drawerOverlay").classList.remove("open");
+}
+
 function openModal(){
-  document.getElementById("orderModal").style.display = "block";
+  document.getElementById("orderModal").classList.add("open");
 }
 
 function closeModal(){
-  document.getElementById("orderModal").style.display = "none";
+  document.getElementById("orderModal").classList.remove("open");
 }
 
 async function loadSelectableTables(){
@@ -105,7 +126,7 @@ async function loadSelectableTables(){
   select.innerHTML = available.length
     ? available.map(r => `
       <option value="${r.assigned_table_code}">
-        ${r.assigned_table_code} - ${r.customer_name} - ${r.reservation_date} ${String(r.reservation_time).slice(0,5)}
+        ${r.assigned_table_code} - ${r.customer_name} - ${r.reservation_date} ${String(r.reservation_time || "").slice(0,5)}
       </option>
     `).join("")
     : `<option value="">Nessun tavolo disponibile</option>`;
@@ -115,19 +136,46 @@ async function loadMenuPicker(){
   menuItemsCache = await getMenuItems();
   const box = document.getElementById("menuPicker");
 
-  box.innerHTML = menuItemsCache.map(item => `
-    <div class="card" style="padding:16px; margin-bottom:12px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:14px;">
-        <div>
-          <div style="font-weight:700; font-size:18px;">${item.name}</div>
-          <div style="color:var(--muted); margin-top:6px;">
-            ${item.category || "-"} · €${Number(item.price || 0).toFixed(2)}
+  const grouped = {};
+  menuItemsCache.forEach(item => {
+    const cat = item.category || "Altro";
+    if(!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(item);
+  });
+
+  box.innerHTML = Object.keys(grouped).map(category => `
+    <div style="margin-bottom:22px;">
+      <div style="font-size:14px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:10px;">
+        ${category}
+      </div>
+      <div class="menu-grid">
+        ${grouped[category].map(item => `
+          <div class="menu-pick-card">
+            <div>
+              <div style="font-weight:800;font-size:18px;">${item.name}</div>
+              <div style="color:var(--muted);margin-top:6px;">€${Number(item.price || 0).toFixed(2)}</div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button class="btn btn-soft" style="padding:8px 12px;" onclick="changeQty('${item.id}', -1)">−</button>
+              <div id="qty-label-${item.id}" style="min-width:24px;text-align:center;font-weight:800;">0</div>
+              <button class="btn btn-primary" style="padding:8px 12px;" onclick="changeQty('${item.id}', 1)">＋</button>
+              <input type="hidden" id="qty-${item.id}" value="0">
+            </div>
           </div>
-        </div>
-        <input type="number" min="0" value="0" id="qty-${item.id}" style="width:90px;">
+        `).join("")}
       </div>
     </div>
   `).join("");
+}
+
+function changeQty(itemId, delta){
+  const input = document.getElementById(`qty-${itemId}`);
+  const label = document.getElementById(`qty-label-${itemId}`);
+  let value = Number(input.value || 0) + delta;
+  if(value < 0) value = 0;
+  input.value = value;
+  label.textContent = value;
 }
 
 async function saveOrder(){
@@ -153,8 +201,9 @@ async function saveOrder(){
   }
 
   await createOrderWithItems({ table_code, note, items });
+
   closeModal();
-  loadOrders();
+  await loadOrders();
 }
 
 async function loadOrders(){
@@ -171,10 +220,10 @@ async function loadOrders(){
       <div class="reservation-top">
         <div>
           <h3 class="reservation-name">Tavolo ${order.table_code || "-"}</h3>
-          ${order.note ? `<div style="margin-top:8px; color:var(--muted);">${order.note}</div>` : ""}
+          ${order.note ? `<div style="margin-top:8px;color:var(--muted);">${order.note}</div>` : ""}
           <div style="margin-top:18px;">
             ${(order.order_items || []).map(item => `
-              <div style="padding:10px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:12px;">
+              <div style="padding:12px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px;">
                 <div>
                   <strong>${item.item_name}</strong> x${item.qty}
                   ${item.served ? `<span class="badge badge-confirmed" style="margin-left:8px;">Servito</span>` : ""}
@@ -208,8 +257,11 @@ async function doLogout(){
   location.href = "login.html";
 }
 
+window.openDrawer = openDrawer;
+window.closeDrawer = closeDrawer;
 window.openModal = openModal;
 window.closeModal = closeModal;
+window.changeQty = changeQty;
 window.saveOrder = saveOrder;
 window.serveLine = serveLine;
 window.closeOrder = closeOrder;
