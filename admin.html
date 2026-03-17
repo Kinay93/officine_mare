@@ -2,93 +2,121 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Admin - Officine Mare</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prenotazioni - Officine Mare</title>
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/admin.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
 
-<div style="display:flex;min-height:100vh;">
+<div class="admin-shell">
 
-  <aside style="width:260px;background:#0B1F3A;color:white;padding:24px;display:flex;flex-direction:column;justify-content:space-between;">
+  <header class="admin-topbar">
+    <div class="topbar-left">
+      <button class="hamburger-btn" onclick="openDrawer()">☰</button>
+      <div class="brand">
+        <img src="assets/logo.png">
+        <span>Ristorante</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+  <aside class="drawer" id="drawer">
     <div>
-      <div style="text-align:center;margin-bottom:24px;">
-        <img src="assets/logo.jpg" height="80" onerror="this.src='assets/logo.png'">
-        <h2 style="margin-top:12px;">Officine Mare</h2>
-        <div style="opacity:0.7;">Pannello di gestione</div>
+      <div class="drawer-head">
+        <div class="drawer-title">
+          <h2>Officine Mare</h2>
+          <p>Pannello di gestione</p>
+        </div>
+        <button class="drawer-close" onclick="closeDrawer()">✕</button>
       </div>
 
-      <a class="sidebar-link active" href="admin.html">Prenotazioni</a>
-      <a class="sidebar-link" href="menu.html">Menu</a>
-      <a class="sidebar-link" href="tables.html">Tavoli</a>
-      <a class="sidebar-link" href="orders.html">Ordini</a>
-      <a class="sidebar-link" href="kitchen.html">Cucina</a>
+      <nav class="drawer-nav">
+        <a class="drawer-link active" href="admin.html">📅 Prenotazioni</a>
+        <a class="drawer-link" href="tables.html">◻️ Tavoli</a>
+        <a class="drawer-link" href="menu.html">📖 Menu</a>
+        <a class="drawer-link" href="orders.html">🍽️ Ordini</a>
+        <a class="drawer-link" href="kitchen.html">👨‍🍳 Cucina</a>
+      </nav>
     </div>
 
-    <div style="margin-top:30px;">
-      <button style="width:100%;" onclick="doLogout()">Logout</button>
+    <div>
+      <button class="btn btn-soft" style="width:100%;" onclick="doLogout()">Esci</button>
     </div>
   </aside>
 
-  <main style="flex:1;padding:30px;">
-    <div class="page-title">
-      <div>
-        <h1>Prenotazioni</h1>
-        <p style="color:#6B7280;margin-top:8px;">Conferma, assegna tavoli e invia conferma al cliente</p>
-      </div>
-    </div>
+  <main class="admin-content">
 
-    <div class="stats">
-      <div class="stat-box">
-        <small>In attesa</small>
-        <strong id="pendingCount">0</strong>
-      </div>
-      <div class="stat-box">
-        <small>Confermate</small>
-        <strong id="confirmedCount">0</strong>
-      </div>
-      <div class="stat-box">
-        <small>Conferme inviate</small>
-        <strong id="sentCount">0</strong>
-      </div>
-    </div>
+    <section class="page-header">
+      <h1>Prenotazioni</h1>
+      <p>Gestisci le prenotazioni del ristorante</p>
+    </section>
 
-    <div class="top-filters">
-      <input id="searchInput" placeholder="Cerca per nome o telefono">
-      <select id="statusFilter">
-        <option value="all">Tutti gli stati</option>
-        <option value="pending">In attesa</option>
-        <option value="confirmed">Confermate</option>
-        <option value="cancelled">Annullate</option>
-      </select>
-      <button onclick="loadReservations()">Aggiorna</button>
-    </div>
+    <section class="stats-grid">
+      <div class="stat-card warning">
+        <div class="label">In attesa</div>
+        <div class="value" id="pendingCount">0</div>
+      </div>
+      <div class="stat-card success">
+        <div class="label">Confermate</div>
+        <div class="value" id="confirmedCount">0</div>
+      </div>
+      <div class="stat-card info">
+        <div class="label">Oggi</div>
+        <div class="value" id="todayCount">0</div>
+      </div>
+    </section>
 
-    <div id="reservationsList"></div>
+    <section class="filters-bar">
+      <div class="search-box">
+        <input id="searchInput" placeholder="Cerca per nome o telefono...">
+      </div>
+      <div class="filter-box">
+        <select id="statusFilter">
+          <option value="all">Tutti gli stati</option>
+          <option value="pending">In attesa</option>
+          <option value="confirmed">Confermate</option>
+          <option value="cancelled">Annullate</option>
+          <option value="arrived">Arrivate</option>
+        </select>
+      </div>
+    </section>
+
+    <section id="reservationsList" class="reservation-list"></section>
+
   </main>
-
 </div>
 
 <script type="module">
 import { requireAuth, logout } from "./js/auth.service.js";
-import {
-  updateReservationStatus,
-  searchReservations
-} from "./js/reservations.service.js";
+import { searchReservations, updateReservationStatus } from "./js/reservations.service.js";
 import { getTables } from "./js/ui.js";
-import {
-  getReservationTables,
-  setReservationTables
-} from "./js/reservation-tables.service.js";
-import {
-  sendReservationConfirmation,
-  markConfirmationSent
-} from "./js/notifications.service.js";
+import { getReservationTables, setReservationTables } from "./js/reservation-tables.service.js";
 
 await requireAuth();
 
-async function loadReservations() {
+function openDrawer(){
+  document.getElementById("drawer").classList.add("open");
+  document.getElementById("drawerOverlay").classList.add("open");
+}
+
+function closeDrawer(){
+  document.getElementById("drawer").classList.remove("open");
+  document.getElementById("drawerOverlay").classList.remove("open");
+}
+
+function isToday(dateStr){
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = String(today.getMonth()+1).padStart(2,"0");
+  const d = String(today.getDate()).padStart(2,"0");
+  return dateStr === `${y}-${m}-${d}`;
+}
+
+async function loadReservations(){
   const search = document.getElementById("searchInput").value;
   const status = document.getElementById("statusFilter").value;
 
@@ -101,50 +129,57 @@ async function loadReservations() {
   document.getElementById("confirmedCount").textContent =
     data.filter(x => x.status === "confirmed").length;
 
-  document.getElementById("sentCount").textContent =
-    data.filter(x => x.confirmation_sent === true).length;
+  document.getElementById("todayCount").textContent =
+    data.filter(x => isToday(x.reservation_date)).length;
+
+  const list = document.getElementById("reservationsList");
+
+  if(!data.length){
+    list.innerHTML = `<div class="empty-card">Nessuna prenotazione trovata</div>`;
+    return;
+  }
 
   let html = "";
 
-  for (const r of data) {
-    const badgeClass =
-      r.status === "confirmed"
-        ? "confirmed"
-        : r.status === "cancelled"
-        ? "cancelled"
-        : "pending";
+  for(const r of data){
+    const assigned = await getReservationTables(r.id);
+    const assignedCodes = assigned.map(x => x.table_code);
 
-    const assignedTables = await getReservationTables(r.id);
-    const assignedCodes = assignedTables.map(x => x.table_code);
+    let badgeClass = "badge-pending";
+    if(r.status === "confirmed") badgeClass = "badge-confirmed";
+    if(r.status === "cancelled") badgeClass = "badge-cancelled";
 
     html += `
-      <div class="list-card">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;">
+      <article class="reservation-card">
+        <div class="reservation-top">
           <div>
-            <h3 style="margin:0 0 8px 0;">${r.customer_name}</h3>
-            <span class="badge ${badgeClass}">${r.status}</span>
-            ${
-              r.confirmation_sent
-                ? `<span class="badge confirmed" style="margin-left:8px;">conferma inviata</span>`
-                : ``
-            }
+            <h3 class="reservation-name">${r.customer_name}</h3>
+            <div style="margin-top:10px;">
+              <span class="badge ${badgeClass}">
+                ${r.status === "pending" ? "In attesa" :
+                  r.status === "confirmed" ? "Confermata" :
+                  r.status === "cancelled" ? "Annullata" :
+                  r.status}
+              </span>
+            </div>
 
-            <div style="margin-top:14px;color:#6B7280;">
-              <div>📅 ${r.reservation_date}</div>
-              <div>🕒 ${String(r.reservation_time).slice(0,5)}</div>
-              <div>👥 ${r.people} persone</div>
-              <div>📞 ${r.customer_phone || "-"}</div>
-              <div>📝 ${r.notes || "-"}</div>
+            <div class="reservation-meta">
+              <span>📅 ${r.reservation_date}</span>
+              <span>🕒 ${String(r.reservation_time || "").slice(0,5)}</span>
+              <span>👥 ${r.people} persone</span>
+              <span>📞 ${r.customer_phone || "-"}</span>
+              ${r.notes ? `<span>✉️ ${r.notes}</span>` : ""}
             </div>
           </div>
         </div>
 
-        <div style="margin-top:18px;">
+        <div style="margin-top:22px;">
           <strong>Assegna tavoli</strong>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px;">
+          <div class="table-check-grid">
             ${tables.map(t => `
-              <label style="display:flex;gap:8px;align-items:center;border:1px solid #ddd;padding:10px;border-radius:10px;">
-                <input type="checkbox"
+              <label class="table-check-item">
+                <input
+                  type="checkbox"
                   class="table-check-${r.id}"
                   value="${t.code}"
                   ${assignedCodes.includes(t.code) ? "checked" : ""}
@@ -156,70 +191,45 @@ async function loadReservations() {
           </div>
         </div>
 
-        <div class="row-actions">
-          <button onclick="saveReservationTables('${r.id}')">Salva tavoli</button>
-          <button onclick="confirmReservation('${r.id}')">Conferma</button>
-          <button class="secondary" onclick="cancelReservation('${r.id}')">Annulla</button>
-          <button onclick="sendConfirmation('${r.id}', '${r.customer_name}', '${r.customer_phone || ""}', '${r.reservation_date}', '${String(r.reservation_time).slice(0,5)}')">
-            Invia conferma
-          </button>
+        <div class="reservation-actions">
+          <button class="btn btn-soft" onclick="saveReservationTables('${r.id}')">Salva tavoli</button>
+          <button class="btn btn-success" onclick="confirmReservation('${r.id}')">✓ Conferma</button>
+          <button class="btn btn-danger" onclick="cancelReservation('${r.id}')">✕ Rifiuta</button>
         </div>
-      </div>
+      </article>
     `;
   }
 
-  document.getElementById("reservationsList").innerHTML =
-    html || "<div class='list-card'>Nessuna prenotazione trovata</div>";
+  list.innerHTML = html;
 }
 
-async function saveReservationTables(id) {
+async function saveReservationTables(id){
   const checks = document.querySelectorAll(`.table-check-${id}:checked`);
   const codes = Array.from(checks).map(x => x.value);
   await setReservationTables(id, codes);
-  alert("Tavoli assegnati");
   loadReservations();
 }
 
-async function confirmReservation(id) {
+async function confirmReservation(id){
   await updateReservationStatus(id, "confirmed");
   loadReservations();
 }
 
-async function cancelReservation(id) {
+async function cancelReservation(id){
   await updateReservationStatus(id, "cancelled");
   loadReservations();
 }
 
-async function sendConfirmation(id, customerName, customerPhone, reservationDate, reservationTime) {
-  try {
-    await sendReservationConfirmation({
-      reservationId: id,
-      customerName,
-      customerPhone,
-      reservationDate,
-      reservationTime,
-      channel: "email_or_message"
-    });
-
-    await markConfirmationSent(id);
-
-    alert("Conferma inviata");
-    loadReservations();
-  } catch (err) {
-    alert("Errore invio conferma: " + (err?.message || err));
-  }
-}
-
 async function doLogout(){
   await logout();
-  window.location.href = "login.html";
+  location.href = "login.html";
 }
 
-window.loadReservations = loadReservations;
+window.openDrawer = openDrawer;
+window.closeDrawer = closeDrawer;
+window.saveReservationTables = saveReservationTables;
 window.confirmReservation = confirmReservation;
 window.cancelReservation = cancelReservation;
-window.saveReservationTables = saveReservationTables;
-window.sendConfirmation = sendConfirmation;
 window.doLogout = doLogout;
 
 document.getElementById("searchInput").addEventListener("input", loadReservations);
