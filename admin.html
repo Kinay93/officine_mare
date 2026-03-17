@@ -35,7 +35,7 @@
     <div class="page-title">
       <div>
         <h1>Prenotazioni</h1>
-        <p style="color:#6B7280;margin-top:8px;">Gestisci le prenotazioni del ristorante</p>
+        <p style="color:#6B7280;margin-top:8px;">Conferma, assegna tavoli e invia conferma al cliente</p>
       </div>
     </div>
 
@@ -49,8 +49,8 @@
         <strong id="confirmedCount">0</strong>
       </div>
       <div class="stat-box">
-        <small>Annullate</small>
-        <strong id="cancelledCount">0</strong>
+        <small>Conferme inviate</small>
+        <strong id="sentCount">0</strong>
       </div>
     </div>
 
@@ -76,6 +76,15 @@ import {
   updateReservationStatus,
   searchReservations
 } from "./js/reservations.service.js";
+import { getTables } from "./js/ui.js";
+import {
+  getReservationTables,
+  setReservationTables
+} from "./js/reservation-tables.service.js";
+import {
+  sendReservationConfirmation,
+  markConfirmationSent
+} from "./js/notifications.service.js";
 
 await requireAuth();
 
@@ -84,6 +93,7 @@ async function loadReservations() {
   const status = document.getElementById("statusFilter").value;
 
   const data = await searchReservations(search, status);
+  const tables = await getTables();
 
   document.getElementById("pendingCount").textContent =
     data.filter(x => x.status === "pending").length;
@@ -91,12 +101,12 @@ async function loadReservations() {
   document.getElementById("confirmedCount").textContent =
     data.filter(x => x.status === "confirmed").length;
 
-  document.getElementById("cancelledCount").textContent =
-    data.filter(x => x.status === "cancelled").length;
+  document.getElementById("sentCount").textContent =
+    data.filter(x => x.confirmation_sent === true).length;
 
   let html = "";
 
-  data.forEach(r => {
+  for (const r of data) {
     const badgeClass =
       r.status === "confirmed"
         ? "confirmed"
@@ -104,12 +114,20 @@ async function loadReservations() {
         ? "cancelled"
         : "pending";
 
+    const assignedTables = await getReservationTables(r.id);
+    const assignedCodes = assignedTables.map(x => x.table_code);
+
     html += `
       <div class="list-card">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;">
           <div>
             <h3 style="margin:0 0 8px 0;">${r.customer_name}</h3>
             <span class="badge ${badgeClass}">${r.status}</span>
+            ${
+              r.confirmation_sent
+                ? `<span class="badge confirmed" style="margin-left:8px;">conferma inviata</span>`
+                : ``
+            }
 
             <div style="margin-top:14px;color:#6B7280;">
               <div>📅 ${r.reservation_date}</div>
@@ -121,16 +139,45 @@ async function loadReservations() {
           </div>
         </div>
 
+        <div style="margin-top:18px;">
+          <strong>Assegna tavoli</strong>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px;">
+            ${tables.map(t => `
+              <label style="display:flex;gap:8px;align-items:center;border:1px solid #ddd;padding:10px;border-radius:10px;">
+                <input type="checkbox"
+                  class="table-check-${r.id}"
+                  value="${t.code}"
+                  ${assignedCodes.includes(t.code) ? "checked" : ""}
+                  ${!t.is_open ? "disabled" : ""}
+                >
+                <span>${t.code}</span>
+              </label>
+            `).join("")}
+          </div>
+        </div>
+
         <div class="row-actions">
+          <button onclick="saveReservationTables('${r.id}')">Salva tavoli</button>
           <button onclick="confirmReservation('${r.id}')">Conferma</button>
           <button class="secondary" onclick="cancelReservation('${r.id}')">Annulla</button>
+          <button onclick="sendConfirmation('${r.id}', '${r.customer_name}', '${r.customer_phone || ""}', '${r.reservation_date}', '${String(r.reservation_time).slice(0,5)}')">
+            Invia conferma
+          </button>
         </div>
       </div>
     `;
-  });
+  }
 
   document.getElementById("reservationsList").innerHTML =
     html || "<div class='list-card'>Nessuna prenotazione trovata</div>";
+}
+
+async function saveReservationTables(id) {
+  const checks = document.querySelectorAll(`.table-check-${id}:checked`);
+  const codes = Array.from(checks).map(x => x.value);
+  await setReservationTables(id, codes);
+  alert("Tavoli assegnati");
+  loadReservations();
 }
 
 async function confirmReservation(id) {
@@ -143,6 +190,26 @@ async function cancelReservation(id) {
   loadReservations();
 }
 
+async function sendConfirmation(id, customerName, customerPhone, reservationDate, reservationTime) {
+  try {
+    await sendReservationConfirmation({
+      reservationId: id,
+      customerName,
+      customerPhone,
+      reservationDate,
+      reservationTime,
+      channel: "email_or_message"
+    });
+
+    await markConfirmationSent(id);
+
+    alert("Conferma inviata");
+    loadReservations();
+  } catch (err) {
+    alert("Errore invio conferma: " + (err?.message || err));
+  }
+}
+
 async function doLogout(){
   await logout();
   window.location.href = "login.html";
@@ -151,6 +218,8 @@ async function doLogout(){
 window.loadReservations = loadReservations;
 window.confirmReservation = confirmReservation;
 window.cancelReservation = cancelReservation;
+window.saveReservationTables = saveReservationTables;
+window.sendConfirmation = sendConfirmation;
 window.doLogout = doLogout;
 
 document.getElementById("searchInput").addEventListener("input", loadReservations);
