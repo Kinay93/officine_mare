@@ -11,18 +11,24 @@
 
 <div style="display:flex;min-height:100vh;">
 
-  <aside style="width:260px;background:#0B1F3A;color:white;padding:24px;">
-    <div style="text-align:center;margin-bottom:24px;">
-      <img src="assets/logo.jpg" height="80" onerror="this.src='assets/logo.png'">
-      <h2 style="margin-top:12px;">Officine Mare</h2>
-      <div style="opacity:0.7;">Pannello di gestione</div>
+  <aside style="width:260px;background:#0B1F3A;color:white;padding:24px;display:flex;flex-direction:column;justify-content:space-between;">
+    <div>
+      <div style="text-align:center;margin-bottom:24px;">
+        <img src="assets/logo.jpg" height="80" onerror="this.src='assets/logo.png'">
+        <h2 style="margin-top:12px;">Officine Mare</h2>
+        <div style="opacity:0.7;">Pannello di gestione</div>
+      </div>
+
+      <a class="sidebar-link active" href="admin.html">Prenotazioni</a>
+      <a class="sidebar-link" href="menu.html">Menu</a>
+      <a class="sidebar-link" href="tables.html">Tavoli</a>
+      <a class="sidebar-link" href="orders.html">Ordini</a>
+      <a class="sidebar-link" href="kitchen.html">Cucina</a>
     </div>
 
-    <a class="sidebar-link active" href="admin.html">Prenotazioni</a>
-    <a class="sidebar-link" href="menu.html">Menu</a>
-    <a class="sidebar-link" href="tables.html">Tavoli</a>
-    <a class="sidebar-link" href="orders.html">Ordini</a>
-    <a class="sidebar-link" href="kitchen.html">Cucina</a>
+    <div style="margin-top:30px;">
+      <button style="width:100%;" onclick="doLogout()">Logout</button>
+    </div>
   </aside>
 
   <main style="flex:1;padding:30px;">
@@ -65,11 +71,13 @@
 </div>
 
 <script type="module">
+import { requireAuth, logout } from "./js/auth.service.js";
 import {
-  getReservations,
   updateReservationStatus,
   searchReservations
 } from "./js/reservations.service.js";
+
+await requireAuth();
 
 async function loadReservations() {
   const search = document.getElementById("searchInput").value;
@@ -121,7 +129,8 @@ async function loadReservations() {
     `;
   });
 
-  document.getElementById("reservationsList").innerHTML = html || "<div class='list-card'>Nessuna prenotazione trovata</div>";
+  document.getElementById("reservationsList").innerHTML =
+    html || "<div class='list-card'>Nessuna prenotazione trovata</div>";
 }
 
 async function confirmReservation(id) {
@@ -134,9 +143,15 @@ async function cancelReservation(id) {
   loadReservations();
 }
 
+async function doLogout(){
+  await logout();
+  window.location.href = "login.html";
+}
+
 window.loadReservations = loadReservations;
 window.confirmReservation = confirmReservation;
 window.cancelReservation = cancelReservation;
+window.doLogout = doLogout;
 
 document.getElementById("searchInput").addEventListener("input", loadReservations);
 document.getElementById("statusFilter").addEventListener("change", loadReservations);
