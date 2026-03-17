@@ -1,78 +1,147 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="it">
 <head>
-
-<meta charset="UTF-8">
-
-<link rel="stylesheet" href="css/theme.css">
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
+  <meta charset="UTF-8">
+  <title>Admin - Officine Mare</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
-
 <body>
 
-<div style="display:flex">
+<div style="display:flex;min-height:100vh;">
 
-<div style="width:220px;background:#0B1F3A;color:white;height:100vh;padding:20px">
+  <aside style="width:260px;background:#0B1F3A;color:white;padding:24px;">
+    <div style="text-align:center;margin-bottom:24px;">
+      <img src="assets/logo.jpg" height="80" onerror="this.src='assets/logo.png'">
+      <h2 style="margin-top:12px;">Officine Mare</h2>
+      <div style="opacity:0.7;">Pannello di gestione</div>
+    </div>
 
-<h2>Officine Mare</h2>
+    <a class="sidebar-link active" href="admin.html">Prenotazioni</a>
+    <a class="sidebar-link" href="menu.html">Menu</a>
+    <a class="sidebar-link" href="tables.html">Tavoli</a>
+    <a class="sidebar-link" href="orders.html">Ordini</a>
+    <a class="sidebar-link" href="kitchen.html">Cucina</a>
+  </aside>
 
-<p>Dashboard</p>
-<p>Prenotazioni</p>
-<p>Menu</p>
-<p>Tavoli</p>
-<p>Ordini</p>
+  <main style="flex:1;padding:30px;">
+    <div class="page-title">
+      <div>
+        <h1>Prenotazioni</h1>
+        <p style="color:#6B7280;margin-top:8px;">Gestisci le prenotazioni del ristorante</p>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-box">
+        <small>In attesa</small>
+        <strong id="pendingCount">0</strong>
+      </div>
+      <div class="stat-box">
+        <small>Confermate</small>
+        <strong id="confirmedCount">0</strong>
+      </div>
+      <div class="stat-box">
+        <small>Annullate</small>
+        <strong id="cancelledCount">0</strong>
+      </div>
+    </div>
+
+    <div class="top-filters">
+      <input id="searchInput" placeholder="Cerca per nome o telefono">
+      <select id="statusFilter">
+        <option value="all">Tutti gli stati</option>
+        <option value="pending">In attesa</option>
+        <option value="confirmed">Confermate</option>
+        <option value="cancelled">Annullate</option>
+      </select>
+      <button onclick="loadReservations()">Aggiorna</button>
+    </div>
+
+    <div id="reservationsList"></div>
+  </main>
 
 </div>
-
-
-<div style="flex:1;padding:40px">
-
-<h1>Prenotazioni</h1>
-
-<div id="reservations"></div>
-
-</div>
-
-</div>
-
 
 <script type="module">
+import {
+  getReservations,
+  updateReservationStatus,
+  searchReservations
+} from "./js/reservations.service.js";
 
-import supabase from "./js/supabase-client.js"
+async function loadReservations() {
+  const search = document.getElementById("searchInput").value;
+  const status = document.getElementById("statusFilter").value;
 
-async function loadReservations(){
+  const data = await searchReservations(search, status);
 
-let {data} = await supabase
-.from("reservations")
-.select("*")
+  document.getElementById("pendingCount").textContent =
+    data.filter(x => x.status === "pending").length;
 
-let html=""
+  document.getElementById("confirmedCount").textContent =
+    data.filter(x => x.status === "confirmed").length;
 
-data.forEach(r=>{
+  document.getElementById("cancelledCount").textContent =
+    data.filter(x => x.status === "cancelled").length;
 
-html+=`
+  let html = "";
 
-<div class="card">
+  data.forEach(r => {
+    const badgeClass =
+      r.status === "confirmed"
+        ? "confirmed"
+        : r.status === "cancelled"
+        ? "cancelled"
+        : "pending";
 
-<b>${r.customer_name}</b><br>
-${r.reservation_date} ${r.reservation_time}<br>
-${r.guests} persone
+    html += `
+      <div class="list-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;">
+          <div>
+            <h3 style="margin:0 0 8px 0;">${r.customer_name}</h3>
+            <span class="badge ${badgeClass}">${r.status}</span>
 
-</div>
+            <div style="margin-top:14px;color:#6B7280;">
+              <div>📅 ${r.reservation_date}</div>
+              <div>🕒 ${String(r.reservation_time).slice(0,5)}</div>
+              <div>👥 ${r.people} persone</div>
+              <div>📞 ${r.customer_phone || "-"}</div>
+              <div>📝 ${r.notes || "-"}</div>
+            </div>
+          </div>
+        </div>
 
-`
+        <div class="row-actions">
+          <button onclick="confirmReservation('${r.id}')">Conferma</button>
+          <button class="secondary" onclick="cancelReservation('${r.id}')">Annulla</button>
+        </div>
+      </div>
+    `;
+  });
 
-})
-
-document.getElementById("reservations").innerHTML=html
-
+  document.getElementById("reservationsList").innerHTML = html || "<div class='list-card'>Nessuna prenotazione trovata</div>";
 }
 
-loadReservations()
+async function confirmReservation(id) {
+  await updateReservationStatus(id, "confirmed");
+  loadReservations();
+}
 
+async function cancelReservation(id) {
+  await updateReservationStatus(id, "cancelled");
+  loadReservations();
+}
+
+window.loadReservations = loadReservations;
+window.confirmReservation = confirmReservation;
+window.cancelReservation = cancelReservation;
+
+document.getElementById("searchInput").addEventListener("input", loadReservations);
+document.getElementById("statusFilter").addEventListener("change", loadReservations);
+
+loadReservations();
 </script>
 
 </body>
