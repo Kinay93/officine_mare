@@ -1,90 +1,223 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="it">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prenota il tuo tavolo - Officine Mare</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    .booking-page{
+      min-height:100vh;
+      background:linear-gradient(180deg,#0B1F3A 0%, #173A63 48%, #F7F2EA 48%, #F7F2EA 100%);
+    }
 
-<meta charset="UTF-8">
-<title>Officine di Mare</title>
+    .hero{
+      min-height:470px;
+      background:
+        linear-gradient(to bottom, rgba(11,31,58,.28), rgba(11,31,58,.58)),
+        url("assets/hero.jpg") center/cover no-repeat;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      padding:24px 20px 0;
+    }
 
-<link rel="stylesheet" href="css/theme.css">
+    .hero-inner{
+      text-align:center;
+      color:#fff;
+      max-width:920px;
+      padding-top:6px;
+    }
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    .hero-logo{
+      width:92px;
+      height:92px;
+      border-radius:22px;
+      object-fit:cover;
+      border:4px solid rgba(255,255,255,.78);
+      box-shadow:0 12px 30px rgba(0,0,0,.20);
+      margin-bottom:18px;
+    }
 
+    .hero-title{
+      margin:0;
+      font-size:70px;
+      line-height:1.02;
+      font-weight:900;
+      letter-spacing:-1px;
+    }
+
+    .hero-subtitle{
+      margin:16px 0 0;
+      font-size:19px;
+      opacity:.96;
+    }
+
+    .booking-card{
+      width:min(900px, 92vw);
+      margin:-72px auto 46px;
+      background:rgba(255,255,255,.98);
+      border:1px solid var(--border);
+      border-radius:28px;
+      box-shadow:0 18px 50px rgba(16,40,74,.12);
+      padding:34px;
+      position:relative;
+      z-index:5;
+    }
+
+    .booking-card h2{
+      margin:0 0 6px;
+      font-size:22px;
+    }
+
+    .booking-card p{
+      margin:0 0 22px;
+      color:var(--muted);
+    }
+
+    .booking-grid-2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+      margin-bottom:16px;
+    }
+
+    .field label{
+      display:block;
+      margin-bottom:8px;
+      font-weight:700;
+      color:var(--text);
+    }
+
+    .booking-actions{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:20px;
+    }
+
+    .booking-status{
+      margin-top:16px;
+      font-size:14px;
+    }
+
+    .booking-status.ok{ color:#0F8A5A; font-weight:700; }
+    .booking-status.bad{ color:#C53B3B; font-weight:700; }
+
+    @media (max-width:900px){
+      .hero-title{ font-size:44px; }
+      .booking-grid-2{ grid-template-columns:1fr; }
+      .booking-card{ padding:24px; }
+    }
+  </style>
 </head>
+<body class="booking-page">
 
-<body>
+  <section class="hero">
+    <div class="hero-inner">
+      <img src="assets/logo.png" alt="Logo Officine Mare" class="hero-logo">
+      <h1 class="hero-title">Prenota il tuo tavolo</h1>
+      <p class="hero-subtitle">Un’esperienza culinaria unica ti aspetta</p>
+    </div>
+  </section>
 
-<div style="text-align:center;padding:40px">
+  <section class="booking-card">
+    <h2>Prenotazione</h2>
+    <p>Compila il form e invia la tua richiesta al ristorante.</p>
 
-<img src="assets/logo.jpg" height="80"
-onerror="this.src='assets/logo.png'">
+    <form id="bookingForm">
+      <div class="booking-grid-2">
+        <div class="field">
+          <label>Nome *</label>
+          <input id="name" required placeholder="Mario Rossi">
+        </div>
+        <div class="field">
+          <label>Telefono *</label>
+          <input id="phone" required placeholder="+39 333 1234567">
+        </div>
+      </div>
 
-<h1>Prenota il tuo tavolo</h1>
+      <div class="booking-grid-2">
+        <div class="field">
+          <label>Email</label>
+          <input id="email" type="email" placeholder="mario@email.com">
+        </div>
+        <div class="field">
+          <label>Persone *</label>
+          <select id="people" required>
+            <option value="">N°</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option>
+            <option>5</option><option>6</option><option>7</option><option>8</option>
+            <option>9</option><option>10</option><option>11</option><option>12</option>
+          </select>
+        </div>
+      </div>
 
-</div>
+      <div class="booking-grid-2">
+        <div class="field">
+          <label>Data *</label>
+          <input id="date" type="date" required>
+        </div>
+        <div class="field">
+          <label>Ora *</label>
+          <input id="time" type="time" required>
+        </div>
+      </div>
 
+      <div class="field">
+        <label>Note</label>
+        <textarea id="notes" rows="4" placeholder="Allergie, richieste, preferenze..."></textarea>
+      </div>
 
-<div class="card" style="max-width:500px;margin:auto">
+      <div class="booking-actions">
+        <button type="submit" class="btn btn-primary">Prenota ora</button>
+        <button type="reset" class="btn btn-soft">Pulisci</button>
+      </div>
 
-<label>Nome</label>
-<input id="name">
-
-<label>Telefono</label>
-<input id="phone">
-
-<label>Email</label>
-<input id="email">
-
-<label>Data</label>
-<input id="date" type="date">
-
-<label>Ora</label>
-<input id="time" type="time">
-
-<label>Persone</label>
-<input id="people" type="number">
-
-<button onclick="book()">Prenota</button>
-
-</div>
-
+      <div id="bookingStatus" class="booking-status"></div>
+    </form>
+  </section>
 
 <script type="module">
-
 import supabase from "./js/supabase-client.js";
 
-async function book(){
+const form = document.getElementById("bookingForm");
+const statusBox = document.getElementById("bookingStatus");
 
-let {error} = await supabase
-.from("reservations")
-.insert({
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-customer_name:document.getElementById("name").value,
-customer_phone:document.getElementById("phone").value,
-reservation_date:document.getElementById("date").value,
-reservation_time:document.getElementById("time").value,
-people:Number(document.getElementById("people").value || 0),
-notes:document.getElementById("email").value
-  ? "Email: " + document.getElementById("email").value
-  : null,
-status:"pending"
+  const payload = {
+    customer_name: document.getElementById("name").value.trim(),
+    customer_phone: document.getElementById("phone").value.trim(),
+    reservation_date: document.getElementById("date").value,
+    reservation_time: document.getElementById("time").value,
+    people: Number(document.getElementById("people").value || 0),
+    notes: [
+      document.getElementById("notes").value.trim(),
+      document.getElementById("email").value.trim()
+        ? "Email: " + document.getElementById("email").value.trim()
+        : ""
+    ].filter(Boolean).join(" | "),
+    status: "pending"
+  };
 
-})
+  try{
+    statusBox.className = "booking-status";
+    statusBox.textContent = "Invio in corso...";
 
-if(error){
+    const { error } = await supabase.from("reservations").insert([payload]);
+    if(error) throw error;
 
-alert("Errore prenotazione")
-
-}else{
-
-alert("Prenotazione inviata!")
-
-}
-
-}
-
-window.book = book
-
+    form.reset();
+    statusBox.className = "booking-status ok";
+    statusBox.textContent = "Prenotazione inviata con successo.";
+  }catch(err){
+    statusBox.className = "booking-status bad";
+    statusBox.textContent = "Errore invio: " + (err?.message || err);
+  }
+});
 </script>
 
 </body>
