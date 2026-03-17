@@ -55,7 +55,6 @@
         <h1>Ordini</h1>
         <p>Prendi ordini e inviali in cucina</p>
       </div>
-
       <button class="btn btn-primary" onclick="openModal()">＋ Nuovo ordine</button>
     </section>
 
@@ -66,7 +65,6 @@
 
 <div class="order-modal" id="orderModal">
   <div class="order-modal-box">
-
     <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;">
       <div>
         <h2 style="margin:0;font-size:22px;">Nuovo ordine</h2>
@@ -93,7 +91,7 @@
 import { requireAuth, logout } from "./js/auth.service.js";
 import { getReservations } from "./js/reservations.service.js";
 import { getMenuItems } from "./js/menu.service.js";
-import { getOpenOrdersWithItems, createOrderWithItems, setLineServed, closeAdminOrder } from "./js/orders-advanced.service.js";
+import { getOpenOrdersWithItems, createOrderWithItems, fireLine, closeAdminOrder } from "./js/orders-advanced.service.js";
 
 await requireAuth();
 
@@ -201,7 +199,6 @@ async function saveOrder(){
   }
 
   await createOrderWithItems({ table_code, note, items });
-
   closeModal();
   await loadOrders();
 }
@@ -226,9 +223,8 @@ async function loadOrders(){
               <div style="padding:12px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px;">
                 <div>
                   <strong>${item.item_name}</strong> x${item.qty}
-                  ${item.served ? `<span class="badge badge-confirmed" style="margin-left:8px;">Servito</span>` : ""}
                 </div>
-                ${!item.served ? `<button class="btn btn-success" onclick="serveLine('${item.id}')">Servito</button>` : ""}
+                <button class="btn btn-success" onclick="sendMarcia('${item.id}')">Marcia</button>
               </div>
             `).join("")}
           </div>
@@ -242,9 +238,8 @@ async function loadOrders(){
   `).join("");
 }
 
-async function serveLine(lineId){
-  await setLineServed(lineId);
-  loadOrders();
+async function sendMarcia(lineId){
+  await fireLine(lineId);
 }
 
 async function closeOrder(orderId){
@@ -263,7 +258,7 @@ window.openModal = openModal;
 window.closeModal = closeModal;
 window.changeQty = changeQty;
 window.saveOrder = saveOrder;
-window.serveLine = serveLine;
+window.sendMarcia = sendMarcia;
 window.closeOrder = closeOrder;
 window.doLogout = doLogout;
 
