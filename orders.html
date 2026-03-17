@@ -2,6 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ordini - Officine Mare</title>
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/admin.css">
@@ -9,112 +10,129 @@
 </head>
 <body>
 
-<div style="display:flex;min-height:100vh;">
-  <aside style="width:260px;background:#0B1F3A;color:white;padding:24px;display:flex;flex-direction:column;justify-content:space-between;">
-    <div>
-      <div style="text-align:center;margin-bottom:24px;">
-        <img src="assets/logo.jpg" height="80" onerror="this.src='assets/logo.png'">
-        <h2 style="margin-top:12px;">Officine Mare</h2>
-        <div style="opacity:0.7;">Pannello di gestione</div>
-      </div>
+<div class="admin-shell">
 
-      <a class="sidebar-link" href="admin.html">Prenotazioni</a>
-      <a class="sidebar-link" href="menu.html">Menu</a>
-      <a class="sidebar-link" href="tables.html">Tavoli</a>
-      <a class="sidebar-link active" href="orders.html">Ordini</a>
-      <a class="sidebar-link" href="kitchen.html">Cucina</a>
+  <header class="admin-topbar">
+    <div class="brand">
+      <img src="assets/logo.jpg" onerror="this.src='assets/logo.png'">
+      <span>Ristorante</span>
     </div>
+  </header>
 
-    <div style="margin-top:30px;">
-      <button style="width:100%;" onclick="doLogout()">Logout</button>
-    </div>
-  </aside>
+  <div class="admin-layout">
 
-  <main style="flex:1;padding:30px;">
-    <div class="page-title">
+    <aside class="admin-sidebar">
       <div>
-        <h1>Ordini</h1>
-        <p style="color:#6B7280;margin-top:8px;">Crea ordini e invia le comande in cucina</p>
+        <div class="title">
+          <h2>Officine Mare</h2>
+          <p>Pannello di gestione</p>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="sidebar-link" href="admin.html">📅 Prenotazioni</a>
+          <a class="sidebar-link" href="tables.html">◻️ Tavoli</a>
+          <a class="sidebar-link" href="menu.html">📖 Menu</a>
+          <a class="sidebar-link active" href="orders.html">🍽️ Ordini</a>
+          <a class="sidebar-link" href="kitchen.html">👨‍🍳 Cucina</a>
+        </nav>
       </div>
+
+      <div>
+        <button class="btn btn-soft" style="width:100%;" onclick="doLogout()">Esci</button>
+      </div>
+    </aside>
+
+    <main class="admin-content">
+
+      <section class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap;">
+        <div>
+          <h1>Ordini</h1>
+          <p>Prendi ordini e inviali in cucina</p>
+        </div>
+        <button class="btn btn-primary" onclick="openModal()">＋ Nuovo ordine</button>
+      </section>
+
+      <section id="ordersList" class="reservation-list"></section>
+
+    </main>
+  </div>
+</div>
+
+<div id="orderModal" style="display:none; position:fixed; inset:0; background:rgba(10,29,56,0.45); z-index:1000; padding:40px;">
+  <div class="card" style="max-width:960px; margin:0 auto; padding:26px; max-height:90vh; overflow:auto;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px;">
+      <h2 style="margin:0;">Nuovo ordine</h2>
+      <button class="btn btn-soft" onclick="closeModal()">✕</button>
     </div>
 
-    <div class="list-card" style="margin-bottom:24px;">
-      <h3>Nuova comanda</h3>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-        <select id="orderTable"></select>
-        <input id="orderNote" placeholder="Nota comanda">
-      </div>
-
-      <div id="menuPicker"></div>
-
-      <div style="margin-top:16px;">
-        <button onclick="saveOrder()">Invia in cucina</button>
-      </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px;">
+      <select id="orderTable"></select>
+      <input id="orderNote" placeholder="Nota comanda">
     </div>
 
-    <div id="ordersList"></div>
-  </main>
+    <div id="menuPicker"></div>
+
+    <div style="margin-top:18px; display:flex; justify-content:flex-end;">
+      <button class="btn btn-primary" onclick="saveOrder()">Invia in cucina</button>
+    </div>
+  </div>
 </div>
 
 <script type="module">
 import { requireAuth, logout } from "./js/auth.service.js";
-import { getMenuItems } from "./js/menu.service.js";
 import { getReservations } from "./js/reservations.service.js";
-import {
-  getOpenOrdersWithItems,
-  createOrderWithItems,
-  setLineServed,
-  closeAdminOrder
-} from "./js/orders-advanced.service.js";
+import { getMenuItems } from "./js/menu.service.js";
+import { getOpenOrdersWithItems, createOrderWithItems, setLineServed, closeAdminOrder } from "./js/orders-advanced.service.js";
 
 await requireAuth();
 
 let menuItemsCache = [];
 
-async function loadSelectableTables() {
+function openModal(){
+  document.getElementById("orderModal").style.display = "block";
+}
+
+function closeModal(){
+  document.getElementById("orderModal").style.display = "none";
+}
+
+async function loadSelectableTables(){
   const reservations = await getReservations();
   const select = document.getElementById("orderTable");
 
-  const available = reservations.filter(r =>
-    r.status === "confirmed" && r.assigned_table_code
-  );
+  const available = reservations.filter(r => r.status === "confirmed" && r.assigned_table_code);
 
   select.innerHTML = available.length
     ? available.map(r => `
-        <option value="${r.assigned_table_code}">
-          ${r.assigned_table_code} - ${r.customer_name} - ${r.reservation_date} ${String(r.reservation_time).slice(0,5)}
-        </option>
-      `).join("")
-    : `<option value="">Nessun tavolo confermato disponibile</option>`;
+      <option value="${r.assigned_table_code}">
+        ${r.assigned_table_code} - ${r.customer_name} - ${r.reservation_date} ${String(r.reservation_time).slice(0,5)}
+      </option>
+    `).join("")
+    : `<option value="">Nessun tavolo disponibile</option>`;
 }
 
-async function loadMenuPicker() {
+async function loadMenuPicker(){
   menuItemsCache = await getMenuItems();
-  let html = "";
+  const box = document.getElementById("menuPicker");
 
-  menuItemsCache.forEach(item => {
-    html += `
-      <div class="list-card" style="padding:12px;margin-bottom:10px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <strong>${item.name}</strong><br>
-            <span style="color:#6B7280;">${item.category || "-"} · €${Number(item.price || 0).toFixed(2)}</span>
-          </div>
-          <div>
-            <input type="number" min="0" value="0" id="qty-${item.id}" style="width:80px;">
+  box.innerHTML = menuItemsCache.map(item => `
+    <div class="card" style="padding:16px; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:14px;">
+        <div>
+          <div style="font-weight:700; font-size:18px;">${item.name}</div>
+          <div style="color:var(--muted); margin-top:6px;">
+            ${item.category || "-"} · €${Number(item.price || 0).toFixed(2)}
           </div>
         </div>
+        <input type="number" min="0" value="0" id="qty-${item.id}" style="width:90px;">
       </div>
-    `;
-  });
-
-  document.getElementById("menuPicker").innerHTML = html;
+    </div>
+  `).join("");
 }
 
-async function saveOrder() {
+async function saveOrder(){
   const table_code = document.getElementById("orderTable").value;
-  const note = document.getElementById("orderNote").value;
+  const note = document.getElementById("orderNote").value.trim();
 
   const items = menuItemsCache
     .map(item => ({
@@ -124,75 +142,74 @@ async function saveOrder() {
     }))
     .filter(x => x.qty > 0);
 
-  if (!table_code) {
+  if(!table_code){
     alert("Seleziona un tavolo");
     return;
   }
 
-  if (!items.length) {
+  if(!items.length){
     alert("Seleziona almeno un piatto");
     return;
   }
 
   await createOrderWithItems({ table_code, note, items });
-  alert("Comanda inviata in cucina");
+  closeModal();
   loadOrders();
 }
 
-async function loadOrders() {
+async function loadOrders(){
   const orders = await getOpenOrdersWithItems();
+  const box = document.getElementById("ordersList");
 
-  let html = "";
+  if(!orders.length){
+    box.innerHTML = `<div class="empty-card">Nessuna comanda aperta</div>`;
+    return;
+  }
 
-  orders.forEach(order => {
-    html += `
-      <div class="list-card">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;">
-          <div>
-            <h3 style="margin-top:0;">Tavolo ${order.table_code || "-"}</h3>
-            <div style="color:#6B7280;margin-bottom:12px;">${order.note || ""}</div>
-            <div>
-              ${(order.order_items || []).map(item => `
-                <div style="padding:8px 0;border-bottom:1px solid #eee;">
-                  ${item.item_name} x${item.qty}
-                  ${item.served ? `<span class="badge confirmed" style="margin-left:8px;">Servito</span>` : ""}
-                  ${
-                    !item.served
-                      ? `<button style="margin-left:12px;" onclick="serveLine('${item.id}')">Servito</button>`
-                      : ""
-                  }
+  box.innerHTML = orders.map(order => `
+    <article class="reservation-card">
+      <div class="reservation-top">
+        <div>
+          <h3 class="reservation-name">Tavolo ${order.table_code || "-"}</h3>
+          ${order.note ? `<div style="margin-top:8px; color:var(--muted);">${order.note}</div>` : ""}
+          <div style="margin-top:18px;">
+            ${(order.order_items || []).map(item => `
+              <div style="padding:10px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                <div>
+                  <strong>${item.item_name}</strong> x${item.qty}
+                  ${item.served ? `<span class="badge badge-confirmed" style="margin-left:8px;">Servito</span>` : ""}
                 </div>
-              `).join("")}
-            </div>
+                ${!item.served ? `<button class="btn btn-success" onclick="serveLine('${item.id}')">Servito</button>` : ""}
+              </div>
+            `).join("")}
           </div>
 
-          <div>
-            <button onclick="closeOrder('${order.id}')">Chiudi conto</button>
+          <div class="reservation-actions">
+            <button class="btn btn-danger" onclick="closeOrder('${order.id}')">Chiudi conto</button>
           </div>
         </div>
       </div>
-    `;
-  });
-
-  document.getElementById("ordersList").innerHTML =
-    html || "<div class='list-card'>Nessuna comanda aperta</div>";
+    </article>
+  `).join("");
 }
 
-async function serveLine(lineId) {
+async function serveLine(lineId){
   await setLineServed(lineId);
   loadOrders();
 }
 
-async function closeOrder(orderId) {
+async function closeOrder(orderId){
   await closeAdminOrder(orderId);
   loadOrders();
 }
 
 async function doLogout(){
   await logout();
-  window.location.href = "login.html";
+  location.href = "login.html";
 }
 
+window.openModal = openModal;
+window.closeModal = closeModal;
 window.saveOrder = saveOrder;
 window.serveLine = serveLine;
 window.closeOrder = closeOrder;
