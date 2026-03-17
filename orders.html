@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Ordini - Officine Mare</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+
+<div style="display:flex;min-height:100vh;">
+
+  <aside style="width:260px;background:#0B1F3A;color:white;padding:24px;">
+    <div style="text-align:center;margin-bottom:24px;">
+      <img src="assets/logo.jpg" height="80" onerror="this.src='assets/logo.png'">
+      <h2 style="margin-top:12px;">Officine Mare</h2>
+      <div style="opacity:0.7;">Pannello di gestione</div>
+    </div>
+
+    <a class="sidebar-link" href="admin.html">Prenotazioni</a>
+    <a class="sidebar-link" href="menu.html">Menu</a>
+    <a class="sidebar-link" href="tables.html">Tavoli</a>
+    <a class="sidebar-link active" href="orders.html">Ordini</a>
+    <a class="sidebar-link" href="kitchen.html">Cucina</a>
+  </aside>
+
+  <main style="flex:1;padding:30px;">
+    <div class="page-title">
+      <div>
+        <h1>Ordini</h1>
+        <p style="color:#6B7280;margin-top:8px;">Panoramica comande</p>
+      </div>
+    </div>
+
+    <div id="ordersList"></div>
+  </main>
+
+</div>
+
+<script type="module">
+import { getOrders } from "./js/orders.service.js";
+
+async function loadOrders() {
+  const orders = await getOrders();
+
+  let html = "";
+
+  orders.forEach(order => {
+    const items = order.order_items || [];
+
+    html += `
+      <div class="list-card">
+        <h3 style="margin-top:0;">Tavolo ${order.table_code || "-"}</h3>
+        <div style="color:#6B7280;margin-bottom:12px;">Stato: ${order.status || "open"}</div>
+        <div>
+          ${items.map(i => `<div>• ${i.item_name} x${i.qty}</div>`).join("")}
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById("ordersList").innerHTML =
+    html || "<div class='list-card'>Nessun ordine presente</div>";
+}
+
+loadOrders();
+</script>
+
+</body>
+</html>
