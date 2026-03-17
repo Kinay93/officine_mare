@@ -31,7 +31,7 @@ export async function createOrderWithItems({ table_code, note, items }) {
     item_name: item.item_name,
     qty: Number(item.qty),
     line_status: "todo",
-    served: false
+    fired: false
   }));
 
   const { error: itemError } = await supabase
@@ -43,12 +43,25 @@ export async function createOrderWithItems({ table_code, note, items }) {
   return orderData;
 }
 
-export async function setLineServed(lineId) {
+export async function fireLine(lineId) {
   const { data, error } = await supabase
     .from("order_items")
     .update({
-      served: true,
-      served_at: new Date().toISOString()
+      fired: true,
+      fired_at: new Date().toISOString()
+    })
+    .eq("id", lineId)
+    .select();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function clearFiredLine(lineId) {
+  const { data, error } = await supabase
+    .from("order_items")
+    .update({
+      fired: false
     })
     .eq("id", lineId)
     .select();
