@@ -24,6 +24,11 @@
 </div>
 
 <script type="module">
+import { requireAuth, logout } from "./js/auth.service.js";
+import {
+  updateReservationStatus,
+  searchReservations
+} from "./js/reservations.service.js";
 import supabase from "./js/supabase-client.js";
 
 async function loadOrders() {
