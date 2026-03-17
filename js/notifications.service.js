@@ -1,4 +1,3 @@
-
 import supabase from "./supabase-client.js";
 
 export async function markConfirmationSent(reservationId) {
@@ -15,10 +14,6 @@ export async function markConfirmationSent(reservationId) {
   return data;
 }
 
-/*
-  Questa funzione chiama un endpoint esterno o una Edge Function.
-  Sostituisci YOUR_ENDPOINT con il tuo webhook reale.
-*/
 export async function sendReservationConfirmation(payload) {
   const response = await fetch("YOUR_ENDPOINT", {
     method: "POST",
