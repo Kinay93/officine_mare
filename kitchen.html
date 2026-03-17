@@ -1,48 +1,77 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="it">
 <head>
-
-<meta charset="UTF-8">
-
-<link rel="stylesheet" href="css/theme.css">
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
+  <meta charset="UTF-8">
+  <title>Cucina - Officine Mare</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/kitchen.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
-
 <body>
 
-<h1>Cucina</h1>
+<div style="padding:30px;">
 
-<div id="orders"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+    <div>
+      <h1 style="margin:0;">Cucina</h1>
+      <p style="color:#6B7280;">Comande in lavorazione</p>
+    </div>
+    <a href="admin.html"><button>Torna admin</button></a>
+  </div>
 
+  <div id="orders"></div>
+
+</div>
 
 <script type="module">
+import supabase from "./js/supabase-client.js";
 
-import supabase from "./js/supabase-client.js"
+async function loadOrders() {
+  let { data, error } = await supabase
+    .from("orders")
+    .select("*, order_items(*)")
+    .eq("status", "open")
+    .order("created_at", { ascending: false });
 
-async function loadOrders(){
+  if (error) {
+    console.error(error);
+    return;
+  }
 
-let {data} = await supabase
-.from("orders")
-.select("*")
-.eq("status","open")
+  let html = "";
 
-let html=""
+  data.forEach(order => {
+    html += `
+      <div class="card" style="margin-bottom:16px;">
+        <h2 style="margin-top:0;">Tavolo ${order.table_code || "-"}</h2>
+        <div style="color:#6B7280;margin-bottom:12px;">
+          ${new Date(order.created_at).toLocaleString("it-IT")}
+        </div>
+        <div>
+          ${(order.order_items || []).map(item => `
+            <div style="padding:8px 0;border-bottom:1px solid #eee;">
+              ${item.item_name} x${item.qty}
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  });
 
-data.forEach(o=>{
-
-html+=`<div class="card">Tavolo ${o.table_id}</div>`
-
-})
-
-document.getElementById("orders").innerHTML=html
-
+  document.getElementById("orders").innerHTML =
+    html || "<div class='card'>Nessuna comanda aperta</div>";
 }
 
-loadOrders()
+loadOrders();
 
+supabase
+  .channel("kitchen-orders")
+  .on(
+    "postgres_changes",
+    { event: "*", schema: "public", table: "orders" },
+    () => loadOrders()
+  )
+  .subscribe();
 </script>
 
 </body>
