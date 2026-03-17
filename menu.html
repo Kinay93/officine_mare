@@ -16,7 +16,7 @@
     <div class="topbar-left">
       <button class="hamburger-btn" onclick="openDrawer()">☰</button>
       <div class="brand">
-        <img src="assets/logo.png">
+        <img src="assets/logo.png" alt="Logo">
         <span>Ristorante</span>
       </div>
     </div>
@@ -78,11 +78,15 @@
 
     <section class="card" style="padding:24px;margin-bottom:22px;">
       <h3 style="margin-top:0;">Menù del giorno</h3>
-      <p style="color:var(--muted);">Inserisci il link immagine del menù aggiornato.</p>
-      <div style="display:grid;grid-template-columns:1fr auto;gap:14px;">
-        <input id="menuDayImage" placeholder="https://... immagine menu del giorno">
-        <button class="btn btn-primary" onclick="saveDayMenu()">Salva menù del giorno</button>
+      <p style="color:var(--muted);">Carica una nuova immagine. Se ne carichi una nuova, sostituisce la precedente.</p>
+
+      <div style="display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;">
+        <input id="menuDayFile" type="file" accept="image/*">
+        <button class="btn btn-primary" onclick="uploadDayMenu()">Carica menù del giorno</button>
       </div>
+
+      <div id="menuDayStatus" style="margin-top:12px;color:var(--muted);"></div>
+      <div id="menuDayPreview" style="margin-top:16px;"></div>
     </section>
 
     <section id="menuList" class="reservation-list"></section>
@@ -92,7 +96,7 @@
 
 <script type="module">
 import { requireAuth, logout } from "./js/auth.service.js";
-import { getMenuItems, createMenuItem, deleteMenuItem, saveMenuDay } from "./js/menu.service.js";
+import { getMenuItems, createMenuItem, deleteMenuItem, saveMenuDayImage, getMenuDay } from "./js/menu.service.js";
 
 await requireAuth();
 
@@ -135,6 +139,20 @@ async function loadMenu(){
   `).join("");
 }
 
+async function loadDayMenuPreview(){
+  const data = await getMenuDay();
+  const preview = document.getElementById("menuDayPreview");
+
+  if(data?.image_url){
+    preview.innerHTML = `
+      <img src="${data.image_url}" alt="Menù del giorno"
+           style="max-width:320px;width:100%;border-radius:16px;border:1px solid var(--border);box-shadow:var(--shadow);">
+    `;
+  } else {
+    preview.innerHTML = `<div style="color:var(--muted);">Nessuna immagine caricata oggi.</div>`;
+  }
+}
+
 async function saveItem(){
   const name = document.getElementById("itemName").value.trim();
   const category = document.getElementById("itemCategory").value;
@@ -164,14 +182,34 @@ async function saveItem(){
 
 async function removeItem(id){
   if(!confirm("Eliminare il piatto?")) return;
-  await deleteMenuItem(id);
-  loadMenu();
+
+  try{
+    await deleteMenuItem(id);
+    await loadMenu();
+  }catch(err){
+    alert("Errore eliminazione: " + (err?.message || err));
+  }
 }
 
-async function saveDayMenuAction(){
-  const image_url = document.getElementById("menuDayImage").value.trim();
-  await saveMenuDay({ image_url });
-  alert("Menù del giorno salvato");
+async function uploadDayMenu(){
+  const input = document.getElementById("menuDayFile");
+  const status = document.getElementById("menuDayStatus");
+  const file = input.files?.[0];
+
+  if(!file){
+    alert("Seleziona un'immagine");
+    return;
+  }
+
+  try{
+    status.textContent = "Caricamento in corso...";
+    await saveMenuDayImage(file);
+    status.textContent = "Menù del giorno aggiornato.";
+    input.value = "";
+    await loadDayMenuPreview();
+  }catch(err){
+    status.textContent = "Errore caricamento: " + (err?.message || err);
+  }
 }
 
 async function doLogout(){
@@ -183,10 +221,11 @@ window.openDrawer = openDrawer;
 window.closeDrawer = closeDrawer;
 window.saveItem = saveItem;
 window.removeItem = removeItem;
-window.saveDayMenu = saveDayMenuAction;
+window.uploadDayMenu = uploadDayMenu;
 window.doLogout = doLogout;
 
-loadMenu();
+await loadMenu();
+await loadDayMenuPreview();
 </script>
 
 </body>
