@@ -505,9 +505,7 @@ function refreshSlots(){
 
   timeEl.innerHTML = `<option value="">Seleziona prima data e turno</option>`;
 
-  if(!date || !turno){
-    return;
-  }
+  if(!date || !turno) return;
 
   if(isMonday(date)){
     timeEl.innerHTML = `<option value="">Lunedì chiuso</option>`;
@@ -546,34 +544,179 @@ window.toggleDayMenu = async function(){
   }
 };
 
+/* =========================
+   SICUREZZA / VALIDAZIONE
+========================= */
+
+function normalizeSpaces(value){
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function stripHtml(value){
+  return String(value || "").replace(/<[^>]*>/g, "");
+}
+
+function containsDangerousPattern(value){
+  const v = String(value || "").toLowerCase();
+  return (
+    v.includes("<script") ||
+    v.includes("</script") ||
+    v.includes("javascript:") ||
+    v.includes("data:text/html") ||
+    v.includes("onerror=") ||
+    v.includes("onload=") ||
+    v.includes("onclick=") ||
+    v.includes("onmouseover=") ||
+    v.includes("iframe") ||
+    v.includes("svg") ||
+    v.includes("document.cookie") ||
+    v.includes("window.location") ||
+    v.includes("alert(")
+  );
+}
+
+function sanitizeText(value, maxLen = 120){
+  let v = normalizeSpaces(value);
+  v = stripHtml(v);
+  v = v.slice(0, maxLen);
+  return v;
+}
+
+function validateName(value){
+  const v = sanitizeText(value, 80);
+
+  if(!v) return { ok:false, msg:"Inserisci il nome." };
+  if(containsDangerousPattern(v)) return { ok:false, msg:"Nome non valido." };
+  if(!/^[A-Za-zÀ-ÖØ-öø-ÿ'’.\- ]{2,80}$/.test(v)){
+    return { ok:false, msg:"Il nome contiene caratteri non validi." };
+  }
+
+  return { ok:true, value:v };
+}
+
+function validatePhone(value){
+  let v = normalizeSpaces(value).replace(/[^\d+ ]/g, "");
+  v = v.slice(0, 20);
+
+  if(!v) return { ok:false, msg:"Inserisci il telefono." };
+  if(containsDangerousPattern(v)) return { ok:false, msg:"Telefono non valido." };
+  if(!/^\+?[0-9 ]{6,20}$/.test(v)){
+    return { ok:false, msg:"Numero di telefono non valido." };
+  }
+
+  return { ok:true, value:v };
+}
+
+function validateEmail(value){
+  let v = normalizeSpaces(value).toLowerCase().slice(0, 120);
+
+  if(!v) return { ok:true, value:"" };
+  if(containsDangerousPattern(v)) return { ok:false, msg:"Email non valida." };
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)){
+    return { ok:false, msg:"Formato email non valido." };
+  }
+
+  return { ok:true, value:v };
+}
+
+function validateNotes(value){
+  let v = sanitizeText(value, 500);
+
+  if(containsDangerousPattern(v)){
+    return { ok:false, msg:"Le note contengono testo non consentito." };
+  }
+
+  return { ok:true, value:v };
+}
+
+function showError(msg){
+  statusBox.className = "booking-status bad";
+  statusBox.textContent = msg;
+}
+
+function showOk(msg){
+  statusBox.className = "booking-status ok";
+  statusBox.textContent = msg;
+}
+
+/* opzionale: blocco immediato di < e > nelle note */
+document.getElementById("notes").addEventListener("input", (e) => {
+  e.target.value = e.target.value.replace(/[<>]/g, "");
+});
+
+document.getElementById("name").addEventListener("input", (e) => {
+  e.target.value = e.target.value.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ'’.\- ]/g, "");
+});
+
+document.getElementById("phone").addEventListener("input", (e) => {
+  e.target.value = e.target.value.replace(/[^\d+ ]/g, "");
+});
+
+/* =========================
+   SUBMIT
+========================= */
+
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   if(isMonday(dateEl.value)){
-    statusBox.className = "booking-status bad";
-    statusBox.textContent = "Il lunedì il ristorante è chiuso.";
+    showError("Il lunedì il ristorante è chiuso.");
     return;
   }
 
   if(isSunday(dateEl.value) && turnoEl.value === "cena"){
-    statusBox.className = "booking-status bad";
-    statusBox.textContent = "La domenica sera non è disponibile.";
+    showError("La domenica sera non è disponibile.");
     return;
   }
 
+  if(!timeEl.value){
+    showError("Seleziona un orario valido.");
+    return;
+  }
+
+  const nameCheck = validateName(document.getElementById("name").value);
+  if(!nameCheck.ok){
+    showError(nameCheck.msg);
+    return;
+  }
+
+  const phoneCheck = validatePhone(document.getElementById("phone").value);
+  if(!phoneCheck.ok){
+    showError(phoneCheck.msg);
+    return;
+  }
+
+  const emailCheck = validateEmail(document.getElementById("email").value);
+  if(!emailCheck.ok){
+    showError(emailCheck.msg);
+    return;
+  }
+
+  const notesCheck = validateNotes(document.getElementById("notes").value);
+  if(!notesCheck.ok){
+    showError(notesCheck.msg);
+    return;
+  }
+
+  const people = Number(document.getElementById("people").value || 0);
+  if(!people || people < 1 || people > 12){
+    showError("Numero persone non valido.");
+    return;
+  }
+
+  const safeNotes = [
+    "Turno: " + turnoEl.value,
+    notesCheck.value,
+    emailCheck.value ? "Email: " + emailCheck.value : ""
+  ].filter(Boolean).join(" | ");
+
   const payload = {
-    customer_name: document.getElementById("name").value.trim(),
-    customer_phone: document.getElementById("phone").value.trim(),
+    customer_name: nameCheck.value,
+    customer_phone: phoneCheck.value,
     reservation_date: dateEl.value,
     reservation_time: timeEl.value,
-    people: Number(document.getElementById("people").value || 0),
-    notes: [
-      "Turno: " + turnoEl.value,
-      document.getElementById("notes").value.trim(),
-      document.getElementById("email").value.trim()
-        ? "Email: " + document.getElementById("email").value.trim()
-        : ""
-    ].filter(Boolean).join(" | "),
+    people,
+    notes: safeNotes,
     status: "pending"
   };
 
@@ -586,11 +729,9 @@ form.addEventListener("submit", async (e) => {
 
     form.reset();
     timeEl.innerHTML = `<option value="">Seleziona prima data e turno</option>`;
-    statusBox.className = "booking-status ok";
-    statusBox.textContent = "Prenotazione inviata con successo.";
+    showOk("Prenotazione inviata con successo.");
   }catch(err){
-    statusBox.className = "booking-status bad";
-    statusBox.textContent = "Errore invio: " + (err?.message || err);
+    showError("Errore invio: " + (err?.message || err));
   }
 });
 </script>
