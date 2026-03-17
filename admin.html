@@ -56,16 +56,16 @@
     </section>
 
     <section class="stats-grid">
-      <div class="stat-card warning">
+      <div class="stat-card warning" onclick="setView('pending')" style="cursor:pointer;">
         <div class="label">In attesa</div>
         <div class="value" id="pendingCount">0</div>
       </div>
-      <div class="stat-card success">
+      <div class="stat-card success" onclick="setView('confirmed')" style="cursor:pointer;">
         <div class="label">Confermate</div>
         <div class="value" id="confirmedCount">0</div>
       </div>
-      <div class="stat-card info">
-        <div class="label">Oggi</div>
+      <div class="stat-card info" onclick="toggleTodayFilter()" style="cursor:pointer;">
+        <div class="label" id="todayLabel">Oggi</div>
         <div class="value" id="todayCount">0</div>
       </div>
     </section>
@@ -79,8 +79,7 @@
           <option value="all">Tutti gli stati</option>
           <option value="pending">In attesa</option>
           <option value="confirmed">Confermate</option>
-          <option value="cancelled">Annullate</option>
-          <option value="arrived">Arrivate</option>
+          <option value="cancelled">Rifiutate</option>
         </select>
       </div>
     </section>
@@ -90,13 +89,39 @@
   </main>
 </div>
 
+<div class="order-modal" id="tablesModal">
+  <div class="order-modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;">
+      <div>
+        <h2 style="margin:0;font-size:22px;">Assegna tavoli</h2>
+        <p style="margin:8px 0 0;color:var(--muted);">Seleziona i tavoli per la prenotazione</p>
+      </div>
+      <button class="btn btn-soft" onclick="closeTablesModal()">✕</button>
+    </div>
+
+    <div id="tablesModalGrid" class="table-check-grid"></div>
+
+    <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px;">
+      <button class="btn btn-soft" onclick="closeTablesModal()">Chiudi</button>
+      <button class="btn btn-primary" onclick="saveTablesModal()">Salva tavoli</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { requireAuth, logout } from "./js/auth.service.js";
 import { searchReservations, updateReservationStatus } from "./js/reservations.service.js";
 import { getTables } from "./js/ui.js";
 import { getReservationTables, setReservationTables } from "./js/reservation-tables.service.js";
+import { sendReservationConfirmation, markConfirmationSent } from "./js/notifications.service.js";
 
 await requireAuth();
+
+let currentView = "all";
+let currentPeriod = "today";
+let modalReservationId = null;
+let modalAssignedCodes = [];
+let tablesCache = [];
 
 function openDrawer(){
   document.getElementById("drawer").classList.add("open");
@@ -116,12 +141,99 @@ function isToday(dateStr){
   return dateStr === `${y}-${m}-${d}`;
 }
 
+function isInWeek(dateStr){
+  const now = new Date();
+  const date = new Date(dateStr + "T00:00:00");
+  const diff = (date - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000;
+  return diff >= 0 && diff <= 7;
+}
+
+function isInMonth(dateStr){
+  const now = new Date();
+  const date = new Date(dateStr + "T00:00:00");
+  return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+}
+
+window.setView = function(view){
+  currentView = view;
+  document.getElementById("statusFilter").value = view === "all" ? "all" : view;
+  loadReservations();
+};
+
+window.toggleTodayFilter = function(){
+  if(currentPeriod === "today") currentPeriod = "week";
+  else if(currentPeriod === "week") currentPeriod = "month";
+  else currentPeriod = "today";
+
+  document.getElementById("todayLabel").textContent =
+    currentPeriod === "today" ? "Oggi" :
+    currentPeriod === "week" ? "Settimana" : "Mese";
+
+  loadReservations();
+};
+
+async function openTablesModal(reservationId){
+  modalReservationId = reservationId;
+  tablesCache = await getTables();
+  const assigned = await getReservationTables(reservationId);
+  modalAssignedCodes = assigned.map(x => x.table_code);
+
+  const grid = document.getElementById("tablesModalGrid");
+  grid.innerHTML = tablesCache.map(t => `
+    <label class="table-check-item">
+      <input type="checkbox" class="modal-table-check" value="${t.code}"
+        ${modalAssignedCodes.includes(t.code) ? "checked" : ""}
+        ${!t.is_open ? "disabled" : ""}>
+      <span>${t.code}</span>
+    </label>
+  `).join("");
+
+  document.getElementById("tablesModal").classList.add("open");
+}
+
+window.closeTablesModal = function(){
+  document.getElementById("tablesModal").classList.remove("open");
+  modalReservationId = null;
+  modalAssignedCodes = [];
+};
+
+window.saveTablesModal = async function(){
+  const selected = Array.from(document.querySelectorAll(".modal-table-check:checked")).map(x => x.value);
+  await setReservationTables(modalReservationId, selected);
+  closeTablesModal();
+  loadReservations();
+};
+
+async function confirmReservation(id, customerName, customerPhone, reservationDate, reservationTime){
+  await updateReservationStatus(id, "confirmed");
+
+  try{
+    await sendReservationConfirmation({
+      reservationId: id,
+      customerName,
+      customerPhone,
+      reservationDate,
+      reservationTime
+    });
+    await markConfirmationSent(id);
+  }catch(e){
+    console.warn("Conferma non inviata:", e);
+  }
+
+  loadReservations();
+}
+
+async function rejectReservation(id){
+  await updateReservationStatus(id, "cancelled");
+  loadReservations();
+}
+
 async function loadReservations(){
   const search = document.getElementById("searchInput").value;
   const status = document.getElementById("statusFilter").value;
 
-  const data = await searchReservations(search, status);
-  const tables = await getTables();
+  let data = await searchReservations(search, status);
+  data = data.filter(x => !x.hidden);
 
   document.getElementById("pendingCount").textContent =
     data.filter(x => x.status === "pending").length;
@@ -129,8 +241,27 @@ async function loadReservations(){
   document.getElementById("confirmedCount").textContent =
     data.filter(x => x.status === "confirmed").length;
 
-  document.getElementById("todayCount").textContent =
-    data.filter(x => isToday(x.reservation_date)).length;
+  const periodCount = currentPeriod === "today"
+    ? data.filter(x => isToday(x.reservation_date)).length
+    : currentPeriod === "week"
+    ? data.filter(x => isInWeek(x.reservation_date)).length
+    : data.filter(x => isInMonth(x.reservation_date)).length;
+
+  document.getElementById("todayCount").textContent = periodCount;
+
+  if(currentView === "pending"){
+    data = data.filter(x => x.status === "pending");
+  }else if(currentView === "confirmed"){
+    data = data.filter(x => x.status === "confirmed");
+  }
+
+  if(currentPeriod === "today"){
+    data = data.filter(x => isToday(x.reservation_date));
+  }else if(currentPeriod === "week"){
+    data = data.filter(x => isInWeek(x.reservation_date));
+  }else{
+    data = data.filter(x => isInMonth(x.reservation_date));
+  }
 
   const list = document.getElementById("reservationsList");
 
@@ -139,17 +270,12 @@ async function loadReservations(){
     return;
   }
 
-  let html = "";
-
-  for(const r of data){
-    const assigned = await getReservationTables(r.id);
-    const assignedCodes = assigned.map(x => x.table_code);
-
+  list.innerHTML = data.map(r => {
     let badgeClass = "badge-pending";
     if(r.status === "confirmed") badgeClass = "badge-confirmed";
     if(r.status === "cancelled") badgeClass = "badge-cancelled";
 
-    html += `
+    return `
       <article class="reservation-card">
         <div class="reservation-top">
           <div>
@@ -158,7 +284,7 @@ async function loadReservations(){
               <span class="badge ${badgeClass}">
                 ${r.status === "pending" ? "In attesa" :
                   r.status === "confirmed" ? "Confermata" :
-                  r.status === "cancelled" ? "Annullata" :
+                  r.status === "cancelled" ? "Rifiutata" :
                   r.status}
               </span>
             </div>
@@ -173,51 +299,18 @@ async function loadReservations(){
           </div>
         </div>
 
-        <div style="margin-top:22px;">
-          <strong>Assegna tavoli</strong>
-          <div class="table-check-grid">
-            ${tables.map(t => `
-              <label class="table-check-item">
-                <input
-                  type="checkbox"
-                  class="table-check-${r.id}"
-                  value="${t.code}"
-                  ${assignedCodes.includes(t.code) ? "checked" : ""}
-                  ${!t.is_open ? "disabled" : ""}
-                >
-                <span>${t.code}</span>
-              </label>
-            `).join("")}
-          </div>
-        </div>
-
         <div class="reservation-actions">
-          <button class="btn btn-soft" onclick="saveReservationTables('${r.id}')">Salva tavoli</button>
-          <button class="btn btn-success" onclick="confirmReservation('${r.id}')">✓ Conferma</button>
-          <button class="btn btn-danger" onclick="cancelReservation('${r.id}')">✕ Rifiuta</button>
+          <button class="btn btn-soft" onclick="openTablesModal('${r.id}')">Assegna tavoli</button>
+          ${r.status === "pending" ? `
+            <button class="btn btn-success" onclick="confirmReservation('${r.id}', '${r.customer_name}', '${r.customer_phone || ""}', '${r.reservation_date}', '${String(r.reservation_time || "").slice(0,5)}')">✓ Conferma</button>
+            <button class="btn btn-danger" onclick="rejectReservation('${r.id}')">✕ Rifiuta</button>
+          ` : r.status === "confirmed" ? `
+            <button class="btn btn-danger" onclick="rejectReservation('${r.id}')">✕ Rifiuta</button>
+          ` : ``}
         </div>
       </article>
     `;
-  }
-
-  list.innerHTML = html;
-}
-
-async function saveReservationTables(id){
-  const checks = document.querySelectorAll(`.table-check-${id}:checked`);
-  const codes = Array.from(checks).map(x => x.value);
-  await setReservationTables(id, codes);
-  loadReservations();
-}
-
-async function confirmReservation(id){
-  await updateReservationStatus(id, "confirmed");
-  loadReservations();
-}
-
-async function cancelReservation(id){
-  await updateReservationStatus(id, "cancelled");
-  loadReservations();
+  }).join("");
 }
 
 async function doLogout(){
@@ -227,13 +320,18 @@ async function doLogout(){
 
 window.openDrawer = openDrawer;
 window.closeDrawer = closeDrawer;
-window.saveReservationTables = saveReservationTables;
+window.openTablesModal = openTablesModal;
 window.confirmReservation = confirmReservation;
-window.cancelReservation = cancelReservation;
+window.rejectReservation = rejectReservation;
 window.doLogout = doLogout;
 
 document.getElementById("searchInput").addEventListener("input", loadReservations);
-document.getElementById("statusFilter").addEventListener("change", loadReservations);
+document.getElementById("statusFilter").addEventListener("change", () => {
+  currentView = document.getElementById("statusFilter").value === "all"
+    ? "all"
+    : document.getElementById("statusFilter").value;
+  loadReservations();
+});
 
 loadReservations();
 </script>
