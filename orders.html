@@ -10,66 +10,197 @@
 <body>
 
 <div style="display:flex;min-height:100vh;">
+  <aside style="width:260px;background:#0B1F3A;color:white;padding:24px;display:flex;flex-direction:column;justify-content:space-between;">
+    <div>
+      <div style="text-align:center;margin-bottom:24px;">
+        <img src="assets/logo.jpg" height="80" onerror="this.src='assets/logo.png'">
+        <h2 style="margin-top:12px;">Officine Mare</h2>
+        <div style="opacity:0.7;">Pannello di gestione</div>
+      </div>
 
-  <aside style="width:260px;background:#0B1F3A;color:white;padding:24px;">
-    <div style="text-align:center;margin-bottom:24px;">
-      <img src="assets/logo.jpg" height="80" onerror="this.src='assets/logo.png'">
-      <h2 style="margin-top:12px;">Officine Mare</h2>
-      <div style="opacity:0.7;">Pannello di gestione</div>
+      <a class="sidebar-link" href="admin.html">Prenotazioni</a>
+      <a class="sidebar-link" href="menu.html">Menu</a>
+      <a class="sidebar-link" href="tables.html">Tavoli</a>
+      <a class="sidebar-link active" href="orders.html">Ordini</a>
+      <a class="sidebar-link" href="kitchen.html">Cucina</a>
     </div>
 
-    <a class="sidebar-link" href="admin.html">Prenotazioni</a>
-    <a class="sidebar-link" href="menu.html">Menu</a>
-    <a class="sidebar-link" href="tables.html">Tavoli</a>
-    <a class="sidebar-link active" href="orders.html">Ordini</a>
-    <a class="sidebar-link" href="kitchen.html">Cucina</a>
+    <div style="margin-top:30px;">
+      <button style="width:100%;" onclick="doLogout()">Logout</button>
+    </div>
   </aside>
 
   <main style="flex:1;padding:30px;">
     <div class="page-title">
       <div>
         <h1>Ordini</h1>
-        <p style="color:#6B7280;margin-top:8px;">Panoramica comande</p>
+        <p style="color:#6B7280;margin-top:8px;">Crea ordini e invia le comande in cucina</p>
+      </div>
+    </div>
+
+    <div class="list-card" style="margin-bottom:24px;">
+      <h3>Nuova comanda</h3>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <select id="orderTable"></select>
+        <input id="orderNote" placeholder="Nota comanda">
+      </div>
+
+      <div id="menuPicker"></div>
+
+      <div style="margin-top:16px;">
+        <button onclick="saveOrder()">Invia in cucina</button>
       </div>
     </div>
 
     <div id="ordersList"></div>
   </main>
-
 </div>
 
 <script type="module">
 import { requireAuth, logout } from "./js/auth.service.js";
+import { getMenuItems } from "./js/menu.service.js";
+import { getReservations } from "./js/reservations.service.js";
 import {
-  updateReservationStatus,
-  searchReservations
-} from "./js/reservations.service.js";
-import { getOrders } from "./js/orders.service.js";
+  getOpenOrdersWithItems,
+  createOrderWithItems,
+  setLineServed,
+  closeAdminOrder
+} from "./js/orders-advanced.service.js";
+
+await requireAuth();
+
+let menuItemsCache = [];
+
+async function loadSelectableTables() {
+  const reservations = await getReservations();
+  const select = document.getElementById("orderTable");
+
+  const available = reservations.filter(r =>
+    r.status === "confirmed" && r.assigned_table_code
+  );
+
+  select.innerHTML = available.length
+    ? available.map(r => `
+        <option value="${r.assigned_table_code}">
+          ${r.assigned_table_code} - ${r.customer_name} - ${r.reservation_date} ${String(r.reservation_time).slice(0,5)}
+        </option>
+      `).join("")
+    : `<option value="">Nessun tavolo confermato disponibile</option>`;
+}
+
+async function loadMenuPicker() {
+  menuItemsCache = await getMenuItems();
+  let html = "";
+
+  menuItemsCache.forEach(item => {
+    html += `
+      <div class="list-card" style="padding:12px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <strong>${item.name}</strong><br>
+            <span style="color:#6B7280;">${item.category || "-"} · €${Number(item.price || 0).toFixed(2)}</span>
+          </div>
+          <div>
+            <input type="number" min="0" value="0" id="qty-${item.id}" style="width:80px;">
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById("menuPicker").innerHTML = html;
+}
+
+async function saveOrder() {
+  const table_code = document.getElementById("orderTable").value;
+  const note = document.getElementById("orderNote").value;
+
+  const items = menuItemsCache
+    .map(item => ({
+      menu_item_id: item.id,
+      item_name: item.name,
+      qty: Number(document.getElementById(`qty-${item.id}`).value || 0)
+    }))
+    .filter(x => x.qty > 0);
+
+  if (!table_code) {
+    alert("Seleziona un tavolo");
+    return;
+  }
+
+  if (!items.length) {
+    alert("Seleziona almeno un piatto");
+    return;
+  }
+
+  await createOrderWithItems({ table_code, note, items });
+  alert("Comanda inviata in cucina");
+  loadOrders();
+}
 
 async function loadOrders() {
-  const orders = await getOrders();
+  const orders = await getOpenOrdersWithItems();
 
   let html = "";
 
   orders.forEach(order => {
-    const items = order.order_items || [];
-
     html += `
       <div class="list-card">
-        <h3 style="margin-top:0;">Tavolo ${order.table_code || "-"}</h3>
-        <div style="color:#6B7280;margin-bottom:12px;">Stato: ${order.status || "open"}</div>
-        <div>
-          ${items.map(i => `<div>• ${i.item_name} x${i.qty}</div>`).join("")}
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;">
+          <div>
+            <h3 style="margin-top:0;">Tavolo ${order.table_code || "-"}</h3>
+            <div style="color:#6B7280;margin-bottom:12px;">${order.note || ""}</div>
+            <div>
+              ${(order.order_items || []).map(item => `
+                <div style="padding:8px 0;border-bottom:1px solid #eee;">
+                  ${item.item_name} x${item.qty}
+                  ${item.served ? `<span class="badge confirmed" style="margin-left:8px;">Servito</span>` : ""}
+                  ${
+                    !item.served
+                      ? `<button style="margin-left:12px;" onclick="serveLine('${item.id}')">Servito</button>`
+                      : ""
+                  }
+                </div>
+              `).join("")}
+            </div>
+          </div>
+
+          <div>
+            <button onclick="closeOrder('${order.id}')">Chiudi conto</button>
+          </div>
         </div>
       </div>
     `;
   });
 
   document.getElementById("ordersList").innerHTML =
-    html || "<div class='list-card'>Nessun ordine presente</div>";
+    html || "<div class='list-card'>Nessuna comanda aperta</div>";
 }
 
-loadOrders();
+async function serveLine(lineId) {
+  await setLineServed(lineId);
+  loadOrders();
+}
+
+async function closeOrder(orderId) {
+  await closeAdminOrder(orderId);
+  loadOrders();
+}
+
+async function doLogout(){
+  await logout();
+  window.location.href = "login.html";
+}
+
+window.saveOrder = saveOrder;
+window.serveLine = serveLine;
+window.closeOrder = closeOrder;
+window.doLogout = doLogout;
+
+await loadSelectableTables();
+await loadMenuPicker();
+await loadOrders();
 </script>
 
 </body>
