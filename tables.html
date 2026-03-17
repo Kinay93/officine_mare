@@ -13,46 +13,51 @@
 <div class="admin-shell">
 
   <header class="admin-topbar">
-    <div class="brand">
-      <img src="assets/logo.jpg" onerror="this.src='assets/logo.png'">
-      <span>Ristorante</span>
+    <div class="topbar-left">
+      <button class="hamburger-btn" onclick="openDrawer()">☰</button>
+      <div class="brand">
+        <img src="assets/logo.png">
+        <span>Ristorante</span>
+      </div>
     </div>
   </header>
 
-  <div class="admin-layout">
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
 
-    <aside class="admin-sidebar">
-      <div>
-        <div class="title">
+  <aside class="drawer" id="drawer">
+    <div>
+      <div class="drawer-head">
+        <div class="drawer-title">
           <h2>Officine Mare</h2>
           <p>Pannello di gestione</p>
         </div>
-
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="admin.html">📅 Prenotazioni</a>
-          <a class="sidebar-link active" href="tables.html">◻️ Tavoli</a>
-          <a class="sidebar-link" href="menu.html">📖 Menu</a>
-          <a class="sidebar-link" href="orders.html">🍽️ Ordini</a>
-          <a class="sidebar-link" href="kitchen.html">👨‍🍳 Cucina</a>
-        </nav>
+        <button class="drawer-close" onclick="closeDrawer()">✕</button>
       </div>
 
-      <div>
-        <button class="btn btn-soft" style="width:100%;" onclick="doLogout()">Esci</button>
-      </div>
-    </aside>
+      <nav class="drawer-nav">
+        <a class="drawer-link" href="admin.html">📅 Prenotazioni</a>
+        <a class="drawer-link active" href="tables.html">◻️ Tavoli</a>
+        <a class="drawer-link" href="menu.html">📖 Menu</a>
+        <a class="drawer-link" href="orders.html">🍽️ Ordini</a>
+        <a class="drawer-link" href="kitchen.html">👨‍🍳 Cucina</a>
+      </nav>
+    </div>
 
-    <main class="admin-content">
+    <div>
+      <button class="btn btn-soft" style="width:100%;" onclick="doLogout()">Esci</button>
+    </div>
+  </aside>
 
-      <section class="page-header">
-        <h1>Tavoli</h1>
-        <p>Gestisci apertura e stato dei tavoli</p>
-      </section>
+  <main class="admin-content">
 
-      <section id="tablesGrid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:18px;"></section>
+    <section class="page-header">
+      <h1>Tavoli</h1>
+      <p>Gestisci apertura e stato dei tavoli</p>
+    </section>
 
-    </main>
-  </div>
+    <section id="tablesGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px;"></section>
+
+  </main>
 </div>
 
 <script type="module">
@@ -60,6 +65,16 @@ import { requireAuth, logout } from "./js/auth.service.js";
 import { getTables, updateTableStatus } from "./js/ui.js";
 
 await requireAuth();
+
+function openDrawer(){
+  document.getElementById("drawer").classList.add("open");
+  document.getElementById("drawerOverlay").classList.add("open");
+}
+
+function closeDrawer(){
+  document.getElementById("drawer").classList.remove("open");
+  document.getElementById("drawerOverlay").classList.remove("open");
+}
 
 async function loadTables(){
   const tables = await getTables();
@@ -72,10 +87,10 @@ async function loadTables(){
 
   box.innerHTML = tables.map(t => `
     <article class="card" style="padding:20px;">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
         <div>
-          <h3 style="margin:0; font-size:22px;">${t.code}</h3>
-          <p style="margin:8px 0 0; color:var(--muted);">${t.seats || 0} coperti</p>
+          <h3 style="margin:0;font-size:22px;">${t.code}</h3>
+          <p style="margin:8px 0 0;color:var(--muted);">${t.seats || 0} coperti</p>
         </div>
         <span class="badge ${t.is_open ? 'badge-confirmed' : 'badge-cancelled'}">
           ${t.is_open ? "Aperto" : "Chiuso"}
@@ -101,6 +116,8 @@ async function doLogout(){
   location.href = "login.html";
 }
 
+window.openDrawer = openDrawer;
+window.closeDrawer = closeDrawer;
 window.toggleTable = toggleTable;
 window.doLogout = doLogout;
 
