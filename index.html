@@ -205,36 +205,53 @@
       text-decoration:none;
     }
 
-    .delivery-row{
+    .hours-list{
+      display:grid;
+      gap:6px;
+      margin-top:4px;
+    }
+
+    .hours-row{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .brand-links{
+      margin-top:18px;
       display:flex;
       gap:12px;
       flex-wrap:wrap;
-      margin-top:12px;
+      align-items:center;
     }
 
-    .delivery-link{
+    .brand-link{
       display:inline-flex;
       align-items:center;
+      justify-content:center;
       gap:10px;
-      padding:12px 16px;
-      border-radius:14px;
+      min-width:48px;
+      height:48px;
+      padding:0 16px;
+      border-radius:999px;
       border:1px solid var(--border);
       background:#fff;
       color:var(--text);
       text-decoration:none;
-      font-weight:700;
       box-shadow:var(--shadow);
+      font-weight:700;
     }
 
-    .delivery-icon{
-      width:28px;
-      height:28px;
-      border-radius:999px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      font-size:15px;
-      background:#F3F6FB;
+    .brand-link svg{
+      width:22px;
+      height:22px;
+      display:block;
+    }
+
+    .brand-link span.word{
+      font-size:14px;
+      letter-spacing:.2px;
     }
 
     .site-footer{
@@ -265,6 +282,10 @@
       .info-card{
         padding:24px;
       }
+
+      .hours-row{
+        justify-content:flex-start;
+      }
     }
   </style>
 </head>
@@ -280,7 +301,11 @@
 
   <section class="booking-card">
     <h2>Prenotazione</h2>
-    <p>Compila il form e invia la tua richiesta al ristorante.</p>
+    <p>
+      Orari prenotabili: pranzo e cena con disponibilità ogni 10 minuti.
+      <br>
+      <strong>Lunedì chiuso.</strong>
+    </p>
 
     <form id="bookingForm">
       <div class="booking-grid-2">
@@ -316,14 +341,26 @@
           <input id="date" type="date" required>
         </div>
         <div class="field">
-          <label>Ora *</label>
-          <input id="time" type="time" required>
+          <label>Turno *</label>
+          <select id="turno" required>
+            <option value="">Seleziona turno</option>
+            <option value="pranzo">Pranzo</option>
+            <option value="cena">Cena</option>
+          </select>
         </div>
       </div>
 
-      <div class="field">
-        <label>Note</label>
-        <textarea id="notes" rows="4" placeholder="Allergie, richieste, preferenze..."></textarea>
+      <div class="booking-grid-2">
+        <div class="field">
+          <label>Ora *</label>
+          <select id="time" required>
+            <option value="">Seleziona prima data e turno</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Note</label>
+          <textarea id="notes" rows="4" placeholder="Allergie, richieste, preferenze..."></textarea>
+        </div>
       </div>
 
       <div class="booking-actions">
@@ -349,42 +386,59 @@
     <div class="info-grid">
       <div class="info-item">
         <strong>📍 Dove siamo</strong>
-        <span>Via da inserire, Città, CAP</span>
+        <span>Via delle Robinie, 45 A/B, 00172 Roma RM</span>
       </div>
 
       <div class="info-item">
         <strong>📞 Telefono</strong>
-        <span>+39 000 0000000</span>
-      </div>
-
-      <div class="info-item">
-        <strong>✉️ Email</strong>
-        <span>info@officinemare.it</span>
+        <span>06 6481 0895</span>
       </div>
 
       <div class="info-item">
         <strong>🕒 Orari</strong>
-        <span>Lun-Dom 12:00–15:00 / 19:00–23:30</span>
+        <div class="hours-list">
+          <div class="hours-row"><span>Martedì</span><span>12:30–15:00 / 18:30–23:00</span></div>
+          <div class="hours-row"><span>Mercoledì</span><span>12:30–15:00 / 18:30–23:00</span></div>
+          <div class="hours-row"><span>Giovedì</span><span>12:30–15:00 / 18:30–23:00</span></div>
+          <div class="hours-row"><span>Venerdì</span><span>12:30–15:00 / 18:30–23:00</span></div>
+          <div class="hours-row"><span>Sabato</span><span>12:30–15:00 / 18:30–23:00</span></div>
+          <div class="hours-row"><span>Domenica</span><span>12:30–15:00</span></div>
+          <div class="hours-row"><span>Lunedì</span><span>Chiuso</span></div>
+        </div>
       </div>
 
       <div class="info-item">
-        <strong>📸 Instagram</strong>
-        <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer">
-          Vai al profilo Instagram
-        </a>
-      </div>
+        <strong>Prenotazioni e contatti</strong>
+        <span>Prenota online oppure contattaci telefonicamente.</span>
 
-      <div class="info-item">
-        <strong>🛵 Delivery</strong>
-        <div class="delivery-row">
-          <a class="delivery-link" href="https://www.justeat.it/" target="_blank" rel="noopener noreferrer">
-            <span class="delivery-icon">🧡</span>
-            <span>Just Eat</span>
+        <div class="brand-links">
+          <a class="brand-link" href="https://instagram.com/" target="_blank" rel="noopener noreferrer" title="Instagram">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="2"/>
+              <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
+              <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/>
+            </svg>
           </a>
 
-          <a class="delivery-link" href="https://deliveroo.it/" target="_blank" rel="noopener noreferrer">
-            <span class="delivery-icon">💙</span>
-            <span>Deliveroo</span>
+          <a class="brand-link" href="https://www.justeat.it/" target="_blank" rel="noopener noreferrer" title="Just Eat">
+            <span class="word">Just Eat</span>
+          </a>
+
+          <a class="brand-link" href="https://deliveroo.it/" target="_blank" rel="noopener noreferrer" title="Deliveroo">
+            <span class="word">Deliveroo</span>
+          </a>
+
+          <a class="brand-link" href="tel:+390664810895" title="Chiama">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6.6 10.8C8.2 14 10 15.8 13.2 17.4L15.2 15.4C15.5 15.1 16 15 16.4 15.1C17.7 15.5 19.1 15.7 20.5 15.7C21.1 15.7 21.5 16.1 21.5 16.7V20.5C21.5 21.1 21.1 21.5 20.5 21.5C10.8 21.5 2.5 13.2 2.5 3.5C2.5 2.9 2.9 2.5 3.5 2.5H7.3C7.9 2.5 8.3 2.9 8.3 3.5C8.3 4.9 8.5 6.3 8.9 7.6C9 8 8.9 8.5 8.6 8.8L6.6 10.8Z" fill="currentColor"/>
+            </svg>
+          </a>
+
+          <a class="brand-link" href="https://maps.google.com/?q=Via+delle+Robinie,+45+A/B,+00172+Roma+RM" target="_blank" rel="noopener noreferrer" title="Mappa">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 21C12 21 19 14.2 19 9.5C19 5.9 15.9 3 12 3C8.1 3 5 5.9 5 9.5C5 14.2 12 21 12 21Z" stroke="currentColor" stroke-width="2"/>
+              <circle cx="12" cy="9.5" r="2.5" fill="currentColor"/>
+            </svg>
           </a>
         </div>
       </div>
@@ -393,15 +447,8 @@
 
   <footer class="site-footer">
     <div><strong>Officine Mare</strong></div>
-    <div style="margin-top:8px;">Ristorante di mare · Prenotazioni online · Servizi delivery</div>
-    <div style="margin-top:8px;">
-      Seguici su
-      <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer">Instagram</a>
-      · Ordina su
-      <a href="https://www.justeat.it/" target="_blank" rel="noopener noreferrer">Just Eat</a>
-      ·
-      <a href="https://deliveroo.it/" target="_blank" rel="noopener noreferrer">Deliveroo</a>
-    </div>
+    <div style="margin-top:8px;">Via delle Robinie, 45 A/B, 00172 Roma RM · 06 6481 0895</div>
+    <div style="margin-top:8px;">Prenotazioni online · Delivery · Contatti social</div>
   </footer>
 
 <script type="module">
@@ -410,6 +457,77 @@ import { getMenuDay } from "./js/menu.service.js";
 
 const form = document.getElementById("bookingForm");
 const statusBox = document.getElementById("bookingStatus");
+const dateEl = document.getElementById("date");
+const turnoEl = document.getElementById("turno");
+const timeEl = document.getElementById("time");
+
+function pad(n){
+  return String(n).padStart(2, "0");
+}
+
+function toMinutes(hhmm){
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function fromMinutes(total){
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return `${pad(h)}:${pad(m)}`;
+}
+
+function buildSlots(start, end, step){
+  const slots = [];
+  for(let t = toMinutes(start); t <= toMinutes(end); t += step){
+    slots.push(fromMinutes(t));
+  }
+  return slots;
+}
+
+const lunchSlots = buildSlots("12:30", "15:00", 10);
+const dinnerSlots = buildSlots("18:30", "23:00", 10);
+
+function isMonday(dateStr){
+  if(!dateStr) return false;
+  const d = new Date(dateStr + "T00:00:00");
+  return d.getDay() === 1;
+}
+
+function isSunday(dateStr){
+  if(!dateStr) return false;
+  const d = new Date(dateStr + "T00:00:00");
+  return d.getDay() === 0;
+}
+
+function refreshSlots(){
+  const date = dateEl.value;
+  const turno = turnoEl.value;
+
+  timeEl.innerHTML = `<option value="">Seleziona prima data e turno</option>`;
+
+  if(!date || !turno){
+    return;
+  }
+
+  if(isMonday(date)){
+    timeEl.innerHTML = `<option value="">Lunedì chiuso</option>`;
+    return;
+  }
+
+  if(isSunday(date) && turno === "cena"){
+    timeEl.innerHTML = `<option value="">Domenica sera non disponibile</option>`;
+    return;
+  }
+
+  const slots = turno === "pranzo" ? lunchSlots : dinnerSlots;
+
+  timeEl.innerHTML = `<option value="">Seleziona orario</option>` + slots.map(slot => `
+    <option value="${slot}">${slot}</option>
+  `).join("");
+}
+
+dateEl.addEventListener("change", refreshSlots);
+turnoEl.addEventListener("change", refreshSlots);
 
 window.toggleDayMenu = async function(){
   const panel = document.getElementById("dayMenuPanel");
@@ -431,13 +549,26 @@ window.toggleDayMenu = async function(){
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
+  if(isMonday(dateEl.value)){
+    statusBox.className = "booking-status bad";
+    statusBox.textContent = "Il lunedì il ristorante è chiuso.";
+    return;
+  }
+
+  if(isSunday(dateEl.value) && turnoEl.value === "cena"){
+    statusBox.className = "booking-status bad";
+    statusBox.textContent = "La domenica sera non è disponibile.";
+    return;
+  }
+
   const payload = {
     customer_name: document.getElementById("name").value.trim(),
     customer_phone: document.getElementById("phone").value.trim(),
-    reservation_date: document.getElementById("date").value,
-    reservation_time: document.getElementById("time").value,
+    reservation_date: dateEl.value,
+    reservation_time: timeEl.value,
     people: Number(document.getElementById("people").value || 0),
     notes: [
+      "Turno: " + turnoEl.value,
       document.getElementById("notes").value.trim(),
       document.getElementById("email").value.trim()
         ? "Email: " + document.getElementById("email").value.trim()
@@ -454,6 +585,7 @@ form.addEventListener("submit", async (e) => {
     if(error) throw error;
 
     form.reset();
+    timeEl.innerHTML = `<option value="">Seleziona prima data e turno</option>`;
     statusBox.className = "booking-status ok";
     statusBox.textContent = "Prenotazione inviata con successo.";
   }catch(err){
