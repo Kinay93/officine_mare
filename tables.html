@@ -39,6 +39,11 @@
 </div>
 
 <script type="module">
+import { requireAuth, logout } from "./js/auth.service.js";
+import {
+  updateReservationStatus,
+  searchReservations
+} from "./js/reservations.service.js";
 import { getTables, updateTableStatus } from "./js/ui.js";
 
 async function loadTables() {
