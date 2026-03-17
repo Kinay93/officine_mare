@@ -52,7 +52,7 @@
   <main class="admin-content">
     <section class="page-header">
       <h1>Cucina</h1>
-      <p>Vista ordini in arrivo</p>
+      <p>Marce in arrivo</p>
     </section>
 
     <section id="ordersBox" class="reservation-list"></section>
@@ -63,6 +63,7 @@
 import { requireAuth, logout } from "./js/auth.service.js";
 import supabase from "./js/supabase-client.js";
 import { getKitchenOrders, printKitchenOrder } from "./js/kitchen-advanced.service.js";
+import { clearFiredLine } from "./js/orders-advanced.service.js";
 
 await requireAuth();
 
@@ -78,8 +79,28 @@ function closeDrawer(){
   document.getElementById("drawerOverlay").classList.remove("open");
 }
 
+function playBell(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.value = 950;
+    gain.gain.value = 0.08;
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    setTimeout(() => osc.stop(), 180);
+  }catch(e){}
+}
+
 function schedulePrint(order){
   if(pendingPrints.has(order.id)) return;
+
+  playBell();
 
   const timeoutId = setTimeout(() => {
     printKitchenOrder(order);
@@ -121,41 +142,67 @@ function cancelScheduledPrint(orderId){
 
 async function loadKitchen(){
   const orders = await getKitchenOrders();
+  const firedLines = [];
+
+  orders.forEach(order => {
+    (order.order_items || []).forEach(item => {
+      if(item.fired){
+        firedLines.push({
+          orderId: order.id,
+          table_code: order.table_code,
+          item
+        });
+      }
+    });
+  });
+
   const box = document.getElementById("ordersBox");
 
-  if(!orders.length){
-    box.innerHTML = `<div class="empty-card">Nessun ordine in cucina</div>`;
+  if(!firedLines.length){
+    box.innerHTML = `<div class="empty-card">Nessuna marcia in cucina</div>`;
     return;
   }
 
-  box.innerHTML = orders.map(order => `
+  box.innerHTML = firedLines.map(line => `
     <article class="reservation-card">
       <div class="reservation-top">
         <div>
-          <h3 class="reservation-name">Tavolo ${order.table_code || "-"}</h3>
+          <h3 class="reservation-name">Tavolo ${line.table_code}</h3>
           <div class="reservation-meta">
-            <span>🕒 ${new Date(order.created_at).toLocaleTimeString("it-IT", { hour:"2-digit", minute:"2-digit" })}</span>
-            ${order.note ? `<span>📝 ${order.note}</span>` : ""}
+            <span>🍽️ ${line.item.item_name}</span>
+            <span>🔢 x${line.item.qty}</span>
           </div>
         </div>
       </div>
 
-      <div style="margin-top:18px;">
-        ${(order.order_items || []).map(item => `
-          <div style="padding:12px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; gap:12px;">
-            <div><strong>${item.item_name}</strong> x${item.qty}</div>
-          </div>
-        `).join("")}
-      </div>
-
       <div class="reservation-actions">
-        <span id="print-status-${order.id}" class="badge badge-pending">Stampa tra pochi secondi</span>
-        <button id="cancel-print-${order.id}" class="btn btn-danger" onclick="cancelScheduledPrint('${order.id}')">Annulla stampa</button>
+        <span id="print-status-${line.orderId}" class="badge badge-pending">Stampa tra pochi secondi</span>
+        <button id="cancel-print-${line.orderId}" class="btn btn-danger" onclick="cancelScheduledPrint('${line.orderId}')">Annulla stampa</button>
       </div>
     </article>
   `).join("");
 
-  orders.forEach(order => schedulePrint(order));
+  const groupedOrders = {};
+  firedLines.forEach(line => {
+    if(!groupedOrders[line.orderId]){
+      groupedOrders[line.orderId] = {
+        id: line.orderId,
+        table_code: line.table_code,
+        created_at: new Date().toISOString(),
+        order_items: []
+      };
+    }
+    groupedOrders[line.orderId].order_items.push(line.item);
+  });
+
+  Object.values(groupedOrders).forEach(order => schedulePrint(order));
+
+  firedLines.forEach(line => {
+    setTimeout(async () => {
+      await clearFiredLine(line.item.id);
+      loadKitchen();
+    }, 10000);
+  });
 }
 
 async function doLogout(){
@@ -172,7 +219,7 @@ await loadKitchen();
 
 supabase
   .channel("kitchen-live")
-  .on("postgres_changes", { event:"*", schema:"public", table:"orders" }, async () => {
+  .on("postgres_changes", { event:"*", schema:"public", table:"order_items" }, async () => {
     loadKitchen();
   })
   .subscribe();
