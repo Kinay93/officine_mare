@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Menu - Officine Mare</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+
+<div style="display:flex;min-height:100vh;">
+
+  <aside style="width:260px;background:#0B1F3A;color:white;padding:24px;">
+    <div style="text-align:center;margin-bottom:24px;">
+      <img src="assets/logo.jpg" height="80" onerror="this.src='assets/logo.png'">
+      <h2 style="margin-top:12px;">Officine Mare</h2>
+      <div style="opacity:0.7;">Pannello di gestione</div>
+    </div>
+
+    <a class="sidebar-link" href="admin.html">Prenotazioni</a>
+    <a class="sidebar-link active" href="menu.html">Menu</a>
+    <a class="sidebar-link" href="tables.html">Tavoli</a>
+    <a class="sidebar-link" href="orders.html">Ordini</a>
+    <a class="sidebar-link" href="kitchen.html">Cucina</a>
+  </aside>
+
+  <main style="flex:1;padding:30px;">
+    <div class="page-title">
+      <div>
+        <h1>Menu</h1>
+        <p style="color:#6B7280;margin-top:8px;">Gestisci i piatti del ristorante</p>
+      </div>
+    </div>
+
+    <div class="list-card" style="margin-bottom:24px;">
+      <h3>Aggiungi piatto</h3>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+        <input id="itemName" placeholder="Nome piatto">
+        <input id="itemCategory" placeholder="Categoria">
+        <input id="itemPrice" type="number" step="0.01" placeholder="Prezzo">
+      </div>
+
+      <div style="margin-top:16px;">
+        <button onclick="addMenuItem()">Salva</button>
+      </div>
+    </div>
+
+    <div id="menuList"></div>
+  </main>
+
+</div>
+
+<script type="module">
+import {
+  getMenuItems,
+  createMenuItem,
+  toggleMenuItem
+} from "./js/menu.service.js";
+
+async function loadMenu() {
+  const items = await getMenuItems();
+
+  let html = "";
+
+  items.forEach(item => {
+    html += `
+      <div class="list-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:20px;">
+          <div>
+            <h3 style="margin:0 0 8px 0;">${item.name}</h3>
+            <div style="color:#6B7280;">
+              ${item.category || "-"} · €${Number(item.price || 0).toFixed(2)}
+            </div>
+          </div>
+
+          <div>
+            <button onclick="toggleItem('${item.id}', ${!item.active})">
+              ${item.active ? "Disattiva" : "Attiva"}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById("menuList").innerHTML =
+    html || "<div class='list-card'>Nessun piatto presente</div>";
+}
+
+async function addMenuItem() {
+  const name = document.getElementById("itemName").value;
+  const category = document.getElementById("itemCategory").value;
+  const price = document.getElementById("itemPrice").value;
+
+  await createMenuItem({
+    name,
+    category,
+    price: Number(price),
+    active: true
+  });
+
+  document.getElementById("itemName").value = "";
+  document.getElementById("itemCategory").value = "";
+  document.getElementById("itemPrice").value = "";
+
+  loadMenu();
+}
+
+async function toggleItem(id, active) {
+  await toggleMenuItem(id, active);
+  loadMenu();
+}
+
+window.addMenuItem = addMenuItem;
+window.toggleItem = toggleItem;
+
+loadMenu();
+</script>
+
+</body>
+</html>
