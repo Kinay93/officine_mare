@@ -4,62 +4,60 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ordini - Officine Mare</title>
+  <link rel="icon" href="assets/logo.png">
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/admin.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="supabase-config.js"></script>
+  <style>
+    .order-modal{position:fixed;inset:0;background:rgba(10,29,56,.45);display:none;align-items:center;justify-content:center;z-index:100;padding:24px}
+    .order-modal.open{display:flex}
+    .order-modal-box{width:min(980px,96vw);max-height:90vh;overflow:auto;background:#fff;border-radius:24px;border:1px solid var(--border);box-shadow:0 18px 50px rgba(16,40,74,.12);padding:26px}
+    .menu-group{margin-top:16px}
+    .menu-item-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px;border:1px solid var(--border);border-radius:16px;background:#fff;margin-top:10px}
+    .qty-controls{display:flex;align-items:center;gap:10px}
+    .qty-controls button{width:34px;height:34px;border-radius:12px}
+  </style>
 </head>
 <body>
-
 <div class="admin-shell">
-
   <header class="admin-topbar">
     <div class="topbar-left">
-      <button class="hamburger-btn" onclick="openDrawer()">☰</button>
-      <div class="brand">
-        <img src="assets/logo.png">
-        <span>Ristorante</span>
-      </div>
+      <button class="hamburger-btn" id="openDrawerBtn">☰</button>
+      <div class="brand"><img src="assets/logo.png" alt="Logo"><span>Ristorante</span></div>
     </div>
   </header>
 
-  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
-
+  <div class="drawer-overlay" id="drawerOverlay"></div>
   <aside class="drawer" id="drawer">
     <div>
       <div class="drawer-head">
-        <div class="drawer-title">
-          <h2>Officine Mare</h2>
-          <p>Pannello di gestione</p>
-        </div>
-        <button class="drawer-close" onclick="closeDrawer()">✕</button>
+        <div class="drawer-title"><h2>Officine Mare</h2><p>Pannello di gestione</p></div>
+        <button class="drawer-close" id="closeDrawerBtn">✕</button>
       </div>
-
       <nav class="drawer-nav">
         <a class="drawer-link" href="admin.html">📅 Prenotazioni</a>
         <a class="drawer-link" href="tables.html">◻️ Tavoli</a>
         <a class="drawer-link" href="menu.html">📖 Menu</a>
         <a class="drawer-link active" href="orders.html">🍽️ Ordini</a>
         <a class="drawer-link" href="kitchen.html">👨‍🍳 Cucina</a>
+        <a class="drawer-link" href="calendar.html">🗓️ Gestisci calendario</a>
       </nav>
     </div>
-
-    <div>
-      <button class="btn btn-soft" style="width:100%;" onclick="doLogout()">Esci</button>
-    </div>
+    <div><button class="btn btn-soft" style="width:100%;" id="logoutBtn">Esci</button></div>
   </aside>
 
   <main class="admin-content">
+    <section class="page-header">
+      <h1>Ordini</h1>
+      <p>Prendi ordini e inviali in cucina</p>
+    </section>
 
-    <section class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;">
-      <div>
-        <h1>Ordini</h1>
-        <p>Prendi ordini e inviali in cucina</p>
-      </div>
-      <button class="btn btn-primary" onclick="openModal()">＋ Nuovo ordine</button>
+    <section style="display:flex;justify-content:flex-end;margin-bottom:18px;">
+      <button class="btn btn-primary" id="openOrderModalBtn">＋ Nuovo ordine</button>
     </section>
 
     <section id="ordersList" class="reservation-list"></section>
-
   </main>
 </div>
 
@@ -70,202 +68,23 @@
         <h2 style="margin:0;font-size:22px;">Nuovo ordine</h2>
         <p style="margin:8px 0 0;color:var(--muted);">Seleziona tavolo e piatti del menu</p>
       </div>
-      <button class="btn btn-soft" onclick="closeModal()">✕</button>
+      <button class="btn btn-soft" id="closeOrderModalBtn">✕</button>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
-      <select id="orderTable"></select>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <select id="orderTableSelect"></select>
       <input id="orderNote" placeholder="Nota comanda (opzionale)">
     </div>
 
-    <div id="menuPicker"></div>
+    <div id="orderMenuWrap"></div>
 
     <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px;">
-      <button class="btn btn-soft" onclick="closeModal()">Chiudi</button>
-      <button class="btn btn-primary" onclick="saveOrder()">Invia in cucina</button>
+      <button class="btn btn-soft" id="cancelOrderModalBtn">Chiudi</button>
+      <button class="btn btn-primary" id="saveOrderBtn">Invia in cucina</button>
     </div>
   </div>
 </div>
 
-<script type="module">
-import { requireAuth, logout } from "./js/auth.service.js";
-import { getReservations } from "./js/reservations.service.js";
-import { getMenuItems } from "./js/menu.service.js";
-import { getOpenOrdersWithItems, createOrderWithItems, fireLine, closeAdminOrder } from "./js/orders-advanced.service.js";
-
-await requireAuth();
-
-let menuItemsCache = [];
-
-function openDrawer(){
-  document.getElementById("drawer").classList.add("open");
-  document.getElementById("drawerOverlay").classList.add("open");
-}
-
-function closeDrawer(){
-  document.getElementById("drawer").classList.remove("open");
-  document.getElementById("drawerOverlay").classList.remove("open");
-}
-
-function openModal(){
-  document.getElementById("orderModal").classList.add("open");
-}
-
-function closeModal(){
-  document.getElementById("orderModal").classList.remove("open");
-}
-
-async function loadSelectableTables(){
-  const reservations = await getReservations();
-  const select = document.getElementById("orderTable");
-
-  const available = reservations.filter(r => r.status === "confirmed" && r.assigned_table_code);
-
-  select.innerHTML = available.length
-    ? available.map(r => `
-      <option value="${r.assigned_table_code}">
-        ${r.assigned_table_code} - ${r.customer_name} - ${r.reservation_date} ${String(r.reservation_time || "").slice(0,5)}
-      </option>
-    `).join("")
-    : `<option value="">Nessun tavolo disponibile</option>`;
-}
-
-async function loadMenuPicker(){
-  menuItemsCache = await getMenuItems();
-  const box = document.getElementById("menuPicker");
-
-  const grouped = {};
-  menuItemsCache.forEach(item => {
-    const cat = item.category || "Altro";
-    if(!grouped[cat]) grouped[cat] = [];
-    grouped[cat].push(item);
-  });
-
-  box.innerHTML = Object.keys(grouped).map(category => `
-    <div style="margin-bottom:22px;">
-      <div style="font-size:14px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:10px;">
-        ${category}
-      </div>
-      <div class="menu-grid">
-        ${grouped[category].map(item => `
-          <div class="menu-pick-card">
-            <div>
-              <div style="font-weight:800;font-size:18px;">${item.name}</div>
-              <div style="color:var(--muted);margin-top:6px;">€${Number(item.price || 0).toFixed(2)}</div>
-            </div>
-
-            <div style="display:flex;align-items:center;gap:8px;">
-              <button class="btn btn-soft" style="padding:8px 12px;" onclick="changeQty('${item.id}', -1)">−</button>
-              <div id="qty-label-${item.id}" style="min-width:24px;text-align:center;font-weight:800;">0</div>
-              <button class="btn btn-primary" style="padding:8px 12px;" onclick="changeQty('${item.id}', 1)">＋</button>
-              <input type="hidden" id="qty-${item.id}" value="0">
-            </div>
-          </div>
-        `).join("")}
-      </div>
-    </div>
-  `).join("");
-}
-
-function changeQty(itemId, delta){
-  const input = document.getElementById(`qty-${itemId}`);
-  const label = document.getElementById(`qty-label-${itemId}`);
-  let value = Number(input.value || 0) + delta;
-  if(value < 0) value = 0;
-  input.value = value;
-  label.textContent = value;
-}
-
-async function saveOrder(){
-  const table_code = document.getElementById("orderTable").value;
-  const note = document.getElementById("orderNote").value.trim();
-
-  const items = menuItemsCache
-    .map(item => ({
-      menu_item_id: item.id,
-      item_name: item.name,
-      qty: Number(document.getElementById(`qty-${item.id}`).value || 0)
-    }))
-    .filter(x => x.qty > 0);
-
-  if(!table_code){
-    alert("Seleziona un tavolo");
-    return;
-  }
-
-  if(!items.length){
-    alert("Seleziona almeno un piatto");
-    return;
-  }
-
-  await createOrderWithItems({ table_code, note, items });
-  closeModal();
-  await loadOrders();
-}
-
-async function loadOrders(){
-  const orders = await getOpenOrdersWithItems();
-  const box = document.getElementById("ordersList");
-
-  if(!orders.length){
-    box.innerHTML = `<div class="empty-card">Nessuna comanda aperta</div>`;
-    return;
-  }
-
-  box.innerHTML = orders.map(order => `
-    <article class="reservation-card">
-      <div class="reservation-top">
-        <div>
-          <h3 class="reservation-name">Tavolo ${order.table_code || "-"}</h3>
-          ${order.note ? `<div style="margin-top:8px;color:var(--muted);">${order.note}</div>` : ""}
-          <div style="margin-top:18px;">
-            ${(order.order_items || []).map(item => `
-              <div style="padding:12px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px;">
-                <div>
-                  <strong>${item.item_name}</strong> x${item.qty}
-                </div>
-                <button class="btn btn-success" onclick="sendMarcia('${item.id}')">Marcia</button>
-              </div>
-            `).join("")}
-          </div>
-
-          <div class="reservation-actions">
-            <button class="btn btn-danger" onclick="closeOrder('${order.id}')">Chiudi conto</button>
-          </div>
-        </div>
-      </div>
-    </article>
-  `).join("");
-}
-
-async function sendMarcia(lineId){
-  await fireLine(lineId);
-}
-
-async function closeOrder(orderId){
-  await closeAdminOrder(orderId);
-  loadOrders();
-}
-
-async function doLogout(){
-  await logout();
-  location.href = "login.html";
-}
-
-window.openDrawer = openDrawer;
-window.closeDrawer = closeDrawer;
-window.openModal = openModal;
-window.closeModal = closeModal;
-window.changeQty = changeQty;
-window.saveOrder = saveOrder;
-window.sendMarcia = sendMarcia;
-window.closeOrder = closeOrder;
-window.doLogout = doLogout;
-
-await loadSelectableTables();
-await loadMenuPicker();
-await loadOrders();
-</script>
-
+<script type="module" src="js/orders-page.js"></script>
 </body>
 </html>
