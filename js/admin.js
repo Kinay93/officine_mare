@@ -1,31 +1,34 @@
-import { requireAuth, logout } from "./auth.service.js";
-import { searchReservations, updateReservationStatus } from "./reservations.service.js";
-import { getTables } from "./ui.js";
-import { getReservationTables, setReservationTables } from "./reservation-tables.service.js";
-import { sendReservationConfirmation, markConfirmationSent } from "./notifications.service.js";
-
-await requireAuth();
-
-let currentStatusView = "all";
-let currentPeriod = "all";
-let modalReservationId = null;
-let tablesCache = [];
-let currentSearch = "";
+import supabase from "./supabase-client.js";
 
 const drawer = document.getElementById("drawer");
 const drawerOverlay = document.getElementById("drawerOverlay");
 
 const searchInput = document.getElementById("searchInput");
 const statusFilter = document.getElementById("statusFilter");
+const reservationsList = document.getElementById("reservationsList");
 
 const pendingCount = document.getElementById("pendingCount");
 const confirmedCount = document.getElementById("confirmedCount");
 const periodCount = document.getElementById("periodCount");
 const periodLabel = document.getElementById("periodLabel");
 
-const reservationsList = document.getElementById("reservationsList");
-const tablesModal = document.getElementById("tablesModal");
-const tablesModalGrid = document.getElementById("tablesModalGrid");
+const manualReservationModal = document.getElementById("manualReservationModal");
+const manualReservationForm = document.getElementById("manualReservationForm");
+const mrDate = document.getElementById("mrDate");
+const mrTurno = document.getElementById("mrTurno");
+const mrTime = document.getElementById("mrTime");
+
+let currentStatusView = "all";
+let currentPeriod = "all";
+
+async function requireAuth() {
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session) {
+    location.href = "login.html";
+    throw new Error("NON_AUTHENTICATED");
+  }
+  return data.session;
+}
 
 function openDrawer() {
   drawer.classList.add("open");
@@ -37,25 +40,31 @@ function closeDrawer() {
   drawerOverlay.classList.remove("open");
 }
 
-function openTablesModal() {
-  tablesModal.classList.add("open");
+async function doLogout() {
+  await supabase.auth.signOut();
+  location.href = "login.html";
 }
 
-function closeTablesModal() {
-  tablesModal.classList.remove("open");
-  modalReservationId = null;
+function openManualReservationModal() {
+  manualReservationModal.classList.add("open");
 }
 
-function formatTodayISO() {
-  const today = new Date();
-  const y = today.getFullYear();
-  const m = String(today.getMonth() + 1).padStart(2, "0");
-  const d = String(today.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+function closeManualReservationModal() {
+  manualReservationModal.classList.remove("open");
+  manualReservationForm.reset();
+  mrTime.innerHTML = `<option value="">Seleziona prima data e turno</option>`;
+}
+
+function pad(n) {
+  return String(n).padStart(2, "0");
+}
+
+function toISODate(d) {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 function isToday(dateStr) {
-  return dateStr === formatTodayISO();
+  return dateStr === toISODate(new Date());
 }
 
 function isInWeek(dateStr) {
@@ -63,7 +72,6 @@ function isInWeek(dateStr) {
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const end = new Date(start);
   end.setDate(end.getDate() + 7);
-
   const date = new Date(dateStr + "T00:00:00");
   return date >= start && date <= end;
 }
@@ -81,6 +89,27 @@ function getPeriodLabel() {
   return "Tutte";
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function normalizeSpaces(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function sanitizeText(value, maxLen = 120) {
+  return normalizeSpaces(String(value || "").replace(/<[^>]*>/g, "")).slice(0, maxLen);
+}
+
+function defaultMaxCoversForMonth(monthIndex) {
+  return [4, 5, 6, 7, 8].includes(monthIndex) ? 60 : 40;
+}
+
 function applyPeriodFilter(data) {
   if (currentPeriod === "today") return data.filter(x => isToday(x.reservation_date));
   if (currentPeriod === "week") return data.filter(x => isInWeek(x.reservation_date));
@@ -93,86 +122,176 @@ function applyStatusView(data) {
   return data.filter(x => x.status === currentStatusView);
 }
 
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+function toMinutes(hhmm) {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
 }
 
-async function openReservationTablesModal(reservationId) {
-  modalReservationId = reservationId;
-  tablesCache = await getTables();
-  const assigned = await getReservationTables(reservationId);
-  const assignedCodes = assigned.map(x => x.table_code);
+function fromMinutes(total) {
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return `${pad(h)}:${pad(m)}`;
+}
 
-  tablesModalGrid.innerHTML = tablesCache.map(t => `
-    <label class="table-check-item">
-      <input
-        type="checkbox"
-        class="modal-table-check"
-        value="${escapeHtml(t.code)}"
-        ${assignedCodes.includes(t.code) ? "checked" : ""}
-        ${!t.is_open ? "disabled" : ""}
-      >
-      <span>${escapeHtml(t.code)}</span>
-    </label>
+function buildSlots(start, end, step) {
+  const slots = [];
+  for (let t = toMinutes(start); t <= toMinutes(end); t += step) {
+    slots.push(fromMinutes(t));
+  }
+  return slots;
+}
+
+const lunchSlots = buildSlots("12:30", "15:00", 10);
+const dinnerSlots = buildSlots("18:30", "23:00", 10);
+
+function isMonday(dateStr) {
+  if (!dateStr) return false;
+  const d = new Date(dateStr + "T00:00:00");
+  return d.getDay() === 1;
+}
+
+function isSunday(dateStr) {
+  if (!dateStr) return false;
+  const d = new Date(dateStr + "T00:00:00");
+  return d.getDay() === 0;
+}
+
+function refreshManualReservationSlots() {
+  const date = mrDate.value;
+  const turno = mrTurno.value;
+
+  mrTime.innerHTML = `<option value="">Seleziona prima data e turno</option>`;
+
+  if (!date || !turno) return;
+
+  if (isMonday(date)) {
+    mrTime.innerHTML = `<option value="">Lunedì chiuso</option>`;
+    return;
+  }
+
+  if (isSunday(date) && turno === "cena") {
+    mrTime.innerHTML = `<option value="">Domenica sera non disponibile</option>`;
+    return;
+  }
+
+  const slots = turno === "pranzo" ? lunchSlots : dinnerSlots;
+  mrTime.innerHTML = `<option value="">Seleziona orario</option>` + slots.map(slot => `
+    <option value="${slot}">${slot}</option>
   `).join("");
-
-  openTablesModal();
 }
 
-async function saveTablesModal() {
-  if (!modalReservationId) return;
+async function fetchAllReservations() {
+  const today = new Date();
+  const from = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+  const to = new Date(today.getFullYear(), today.getMonth() + 2, 0);
 
-  const selected = Array.from(document.querySelectorAll(".modal-table-check:checked"))
-    .map(x => x.value);
+  const fromISO = toISODate(from);
+  const toISO = toISODate(to);
 
-  await setReservationTables(modalReservationId, selected);
-  closeTablesModal();
-  await loadReservations();
+  const { data, error } = await supabase
+    .from("reservations")
+    .select("*")
+    .gte("reservation_date", fromISO)
+    .lte("reservation_date", toISO)
+    .order("reservation_date", { ascending: true })
+    .order("reservation_time", { ascending: true });
+
+  if (error) throw error;
+  return data || [];
 }
 
-async function confirmReservation(id, customerName, customerPhone, reservationDate, reservationTime) {
-  await updateReservationStatus(id, "confirmed");
+async function fetchBookingCalendarMap(fromISO, toISO) {
+  const { data, error } = await supabase
+    .from("booking_calendar")
+    .select("*")
+    .gte("day", fromISO)
+    .lte("day", toISO);
 
-  try {
-    await sendReservationConfirmation({
-      reservationId: id,
-      customerName,
-      customerPhone,
-      reservationDate,
-      reservationTime
+  if (error) throw error;
+
+  const map = new Map();
+  (data || []).forEach(row => map.set(row.day, row));
+  return map;
+}
+
+function buildDailyCoverMap(reservations) {
+  const map = new Map();
+
+  reservations
+    .filter(r => !r.hidden)
+    .filter(r => r.status !== "cancelled")
+    .forEach(r => {
+      const key = r.reservation_date;
+      const current = map.get(key) || 0;
+      map.set(key, current + Number(r.people || 0));
     });
-    await markConfirmationSent(id);
-  } catch (e) {
-    console.warn("Conferma non inviata:", e);
+
+  return map;
+}
+
+function getMaxCoversForDay(dateStr, calendarMap) {
+  const override = calendarMap.get(dateStr);
+  if (override?.max_covers) return override.max_covers;
+  const d = new Date(dateStr + "T00:00:00");
+  return defaultMaxCoversForMonth(d.getMonth());
+}
+
+function getWhatsappLink(phone, message) {
+  const cleanPhone = String(phone || "").replace(/[^\d]/g, "");
+  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+}
+
+async function confirmReservation(reservation) {
+  const { error } = await supabase
+    .from("reservations")
+    .update({
+      status: "confirmed",
+      confirmation_sent: true,
+      confirmation_sent_at: new Date().toISOString()
+    })
+    .eq("id", reservation.id);
+
+  if (error) throw error;
+
+  const time = String(reservation.reservation_time || "").slice(0, 5);
+  const msg = `Ciao ${reservation.customer_name}, la tua prenotazione da Officine Mare è confermata per il giorno ${reservation.reservation_date} alle ${time} per ${reservation.people} persone. Ti aspettiamo!`;
+
+  if (reservation.customer_phone) {
+    window.open(getWhatsappLink(reservation.customer_phone, msg), "_blank");
   }
 
   currentStatusView = "confirmed";
-  statusFilter.value = "confirmed";
+  statusFilter.value = "all";
   await loadReservations();
 }
 
-async function rejectReservation(id) {
-  await updateReservationStatus(id, "cancelled");
+async function rejectReservation(reservationId) {
+  const { error } = await supabase
+    .from("reservations")
+    .update({
+      status: "cancelled",
+      hidden: true
+    })
+    .eq("id", reservationId);
+
+  if (error) throw error;
   await loadReservations();
 }
 
-function buildReservationCard(r) {
+function buildReservationCard(r, dailyCoverMap, calendarMap) {
   let badgeClass = "badge-pending";
   let badgeText = "In attesa";
 
   if (r.status === "confirmed") {
     badgeClass = "badge-confirmed";
     badgeText = "Confermata";
-  } else if (r.status === "cancelled") {
-    badgeClass = "badge-cancelled";
-    badgeText = "Rifiutata";
+  } else if (r.status === "arrived") {
+    badgeClass = "badge-confirmed";
+    badgeText = "Arrivata";
   }
 
+  const dayCovers = dailyCoverMap.get(r.reservation_date) || 0;
+  const maxCovers = getMaxCoversForDay(r.reservation_date, calendarMap);
   const time = String(r.reservation_time || "").slice(0, 5);
 
   return `
@@ -180,35 +299,27 @@ function buildReservationCard(r) {
       <div class="reservation-top">
         <div>
           <h3 class="reservation-name">${escapeHtml(r.customer_name)}</h3>
-          <div style="margin-top:10px;">
+
+          <div class="reservation-submeta">
             <span class="badge ${badgeClass}">${badgeText}</span>
+            <span class="covers-pill">👥 ${dayCovers}/${maxCovers}</span>
+            <span class="covers-pill">🍽️ ${escapeHtml(r.people)} coperti</span>
           </div>
 
           <div class="reservation-meta">
             <span>📅 ${escapeHtml(r.reservation_date)}</span>
             <span>🕒 ${escapeHtml(time)}</span>
-            <span>👥 ${escapeHtml(r.people)} persone</span>
             <span>📞 ${escapeHtml(r.customer_phone || "-")}</span>
-            ${r.notes ? `<span>✉️ ${escapeHtml(r.notes)}</span>` : ""}
+            <span>🔖 ${escapeHtml(r.source || "web")}</span>
           </div>
+
+          ${r.notes ? `<div class="mini-note">📝 ${escapeHtml(r.notes)}</div>` : ""}
         </div>
       </div>
 
       <div class="reservation-actions">
-        <button class="btn btn-soft" data-action="tables" data-id="${escapeHtml(r.id)}">Assegna tavoli</button>
-
         ${r.status === "pending" ? `
-          <button
-            class="btn btn-success"
-            data-action="confirm"
-            data-id="${escapeHtml(r.id)}"
-            data-name="${escapeHtml(r.customer_name)}"
-            data-phone="${escapeHtml(r.customer_phone || "")}"
-            data-date="${escapeHtml(r.reservation_date)}"
-            data-time="${escapeHtml(time)}"
-          >
-            ✓ Conferma
-          </button>
+          <button class="btn btn-success" data-action="confirm" data-id="${escapeHtml(r.id)}">✓ Conferma</button>
           <button class="btn btn-danger" data-action="reject" data-id="${escapeHtml(r.id)}">✕ Rifiuta</button>
         ` : ""}
 
@@ -220,22 +331,11 @@ function buildReservationCard(r) {
   `;
 }
 
-function attachCardActions() {
-  reservationsList.querySelectorAll("[data-action='tables']").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      await openReservationTablesModal(btn.dataset.id);
-    });
-  });
-
+function attachCardActions(reservations) {
   reservationsList.querySelectorAll("[data-action='confirm']").forEach(btn => {
     btn.addEventListener("click", async () => {
-      await confirmReservation(
-        btn.dataset.id,
-        btn.dataset.name,
-        btn.dataset.phone,
-        btn.dataset.date,
-        btn.dataset.time
-      );
+      const reservation = reservations.find(x => String(x.id) === String(btn.dataset.id));
+      if (reservation) await confirmReservation(reservation);
     });
   });
 
@@ -249,14 +349,33 @@ function attachCardActions() {
 async function loadReservations() {
   currentSearch = searchInput.value.trim();
 
-  let data = await searchReservations(currentSearch, "all");
-  data = data.filter(x => !x.hidden);
+  const allReservations = await fetchAllReservations();
+  const visibleReservations = allReservations.filter(x => !x.hidden);
 
-  pendingCount.textContent = data.filter(x => x.status === "pending").length;
-  confirmedCount.textContent = data.filter(x => x.status === "confirmed").length;
+  const dailyCoverMap = buildDailyCoverMap(visibleReservations);
+  const dates = visibleReservations.map(x => x.reservation_date).sort();
+
+  let calendarMap = new Map();
+  if (dates.length) {
+    calendarMap = await fetchBookingCalendarMap(dates[0], dates[dates.length - 1]);
+  }
+
+  pendingCount.textContent = visibleReservations.filter(x => x.status === "pending").length;
+  confirmedCount.textContent = visibleReservations.filter(x => x.status === "confirmed").length;
 
   periodLabel.textContent = getPeriodLabel();
-  periodCount.textContent = applyPeriodFilter(data).length;
+  periodCount.textContent = applyPeriodFilter(visibleReservations).length;
+
+  let data = [...visibleReservations];
+
+  if (currentSearch) {
+    const q = currentSearch.toLowerCase();
+    data = data.filter(r =>
+      String(r.customer_name || "").toLowerCase().includes(q) ||
+      String(r.customer_phone || "").toLowerCase().includes(q) ||
+      String(r.notes || "").toLowerCase().includes(q)
+    );
+  }
 
   data = applyStatusView(data);
 
@@ -271,8 +390,8 @@ async function loadReservations() {
     return;
   }
 
-  reservationsList.innerHTML = data.map(buildReservationCard).join("");
-  attachCardActions();
+  reservationsList.innerHTML = data.map(r => buildReservationCard(r, dailyCoverMap, calendarMap)).join("");
+  attachCardActions(data);
 }
 
 function cyclePeriod() {
@@ -284,12 +403,57 @@ function cyclePeriod() {
   loadReservations();
 }
 
-async function doLogout() {
-  await logout();
-  location.href = "login.html";
+async function saveManualReservation(e) {
+  e.preventDefault();
+
+  const name = sanitizeText(document.getElementById("mrName").value, 80);
+  const phone = sanitizeText(document.getElementById("mrPhone").value, 20);
+  const email = sanitizeText(document.getElementById("mrEmail").value, 120);
+  const date = mrDate.value;
+  const turno = mrTurno.value;
+  const time = mrTime.value;
+  const people = Number(document.getElementById("mrPeople").value || 0);
+  const notes = sanitizeText(document.getElementById("mrNotes").value, 500);
+  const status = document.getElementById("mrStatus").value;
+  const source = document.getElementById("mrSource").value;
+
+  if (!name || !phone || !date || !turno || !time || !people) {
+    alert("Compila tutti i campi obbligatori.");
+    return;
+  }
+
+  const fullNotes = [
+    "Turno: " + turno,
+    notes,
+    email ? "Email: " + email : ""
+  ].filter(Boolean).join(" | ");
+
+  const payload = {
+    customer_name: name,
+    customer_phone: phone,
+    reservation_date: date,
+    reservation_time: time,
+    people,
+    notes: fullNotes,
+    status,
+    source,
+    hidden: false
+  };
+
+  const { error } = await supabase
+    .from("reservations")
+    .insert([payload]);
+
+  if (error) {
+    alert("Errore salvataggio: " + error.message);
+    return;
+  }
+
+  closeManualReservationModal();
+  await loadReservations();
 }
 
-/* Event listeners */
+/* listeners */
 document.getElementById("openDrawerBtn").addEventListener("click", openDrawer);
 document.getElementById("closeDrawerBtn").addEventListener("click", closeDrawer);
 drawerOverlay.addEventListener("click", closeDrawer);
@@ -309,22 +473,23 @@ document.getElementById("cardConfirmed").addEventListener("click", () => {
 
 document.getElementById("cardPeriod").addEventListener("click", cyclePeriod);
 
-searchInput.addEventListener("input", () => {
-  loadReservations();
-});
-
+searchInput.addEventListener("input", loadReservations);
 statusFilter.addEventListener("change", () => {
   currentStatusView = "all";
   loadReservations();
 });
 
-document.getElementById("closeTablesModalBtn").addEventListener("click", closeTablesModal);
-document.getElementById("cancelTablesModalBtn").addEventListener("click", closeTablesModal);
-document.getElementById("saveTablesBtn").addEventListener("click", saveTablesModal);
+document.getElementById("openManualReservationBtn").addEventListener("click", openManualReservationModal);
+document.getElementById("closeManualReservationBtn").addEventListener("click", closeManualReservationModal);
+document.getElementById("cancelManualReservationBtn").addEventListener("click", closeManualReservationModal);
 
-tablesModal.addEventListener("click", (e) => {
-  if (e.target === tablesModal) closeTablesModal();
+manualReservationModal.addEventListener("click", (e) => {
+  if (e.target === manualReservationModal) closeManualReservationModal();
 });
 
-/* Init */
+mrDate.addEventListener("change", refreshManualReservationSlots);
+mrTurno.addEventListener("change", refreshManualReservationSlots);
+manualReservationForm.addEventListener("submit", saveManualReservation);
+
+await requireAuth();
 loadReservations();
