@@ -4,9 +4,93 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Prenotazioni - Officine Mare</title>
+  <link rel="icon" href="assets/logo.png">
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/admin.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <style>
+    .top-actions{
+      display:flex;
+      justify-content:flex-end;
+      align-items:center;
+      gap:12px;
+      margin-bottom:18px;
+      flex-wrap:wrap;
+    }
+
+    .reservation-submeta{
+      margin-top:12px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .covers-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:#EEF6FF;
+      border:1px solid #D6E7FA;
+      color:#16365C;
+      font-size:13px;
+      font-weight:800;
+    }
+
+    .mini-note{
+      color:var(--muted);
+      font-size:13px;
+      margin-top:8px;
+    }
+
+    .order-modal{
+      position:fixed;
+      inset:0;
+      background:rgba(10,29,56,0.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:100;
+      padding:24px;
+    }
+
+    .order-modal.open{
+      display:flex;
+    }
+
+    .order-modal-box{
+      width:min(980px, 96vw);
+      max-height:90vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:24px;
+      border:1px solid var(--border);
+      box-shadow:0 18px 50px rgba(16,40,74,0.12);
+      padding:26px;
+    }
+
+    .modal-grid-2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+
+    .modal-grid-3{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:14px;
+    }
+
+    @media (max-width:900px){
+      .modal-grid-2,
+      .modal-grid-3{
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
 </head>
 <body>
 
@@ -40,6 +124,7 @@
         <a class="drawer-link" href="menu.html">📖 Menu</a>
         <a class="drawer-link" href="orders.html">🍽️ Ordini</a>
         <a class="drawer-link" href="kitchen.html">👨‍🍳 Cucina</a>
+        <a class="drawer-link" href="calendar.html">🗓️ Gestisci calendario</a>
       </nav>
     </div>
 
@@ -53,6 +138,10 @@
     <section class="page-header">
       <h1>Prenotazioni</h1>
       <p>Gestisci le prenotazioni del ristorante</p>
+    </section>
+
+    <section class="top-actions">
+      <button class="btn btn-primary" id="openManualReservationBtn">＋ Inserisci prenotazione</button>
     </section>
 
     <section class="stats-grid">
@@ -82,7 +171,7 @@
           <option value="all">Tutti gli stati</option>
           <option value="pending">In attesa</option>
           <option value="confirmed">Confermate</option>
-          <option value="cancelled">Rifiutate</option>
+          <option value="arrived">Arrivate</option>
         </select>
       </div>
     </section>
@@ -92,22 +181,94 @@
   </main>
 </div>
 
-<div class="order-modal" id="tablesModal">
+<!-- MODALE PRENOTAZIONE MANUALE -->
+<div class="order-modal" id="manualReservationModal">
   <div class="order-modal-box">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;">
       <div>
-        <h2 style="margin:0;font-size:22px;">Assegna tavoli</h2>
-        <p style="margin:8px 0 0;color:var(--muted);">Seleziona i tavoli per la prenotazione</p>
+        <h2 style="margin:0;font-size:22px;">Inserisci prenotazione</h2>
+        <p style="margin:8px 0 0;color:var(--muted);">Prenotazione inserita manualmente dal ristoratore.</p>
       </div>
-      <button class="btn btn-soft" id="closeTablesModalBtn">✕</button>
+      <button class="btn btn-soft" type="button" id="closeManualReservationBtn">✕</button>
     </div>
 
-    <div id="tablesModalGrid" class="table-check-grid"></div>
+    <form id="manualReservationForm">
+      <div class="modal-grid-2">
+        <div>
+          <label for="mrName">Nome *</label>
+          <input id="mrName" required placeholder="Mario Rossi">
+        </div>
+        <div>
+          <label for="mrPhone">Telefono *</label>
+          <input id="mrPhone" required placeholder="+39 333 1234567">
+        </div>
+      </div>
 
-    <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px;">
-      <button class="btn btn-soft" id="cancelTablesModalBtn">Chiudi</button>
-      <button class="btn btn-primary" id="saveTablesBtn">Salva tavoli</button>
-    </div>
+      <div class="modal-grid-2" style="margin-top:14px;">
+        <div>
+          <label for="mrEmail">Email</label>
+          <input id="mrEmail" type="email" placeholder="mario@email.com">
+        </div>
+        <div>
+          <label for="mrPeople">Persone *</label>
+          <select id="mrPeople" required>
+            <option value="">N°</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option>
+            <option>5</option><option>6</option><option>7</option><option>8</option>
+            <option>9</option><option>10</option><option>11</option><option>12</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-grid-3" style="margin-top:14px;">
+        <div>
+          <label for="mrDate">Data *</label>
+          <input id="mrDate" type="date" required>
+        </div>
+        <div>
+          <label for="mrTurno">Turno *</label>
+          <select id="mrTurno" required>
+            <option value="">Seleziona turno</option>
+            <option value="pranzo">Pranzo</option>
+            <option value="cena">Cena</option>
+          </select>
+        </div>
+        <div>
+          <label for="mrTime">Ora *</label>
+          <select id="mrTime" required>
+            <option value="">Seleziona prima data e turno</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;">
+        <label for="mrNotes">Note</label>
+        <textarea id="mrNotes" rows="4" placeholder="Note, allergie, richieste..."></textarea>
+      </div>
+
+      <div class="modal-grid-2" style="margin-top:14px;">
+        <div>
+          <label for="mrStatus">Stato iniziale</label>
+          <select id="mrStatus">
+            <option value="confirmed">Confermata</option>
+            <option value="pending">In attesa</option>
+          </select>
+        </div>
+        <div>
+          <label for="mrSource">Sorgente</label>
+          <select id="mrSource">
+            <option value="admin">Admin</option>
+            <option value="phone">Telefono</option>
+            <option value="walkin">Walk-in</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px;">
+        <button type="button" class="btn btn-soft" id="cancelManualReservationBtn">Chiudi</button>
+        <button type="submit" class="btn btn-primary">Salva prenotazione</button>
+      </div>
+    </form>
   </div>
 </div>
 
