@@ -1,7 +1,4 @@
-import { requireAuth, logout } from "./auth.service.js";
 import supabase from "./supabase-client.js";
-
-await requireAuth();
 
 const drawer = document.getElementById("drawer");
 const drawerOverlay = document.getElementById("drawerOverlay");
@@ -9,6 +6,14 @@ const calendarGrid = document.getElementById("calendarGrid");
 const calendarTitle = document.getElementById("calendarTitle");
 
 let currentDate = new Date();
+
+async function requireAuth() {
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session) {
+    location.href = "login.html";
+    throw new Error("NON_AUTHENTICATED");
+  }
+}
 
 function openDrawer() {
   drawer.classList.add("open");
@@ -21,7 +26,7 @@ function closeDrawer() {
 }
 
 async function doLogout() {
-  await logout();
+  await supabase.auth.signOut();
   location.href = "login.html";
 }
 
@@ -38,7 +43,6 @@ function getMonthName(date) {
 }
 
 function defaultMaxCoversForMonth(monthIndex) {
-  // estate: maggio-settembre = 60
   return [4, 5, 6, 7, 8].includes(monthIndex) ? 60 : 40;
 }
 
@@ -74,15 +78,23 @@ async function getCalendarOverridesForMonth(year, monthIndex) {
 
 function buildCoverMap(reservations) {
   const map = new Map();
-
   reservations
     .filter(r => r.status !== "cancelled")
     .forEach(r => {
       const key = r.reservation_date;
-      const current = map.get(key) || 0;
-      map.set(key, current + Number(r.people || 0));
+      map.set(key, (map.get(key) || 0) + Number(r.people || 0));
     });
+  return map;
+}
 
+function buildCountMap(reservations) {
+  const map = new Map();
+  reservations
+    .filter(r => r.status !== "cancelled")
+    .forEach(r => {
+      const key = r.reservation_date;
+      map.set(key, (map.get(key) || 0) + 1);
+    });
   return map;
 }
 
@@ -156,13 +168,13 @@ async function renderCalendar() {
   const overrides = await getCalendarOverridesForMonth(year, monthIndex);
 
   const coverMap = buildCoverMap(reservations);
+  const countMap = buildCountMap(reservations);
   const overrideMap = buildOverrideMap(overrides);
 
   const firstDay = new Date(year, monthIndex, 1);
   const lastDay = new Date(year, monthIndex + 1, 0);
 
   let firstWeekday = firstDay.getDay();
-  // converti domenica=0 in 7, poi lunedì start
   firstWeekday = firstWeekday === 0 ? 7 : firstWeekday;
 
   const blanks = firstWeekday - 1;
@@ -189,12 +201,10 @@ async function renderCalendar() {
     const dayISO = toISO(dayDate);
 
     const covers = coverMap.get(dayISO) || 0;
+    const count = countMap.get(dayISO) || 0;
     const override = overrideMap.get(dayISO);
-
     const maxCovers = override?.max_covers ?? defaultMaxCoversForMonth(monthIndex);
     const isClosed = override?.is_closed ?? false;
-    const bookingsCount = reservations.filter(r => r.reservation_date === dayISO && r.status !== "cancelled").length;
-
     const cssClass = getDayClass(covers, maxCovers, isClosed);
 
     bodyHtml += `
@@ -207,7 +217,7 @@ async function renderCalendar() {
         </div>
 
         <div class="calendar-day-meta">
-          <div>📅 Prenotazioni: <strong>${bookingsCount}</strong></div>
+          <div>📅 Prenotazioni: <strong>${count}</strong></div>
           <div>👥 Coperti: <strong>${covers}/${maxCovers}</strong></div>
           ${override?.note ? `<div>📝 ${override.note}</div>` : ""}
         </div>
@@ -260,4 +270,5 @@ document.getElementById("todayBtn").addEventListener("click", async () => {
   await renderCalendar();
 });
 
-renderCalendar();
+await requireAuth();
+await renderCalendar();
