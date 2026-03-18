@@ -8,94 +8,24 @@
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/admin.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
+  <script src="supabase-config.js"></script>
   <style>
-    .top-actions{
-      display:flex;
-      justify-content:flex-end;
-      align-items:center;
-      gap:12px;
-      margin-bottom:18px;
-      flex-wrap:wrap;
-    }
-
-    .reservation-submeta{
-      margin-top:12px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-
-    .covers-pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 12px;
-      border-radius:999px;
-      background:#EEF6FF;
-      border:1px solid #D6E7FA;
-      color:#16365C;
-      font-size:13px;
-      font-weight:800;
-    }
-
-    .mini-note{
-      color:var(--muted);
-      font-size:13px;
-      margin-top:8px;
-    }
-
-    .order-modal{
-      position:fixed;
-      inset:0;
-      background:rgba(10,29,56,0.45);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index:100;
-      padding:24px;
-    }
-
-    .order-modal.open{
-      display:flex;
-    }
-
-    .order-modal-box{
-      width:min(980px, 96vw);
-      max-height:90vh;
-      overflow:auto;
-      background:#fff;
-      border-radius:24px;
-      border:1px solid var(--border);
-      box-shadow:0 18px 50px rgba(16,40,74,0.12);
-      padding:26px;
-    }
-
-    .modal-grid-2{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:14px;
-    }
-
-    .modal-grid-3{
-      display:grid;
-      grid-template-columns:1fr 1fr 1fr;
-      gap:14px;
-    }
-
-    @media (max-width:900px){
-      .modal-grid-2,
-      .modal-grid-3{
-        grid-template-columns:1fr;
-      }
-    }
+    .top-actions{display:flex;justify-content:flex-end;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+    .reservation-submeta{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .covers-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#EEF6FF;border:1px solid #D6E7FA;color:#16365C;font-size:13px;font-weight:800}
+    .mini-note{color:var(--muted);font-size:13px;margin-top:8px}
+    .order-modal{position:fixed;inset:0;background:rgba(10,29,56,.45);display:none;align-items:center;justify-content:center;z-index:100;padding:24px}
+    .order-modal.open{display:flex}
+    .order-modal-box{width:min(980px,96vw);max-height:90vh;overflow:auto;background:#fff;border-radius:24px;border:1px solid var(--border);box-shadow:0 18px 50px rgba(16,40,74,.12);padding:26px}
+    .modal-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .modal-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+    .table-check-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .table-check-item{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:16px;background:#fff}
+    @media (max-width:900px){.modal-grid-2,.modal-grid-3,.table-check-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-
 <div class="admin-shell">
-
   <header class="admin-topbar">
     <div class="topbar-left">
       <button class="hamburger-btn" id="openDrawerBtn">☰</button>
@@ -134,7 +64,6 @@
   </aside>
 
   <main class="admin-content">
-
     <section class="page-header">
       <h1>Prenotazioni</h1>
       <p>Gestisci le prenotazioni del ristorante</p>
@@ -177,11 +106,28 @@
     </section>
 
     <section id="reservationsList" class="reservation-list"></section>
-
   </main>
 </div>
 
-<!-- MODALE PRENOTAZIONE MANUALE -->
+<div class="order-modal" id="tablesModal">
+  <div class="order-modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;">
+      <div>
+        <h2 style="margin:0;font-size:22px;">Assegna tavoli</h2>
+        <p style="margin:8px 0 0;color:var(--muted);">I tavoli già assegnati nello stesso orario non sono selezionabili.</p>
+      </div>
+      <button class="btn btn-soft" id="closeTablesModalBtn">✕</button>
+    </div>
+
+    <div id="tablesModalGrid" class="table-check-grid"></div>
+
+    <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px;">
+      <button class="btn btn-soft" id="cancelTablesModalBtn">Chiudi</button>
+      <button class="btn btn-primary" id="saveTablesBtn">Salva tavoli</button>
+    </div>
+  </div>
+</div>
+
 <div class="order-modal" id="manualReservationModal">
   <div class="order-modal-box">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;">
