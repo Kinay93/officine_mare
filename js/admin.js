@@ -2,11 +2,9 @@ import supabase from "./supabase-client.js";
 
 const drawer = document.getElementById("drawer");
 const drawerOverlay = document.getElementById("drawerOverlay");
-
 const searchInput = document.getElementById("searchInput");
 const statusFilter = document.getElementById("statusFilter");
 const reservationsList = document.getElementById("reservationsList");
-
 const pendingCount = document.getElementById("pendingCount");
 const confirmedCount = document.getElementById("confirmedCount");
 const periodCount = document.getElementById("periodCount");
@@ -18,8 +16,13 @@ const mrDate = document.getElementById("mrDate");
 const mrTurno = document.getElementById("mrTurno");
 const mrTime = document.getElementById("mrTime");
 
+const tablesModal = document.getElementById("tablesModal");
+const tablesModalGrid = document.getElementById("tablesModalGrid");
+
 let currentStatusView = "all";
 let currentPeriod = "all";
+let currentSearch = "";
+let modalReservation = null;
 
 async function requireAuth() {
   const { data, error } = await supabase.auth.getSession();
@@ -53,6 +56,15 @@ function closeManualReservationModal() {
   manualReservationModal.classList.remove("open");
   manualReservationForm.reset();
   mrTime.innerHTML = `<option value="">Seleziona prima data e turno</option>`;
+}
+
+function openTablesModal() {
+  tablesModal.classList.add("open");
+}
+
+function closeTablesModal() {
+  tablesModal.classList.remove("open");
+  modalReservation = null;
 }
 
 function pad(n) {
@@ -159,16 +171,13 @@ function isSunday(dateStr) {
 function refreshManualReservationSlots() {
   const date = mrDate.value;
   const turno = mrTurno.value;
-
   mrTime.innerHTML = `<option value="">Seleziona prima data e turno</option>`;
 
   if (!date || !turno) return;
-
   if (isMonday(date)) {
     mrTime.innerHTML = `<option value="">Lunedì chiuso</option>`;
     return;
   }
-
   if (isSunday(date) && turno === "cena") {
     mrTime.innerHTML = `<option value="">Domenica sera non disponibile</option>`;
     return;
@@ -216,16 +225,13 @@ async function fetchBookingCalendarMap(fromISO, toISO) {
 
 function buildDailyCoverMap(reservations) {
   const map = new Map();
-
   reservations
     .filter(r => !r.hidden)
     .filter(r => r.status !== "cancelled")
     .forEach(r => {
       const key = r.reservation_date;
-      const current = map.get(key) || 0;
-      map.set(key, current + Number(r.people || 0));
+      map.set(key, (map.get(key) || 0) + Number(r.people || 0));
     });
-
   return map;
 }
 
@@ -278,6 +284,102 @@ async function rejectReservation(reservationId) {
   await loadReservations();
 }
 
+async function openTableAssign(reservation) {
+  modalReservation = reservation;
+
+  const { data: tables, error: tablesError } = await supabase
+    .from("restaurant_tables")
+    .select("*")
+    .order("code", { ascending: true });
+
+  if (tablesError) throw tablesError;
+
+  const { data: currentAssigned, error: currentAssignedError } = await supabase
+    .from("reservation_tables")
+    .select("table_code")
+    .eq("reservation_id", reservation.id);
+
+  if (currentAssignedError) throw currentAssignedError;
+
+  const assignedNow = new Set((currentAssigned || []).map(x => x.table_code));
+
+  const { data: sameSlotReservations, error: sameSlotError } = await supabase
+    .from("reservations")
+    .select("id")
+    .eq("reservation_date", reservation.reservation_date)
+    .eq("reservation_time", reservation.reservation_time)
+    .in("status", ["confirmed", "arrived"]);
+
+  if (sameSlotError) throw sameSlotError;
+
+  const otherIds = (sameSlotReservations || []).map(x => x.id).filter(id => id !== reservation.id);
+
+  let occupiedSet = new Set();
+  if (otherIds.length) {
+    const { data: occupied, error: occErr } = await supabase
+      .from("reservation_tables")
+      .select("table_code")
+      .in("reservation_id", otherIds);
+
+    if (occErr) throw occErr;
+    occupiedSet = new Set((occupied || []).map(x => x.table_code));
+  }
+
+  tablesModalGrid.innerHTML = (tables || []).map(t => {
+    const checked = assignedNow.has(t.code);
+    const disabled = (!t.is_open) || (occupiedSet.has(t.code) && !checked);
+    return `
+      <label class="table-check-item">
+        <input type="checkbox" class="table-check" value="${escapeHtml(t.code)}" ${checked ? "checked" : ""} ${disabled ? "disabled" : ""}>
+        <span>
+          <strong>${escapeHtml(t.code)}</strong><br>
+          <small style="color:var(--muted)">
+            ${!t.is_open ? "Chiuso globalmente" : occupiedSet.has(t.code) && !checked ? "Occupato in questa fascia" : `${escapeHtml(t.seats || 0)} coperti`}
+          </small>
+        </span>
+      </label>
+    `;
+  }).join("");
+
+  openTablesModal();
+}
+
+async function saveAssignedTables() {
+  if (!modalReservation) return;
+
+  const selected = Array.from(document.querySelectorAll(".table-check:checked")).map(x => x.value);
+
+  const { error: delErr } = await supabase
+    .from("reservation_tables")
+    .delete()
+    .eq("reservation_id", modalReservation.id);
+
+  if (delErr) throw delErr;
+
+  if (selected.length) {
+    const rows = selected.map(code => ({
+      reservation_id: modalReservation.id,
+      table_code: code
+    }));
+
+    const { error: insErr } = await supabase
+      .from("reservation_tables")
+      .insert(rows);
+
+    if (insErr) throw insErr;
+  }
+
+  const { error: updErr } = await supabase
+    .from("reservations")
+    .update({ assigned_table_code: selected[0] || null })
+    .eq("id", modalReservation.id);
+
+  if (updErr) throw updErr;
+
+  closeTablesModal();
+  await loadReservations();
+}
+
 function buildReservationCard(r, dailyCoverMap, calendarMap) {
   let badgeClass = "badge-pending";
   let badgeText = "In attesa";
@@ -304,6 +406,7 @@ function buildReservationCard(r, dailyCoverMap, calendarMap) {
             <span class="badge ${badgeClass}">${badgeText}</span>
             <span class="covers-pill">👥 ${dayCovers}/${maxCovers}</span>
             <span class="covers-pill">🍽️ ${escapeHtml(r.people)} coperti</span>
+            ${r.assigned_table_code ? `<span class="covers-pill">🪑 ${escapeHtml(r.assigned_table_code)}</span>` : ""}
           </div>
 
           <div class="reservation-meta">
@@ -318,6 +421,8 @@ function buildReservationCard(r, dailyCoverMap, calendarMap) {
       </div>
 
       <div class="reservation-actions">
+        <button class="btn btn-soft" data-action="tables" data-id="${escapeHtml(r.id)}">Assegna tavoli</button>
+
         ${r.status === "pending" ? `
           <button class="btn btn-success" data-action="confirm" data-id="${escapeHtml(r.id)}">✓ Conferma</button>
           <button class="btn btn-danger" data-action="reject" data-id="${escapeHtml(r.id)}">✕ Rifiuta</button>
@@ -344,6 +449,13 @@ function attachCardActions(reservations) {
       await rejectReservation(btn.dataset.id);
     });
   });
+
+  reservationsList.querySelectorAll("[data-action='tables']").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const reservation = reservations.find(x => String(x.id) === String(btn.dataset.id));
+      if (reservation) await openTableAssign(reservation);
+    });
+  });
 }
 
 async function loadReservations() {
@@ -362,7 +474,6 @@ async function loadReservations() {
 
   pendingCount.textContent = visibleReservations.filter(x => x.status === "pending").length;
   confirmedCount.textContent = visibleReservations.filter(x => x.status === "confirmed").length;
-
   periodLabel.textContent = getPeriodLabel();
   periodCount.textContent = applyPeriodFilter(visibleReservations).length;
 
@@ -399,7 +510,6 @@ function cyclePeriod() {
   else if (currentPeriod === "today") currentPeriod = "week";
   else if (currentPeriod === "week") currentPeriod = "month";
   else currentPeriod = "all";
-
   loadReservations();
 }
 
@@ -453,7 +563,6 @@ async function saveManualReservation(e) {
   await loadReservations();
 }
 
-/* listeners */
 document.getElementById("openDrawerBtn").addEventListener("click", openDrawer);
 document.getElementById("closeDrawerBtn").addEventListener("click", closeDrawer);
 drawerOverlay.addEventListener("click", closeDrawer);
@@ -491,5 +600,13 @@ mrDate.addEventListener("change", refreshManualReservationSlots);
 mrTurno.addEventListener("change", refreshManualReservationSlots);
 manualReservationForm.addEventListener("submit", saveManualReservation);
 
+document.getElementById("closeTablesModalBtn").addEventListener("click", closeTablesModal);
+document.getElementById("cancelTablesModalBtn").addEventListener("click", closeTablesModal);
+document.getElementById("saveTablesBtn").addEventListener("click", saveAssignedTables);
+
+tablesModal.addEventListener("click", (e) => {
+  if (e.target === tablesModal) closeTablesModal();
+});
+
 await requireAuth();
-loadReservations();
+await loadReservations();
