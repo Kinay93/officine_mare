@@ -8,171 +8,45 @@
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/admin.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
+  <script src="supabase-config.js"></script>
   <style>
-    .calendar-toolbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      flex-wrap:wrap;
-      margin-bottom:20px;
-    }
-
-    .calendar-nav{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-
-    .calendar-title{
-      font-size:22px;
-      font-weight:800;
-      color:var(--text);
-      min-width:220px;
-      text-align:center;
-    }
-
-    .calendar-grid{
-      display:grid;
-      grid-template-columns:repeat(7, 1fr);
-      gap:12px;
-    }
-
-    .calendar-head{
-      text-align:center;
-      font-weight:800;
-      color:var(--muted);
-      padding:10px 0;
-    }
-
-    .calendar-day{
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:18px;
-      min-height:160px;
-      padding:14px;
-      box-shadow:var(--shadow);
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-
-    .calendar-day.empty{
-      background:transparent;
-      border:none;
-      box-shadow:none;
-    }
-
-    .calendar-day.green{
-      border-left:5px solid #35C98A;
-    }
-
-    .calendar-day.yellow{
-      border-left:5px solid #F1B532;
-    }
-
-    .calendar-day.red{
-      border-left:5px solid #F06A6A;
-    }
-
-    .calendar-day.gray{
-      border-left:5px solid #94A3B8;
-      background:#F8FAFD;
-    }
-
-    .calendar-day-top{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:8px;
-    }
-
-    .calendar-day-num{
-      font-size:20px;
-      font-weight:800;
-      color:var(--text);
-    }
-
-    .calendar-day-meta{
-      color:var(--muted);
-      font-size:13px;
-      display:grid;
-      gap:6px;
-    }
-
-    .calendar-day-actions{
-      margin-top:auto;
-      display:grid;
-      gap:8px;
-    }
-
-    .calendar-legend{
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      margin:14px 0 20px;
-      color:var(--muted);
-      font-size:14px;
-    }
-
-    .legend-dot{
-      display:inline-block;
-      width:12px;
-      height:12px;
-      border-radius:999px;
-      margin-right:6px;
-      vertical-align:middle;
-    }
-
-    @media (max-width:1100px){
-      .calendar-grid{
-        grid-template-columns:repeat(2, 1fr);
-      }
-
-      .calendar-head{
-        display:none;
-      }
-    }
-
-    @media (max-width:700px){
-      .calendar-grid{
-        grid-template-columns:1fr;
-      }
-
-      .calendar-title{
-        text-align:left;
-      }
-    }
+    .calendar-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+    .calendar-nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .calendar-title{font-size:22px;font-weight:800;color:var(--text);min-width:220px;text-align:center}
+    .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:12px}
+    .calendar-head{text-align:center;font-weight:800;color:var(--muted);padding:10px 0}
+    .calendar-day{background:#fff;border:1px solid var(--border);border-radius:18px;min-height:160px;padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+    .calendar-day.empty{background:transparent;border:none;box-shadow:none}
+    .calendar-day.green{border-left:5px solid #35C98A}
+    .calendar-day.yellow{border-left:5px solid #F1B532}
+    .calendar-day.red{border-left:5px solid #F06A6A}
+    .calendar-day.gray{border-left:5px solid #94A3B8;background:#F8FAFD}
+    .calendar-day-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+    .calendar-day-num{font-size:20px;font-weight:800;color:var(--text)}
+    .calendar-day-meta{color:var(--muted);font-size:13px;display:grid;gap:6px}
+    .calendar-day-actions{margin-top:auto;display:grid;gap:8px}
+    .calendar-legend{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0 20px;color:var(--muted);font-size:14px}
+    .legend-dot{display:inline-block;width:12px;height:12px;border-radius:999px;margin-right:6px;vertical-align:middle}
+    @media (max-width:1100px){.calendar-grid{grid-template-columns:repeat(2,1fr)}.calendar-head{display:none}}
+    @media (max-width:700px){.calendar-grid{grid-template-columns:1fr}.calendar-title{text-align:left}}
   </style>
 </head>
 <body>
-
 <div class="admin-shell">
-
   <header class="admin-topbar">
     <div class="topbar-left">
       <button class="hamburger-btn" id="openDrawerBtn">☰</button>
-      <div class="brand">
-        <img src="assets/logo.png" alt="Logo">
-        <span>Ristorante</span>
-      </div>
+      <div class="brand"><img src="assets/logo.png" alt="Logo"><span>Ristorante</span></div>
     </div>
   </header>
 
   <div class="drawer-overlay" id="drawerOverlay"></div>
-
   <aside class="drawer" id="drawer">
     <div>
       <div class="drawer-head">
-        <div class="drawer-title">
-          <h2>Officine Mare</h2>
-          <p>Pannello di gestione</p>
-        </div>
+        <div class="drawer-title"><h2>Officine Mare</h2><p>Pannello di gestione</p></div>
         <button class="drawer-close" id="closeDrawerBtn">✕</button>
       </div>
-
       <nav class="drawer-nav">
         <a class="drawer-link" href="admin.html">📅 Prenotazioni</a>
         <a class="drawer-link" href="tables.html">◻️ Tavoli</a>
@@ -182,10 +56,7 @@
         <a class="drawer-link active" href="calendar.html">🗓️ Gestisci calendario</a>
       </nav>
     </div>
-
-    <div>
-      <button class="btn btn-soft" style="width:100%;" id="logoutBtn">Esci</button>
-    </div>
+    <div><button class="btn btn-soft" style="width:100%;" id="logoutBtn">Esci</button></div>
   </aside>
 
   <main class="admin-content">
@@ -201,7 +72,6 @@
           <div class="calendar-title" id="calendarTitle">Mese</div>
           <button class="btn btn-soft" id="nextMonthBtn">Mese successivo →</button>
         </div>
-
         <div class="calendar-nav">
           <button class="btn btn-soft" id="todayBtn">Oggi</button>
         </div>
