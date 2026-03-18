@@ -11,13 +11,9 @@
   <style>
     :root{
       --page-light:#F7F2EA;
-      --hero-dark:#0B1F3A;
-      --hero-mid:#173A63;
     }
 
-    *{
-      box-sizing:border-box;
-    }
+    *{ box-sizing:border-box; }
 
     body.booking-page{
       margin:0;
@@ -36,8 +32,8 @@
       padding:28px 20px 0;
       overflow:hidden;
       background:
-        linear-gradient(to bottom, rgba(7, 20, 38, .55), rgba(7, 20, 38, .30)),
-        url("assets/sfondo.jpg") center center / cover no-repeat;
+        linear-gradient(to bottom, rgba(7,20,38,.55), rgba(7,20,38,.30)),
+        url("assets/fondo.webp") center center / cover no-repeat;
     }
 
     .hero::after{
@@ -182,6 +178,94 @@
       border-radius:14px;
     }
 
+    .events-card{
+      width:min(980px, 92vw);
+      margin:0 auto 24px;
+      background:#fff;
+      border:1px solid rgba(16,40,74,.10);
+      border-radius:24px;
+      box-shadow:0 12px 34px rgba(16,40,74,.08);
+      padding:28px;
+      display:none;
+    }
+
+    .events-card.show{
+      display:block;
+    }
+
+    .events-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+
+    .book-slider{
+      display:grid;
+      grid-template-columns:56px 1fr 56px;
+      gap:14px;
+      align-items:center;
+    }
+
+    .book-nav{
+      height:52px;
+      width:52px;
+      border-radius:16px;
+      border:1px solid var(--border);
+      background:#fff;
+      box-shadow:var(--shadow);
+      font-size:20px;
+      cursor:pointer;
+    }
+
+    .book-page{
+      border:1px solid var(--border);
+      border-radius:22px;
+      background:linear-gradient(180deg, #fff 0%, #FAF7F0 100%);
+      box-shadow:0 10px 28px rgba(16,40,74,.08);
+      padding:20px;
+      min-height:260px;
+      display:grid;
+      grid-template-columns:260px 1fr;
+      gap:18px;
+    }
+
+    .book-page img{
+      width:100%;
+      height:100%;
+      min-height:220px;
+      object-fit:cover;
+      border-radius:16px;
+      border:1px solid var(--border);
+    }
+
+    .book-page h3{
+      margin:0 0 10px;
+      font-size:24px;
+    }
+
+    .event-meta{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+
+    .event-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:#EEF6FF;
+      border:1px solid #D6E7FA;
+      color:#16365C;
+      font-size:13px;
+      font-weight:800;
+    }
+
     .info-card{
       width:min(980px, 92vw);
       margin:0 auto 24px;
@@ -290,13 +374,24 @@
       }
 
       .booking-grid-2,
-      .info-grid{
+      .info-grid,
+      .book-page{
         grid-template-columns:1fr;
       }
 
       .booking-card,
-      .info-card{
+      .info-card,
+      .events-card{
         padding:24px;
+      }
+
+      .book-slider{
+        grid-template-columns:1fr;
+      }
+
+      .book-nav{
+        width:100%;
+        height:46px;
       }
     }
   </style>
@@ -306,8 +401,8 @@
   <section class="hero">
     <div class="hero-inner">
       <img src="assets/logo.png" alt="Logo Officine Mare" class="hero-logo">
-      <h1 class="hero-title">Officine Mare</h1>
-      <p class="hero-subtitle">Un’esperienza culinaria per froci</p>
+      <h1 class="hero-title">Prenota il tuo tavolo</h1>
+      <p class="hero-subtitle">Un’esperienza culinaria unica ti aspetta</p>
     </div>
   </section>
 
@@ -392,6 +487,35 @@
       </form>
     </section>
 
+    <section class="events-card" id="eventsSection">
+      <div class="events-head">
+        <div>
+          <h3 style="margin:0;">Eventi</h3>
+          <p style="margin:8px 0 0;color:var(--muted);">Scopri gli eventi attivi del ristorante.</p>
+        </div>
+      </div>
+
+      <div class="book-slider">
+        <button class="book-nav" id="prevEventBtn" type="button">←</button>
+
+        <div class="book-page" id="eventPage">
+          <div>
+            <img id="eventImage" src="" alt="Evento">
+          </div>
+          <div>
+            <h3 id="eventTitle">Titolo evento</h3>
+            <div class="event-meta">
+              <span class="event-pill" id="eventDate">📅</span>
+              <span class="event-pill" id="eventTime">🕒</span>
+            </div>
+            <p id="eventDescription" style="color:var(--muted);line-height:1.6;"></p>
+          </div>
+        </div>
+
+        <button class="book-nav" id="nextEventBtn" type="button">→</button>
+      </div>
+    </section>
+
     <section class="info-card">
       <h3>Informazioni</h3>
 
@@ -409,9 +533,13 @@
         <div class="info-item">
           <strong>🕒 Orari</strong>
           <div class="hours-list">
-            <div class="hours-row"><span>Lunedì</span><span>Chiuso</span></div>
-            <div class="hours-row"><span>Martedì-Sabato</span><span>12:30–15:00 / 18:30–23:00</span></div>
+            <div class="hours-row"><span>Martedì</span><span>12:30–15:00 / 18:30–23:00</span></div>
+            <div class="hours-row"><span>Mercoledì</span><span>12:30–15:00 / 18:30–23:00</span></div>
+            <div class="hours-row"><span>Giovedì</span><span>12:30–15:00 / 18:30–23:00</span></div>
+            <div class="hours-row"><span>Venerdì</span><span>12:30–15:00 / 18:30–23:00</span></div>
+            <div class="hours-row"><span>Sabato</span><span>12:30–15:00 / 18:30–23:00</span></div>
             <div class="hours-row"><span>Domenica</span><span>12:30–15:00</span></div>
+            <div class="hours-row"><span>Lunedì</span><span>Chiuso</span></div>
           </div>
         </div>
 
@@ -420,12 +548,16 @@
           <span>Prenota online oppure contattaci telefonicamente.</span>
 
           <div class="brand-links">
-            <a class="brand-link" href="https://www.instagram.com/officine.mare/" target="_blank" rel="noopener noreferrer" title="Instagram">
+            <a class="brand-link" href="https://instagram.com/" target="_blank" rel="noopener noreferrer" title="Instagram">
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="2"/>
                 <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
                 <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/>
               </svg>
+            </a>
+
+            <a class="brand-link" href="https://www.justeat.it/" target="_blank" rel="noopener noreferrer" title="Just Eat">
+              <span class="word">Just Eat</span>
             </a>
 
             <a class="brand-link" href="https://deliveroo.it/" target="_blank" rel="noopener noreferrer" title="Deliveroo">
@@ -466,8 +598,30 @@ const dateEl = document.getElementById("date");
 const turnoEl = document.getElementById("turno");
 const timeEl = document.getElementById("time");
 
+const eventsSection = document.getElementById("eventsSection");
+const eventImage = document.getElementById("eventImage");
+const eventTitle = document.getElementById("eventTitle");
+const eventDate = document.getElementById("eventDate");
+const eventTime = document.getElementById("eventTime");
+const eventDescription = document.getElementById("eventDescription");
+
+let closedDaysSet = new Set();
+let eventsData = [];
+let currentEventIndex = 0;
+
 function pad(n){
   return String(n).padStart(2, "0");
+}
+
+function todayISO(){
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function addDaysISO(days){
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 }
 
 function toMinutes(hhmm){
@@ -492,6 +646,21 @@ function buildSlots(start, end, step){
 const lunchSlots = buildSlots("12:30", "15:00", 10);
 const dinnerSlots = buildSlots("18:30", "23:00", 10);
 
+async function loadClosedDaysForNextYear(){
+  const fromISO = todayISO();
+  const toISO = addDaysISO(365);
+
+  const { data, error } = await supabase
+    .from("booking_calendar")
+    .select("day")
+    .gte("day", fromISO)
+    .lte("day", toISO)
+    .eq("is_closed", true);
+
+  if(error) throw error;
+  closedDaysSet = new Set((data || []).map(x => x.day));
+}
+
 function isMonday(dateStr){
   if(!dateStr) return false;
   const d = new Date(dateStr + "T00:00:00");
@@ -504,6 +673,10 @@ function isSunday(dateStr){
   return d.getDay() === 0;
 }
 
+function isBlockedDay(dateStr){
+  return closedDaysSet.has(dateStr);
+}
+
 function refreshSlots(){
   const date = dateEl.value;
   const turno = turnoEl.value;
@@ -511,6 +684,11 @@ function refreshSlots(){
   timeEl.innerHTML = `<option value="">Seleziona prima data e turno</option>`;
 
   if(!date || !turno) return;
+
+  if(isBlockedDay(date)){
+    timeEl.innerHTML = `<option value="">Giorno non prenotabile</option>`;
+    return;
+  }
 
   if(isMonday(date)){
     timeEl.innerHTML = `<option value="">Lunedì chiuso</option>`;
@@ -523,13 +701,22 @@ function refreshSlots(){
   }
 
   const slots = turno === "pranzo" ? lunchSlots : dinnerSlots;
-
   timeEl.innerHTML = `<option value="">Seleziona orario</option>` + slots.map(slot => `
     <option value="${slot}">${slot}</option>
   `).join("");
 }
 
-dateEl.addEventListener("change", refreshSlots);
+dateEl.addEventListener("change", () => {
+  if(dateEl.value && isBlockedDay(dateEl.value)){
+    statusBox.className = "booking-status bad";
+    statusBox.textContent = "Questo giorno è bloccato e non è prenotabile.";
+  } else {
+    statusBox.className = "booking-status";
+    statusBox.textContent = "";
+  }
+  refreshSlots();
+});
+
 turnoEl.addEventListener("change", refreshSlots);
 
 function normalizeSpaces(value){
@@ -648,8 +835,65 @@ window.toggleDayMenu = async function(){
   }
 };
 
+async function loadEvents(){
+  const fromISO = todayISO();
+  const toISO = addDaysISO(31);
+
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("is_active", true)
+    .gte("end_date", fromISO)
+    .lte("start_date", toISO)
+    .order("start_date", { ascending: true });
+
+  if(error){
+    console.warn("Eventi non caricati:", error.message);
+    return;
+  }
+
+  eventsData = data || [];
+
+  if(!eventsData.length){
+    eventsSection.classList.remove("show");
+    return;
+  }
+
+  eventsSection.classList.add("show");
+  currentEventIndex = 0;
+  renderEvent();
+}
+
+function renderEvent(){
+  if(!eventsData.length) return;
+  const ev = eventsData[currentEventIndex];
+
+  eventImage.src = ev.image_url || "assets/fondo.webp";
+  eventTitle.textContent = ev.title || "Evento";
+  eventDate.textContent = `📅 ${ev.start_date}${ev.end_date && ev.end_date !== ev.start_date ? " → " + ev.end_date : ""}`;
+  eventTime.textContent = `🕒 ${ev.start_time ? String(ev.start_time).slice(0,5) : "Orario da definire"}${ev.end_time ? " - " + String(ev.end_time).slice(0,5) : ""}`;
+  eventDescription.textContent = ev.description || "Dettagli evento disponibili a breve.";
+}
+
+document.getElementById("prevEventBtn").addEventListener("click", () => {
+  if(!eventsData.length) return;
+  currentEventIndex = (currentEventIndex - 1 + eventsData.length) % eventsData.length;
+  renderEvent();
+});
+
+document.getElementById("nextEventBtn").addEventListener("click", () => {
+  if(!eventsData.length) return;
+  currentEventIndex = (currentEventIndex + 1) % eventsData.length;
+  renderEvent();
+});
+
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
+
+  if(isBlockedDay(dateEl.value)){
+    showError("Questo giorno è bloccato e non è prenotabile.");
+    return;
+  }
 
   if(isMonday(dateEl.value)){
     showError("Il lunedì il ristorante è chiuso.");
@@ -709,7 +953,9 @@ form.addEventListener("submit", async (e) => {
     reservation_time: timeEl.value,
     people,
     notes: safeNotes,
-    status: "pending"
+    status: "pending",
+    source: "web",
+    hidden: false
   };
 
   try{
@@ -726,6 +972,9 @@ form.addEventListener("submit", async (e) => {
     showError("Errore invio: " + (err?.message || err));
   }
 });
+
+await loadClosedDaysForNextYear();
+await loadEvents();
 </script>
 
 </body>
