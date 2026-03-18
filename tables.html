@@ -4,125 +4,50 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tavoli - Officine Mare</title>
+  <link rel="icon" href="assets/logo.png">
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/admin.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="supabase-config.js"></script>
 </head>
 <body>
-
 <div class="admin-shell">
-
   <header class="admin-topbar">
     <div class="topbar-left">
-      <button class="hamburger-btn" onclick="openDrawer()">☰</button>
-      <div class="brand">
-        <img src="assets/logo.png">
-        <span>Ristorante</span>
-      </div>
+      <button class="hamburger-btn" id="openDrawerBtn">☰</button>
+      <div class="brand"><img src="assets/logo.png" alt="Logo"><span>Ristorante</span></div>
     </div>
   </header>
 
-  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
-
+  <div class="drawer-overlay" id="drawerOverlay"></div>
   <aside class="drawer" id="drawer">
     <div>
       <div class="drawer-head">
-        <div class="drawer-title">
-          <h2>Officine Mare</h2>
-          <p>Pannello di gestione</p>
-        </div>
-        <button class="drawer-close" onclick="closeDrawer()">✕</button>
+        <div class="drawer-title"><h2>Officine Mare</h2><p>Pannello di gestione</p></div>
+        <button class="drawer-close" id="closeDrawerBtn">✕</button>
       </div>
-
       <nav class="drawer-nav">
         <a class="drawer-link" href="admin.html">📅 Prenotazioni</a>
         <a class="drawer-link active" href="tables.html">◻️ Tavoli</a>
         <a class="drawer-link" href="menu.html">📖 Menu</a>
         <a class="drawer-link" href="orders.html">🍽️ Ordini</a>
         <a class="drawer-link" href="kitchen.html">👨‍🍳 Cucina</a>
+        <a class="drawer-link" href="calendar.html">🗓️ Gestisci calendario</a>
       </nav>
     </div>
-
-    <div>
-      <button class="btn btn-soft" style="width:100%;" onclick="doLogout()">Esci</button>
-    </div>
+    <div><button class="btn btn-soft" style="width:100%;" id="logoutBtn">Esci</button></div>
   </aside>
 
   <main class="admin-content">
-
     <section class="page-header">
       <h1>Tavoli</h1>
-      <p>Gestisci apertura e stato dei tavoli</p>
+      <p>Apri o chiudi i tavoli del ristorante</p>
     </section>
 
-    <section id="tablesGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px;"></section>
-
+    <section id="tablesGrid" class="reservation-list"></section>
   </main>
 </div>
 
-<script type="module">
-import { requireAuth, logout } from "./js/auth.service.js";
-import { getTables, updateTableStatus } from "./js/ui.js";
-
-await requireAuth();
-
-function openDrawer(){
-  document.getElementById("drawer").classList.add("open");
-  document.getElementById("drawerOverlay").classList.add("open");
-}
-
-function closeDrawer(){
-  document.getElementById("drawer").classList.remove("open");
-  document.getElementById("drawerOverlay").classList.remove("open");
-}
-
-async function loadTables(){
-  const tables = await getTables();
-  const box = document.getElementById("tablesGrid");
-
-  if(!tables.length){
-    box.innerHTML = `<div class="empty-card">Nessun tavolo presente</div>`;
-    return;
-  }
-
-  box.innerHTML = tables.map(t => `
-    <article class="card" style="padding:20px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
-        <div>
-          <h3 style="margin:0;font-size:22px;">${t.code}</h3>
-          <p style="margin:8px 0 0;color:var(--muted);">${t.seats || 0} coperti</p>
-        </div>
-        <span class="badge ${t.is_open ? 'badge-confirmed' : 'badge-cancelled'}">
-          ${t.is_open ? "Aperto" : "Chiuso"}
-        </span>
-      </div>
-
-      <div style="margin-top:18px;">
-        <button class="btn ${t.is_open ? 'btn-danger' : 'btn-success'}" onclick="toggleTable('${t.code}', ${!t.is_open})">
-          ${t.is_open ? "Chiudi tavolo" : "Apri tavolo"}
-        </button>
-      </div>
-    </article>
-  `).join("");
-}
-
-async function toggleTable(code, is_open){
-  await updateTableStatus(code, is_open);
-  loadTables();
-}
-
-async function doLogout(){
-  await logout();
-  location.href = "login.html";
-}
-
-window.openDrawer = openDrawer;
-window.closeDrawer = closeDrawer;
-window.toggleTable = toggleTable;
-window.doLogout = doLogout;
-
-loadTables();
-</script>
-
+<script type="module" src="js/tables-page.js"></script>
 </body>
 </html>
