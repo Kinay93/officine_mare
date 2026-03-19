@@ -30,7 +30,6 @@ async function requireAuth() {
     location.href = "login.html";
     throw new Error("NON_AUTHENTICATED");
   }
-  return data.session;
 }
 
 function openDrawer() {
@@ -122,6 +121,15 @@ function defaultMaxCoversForMonth(monthIndex) {
   return [4, 5, 6, 7, 8].includes(monthIndex) ? 60 : 40;
 }
 
+function detectService(reservation) {
+  if (reservation.service === "lunch" || reservation.service === "dinner") {
+    return reservation.service;
+  }
+  const notes = String(reservation.notes || "").toLowerCase();
+  if (notes.includes("turno: cena")) return "dinner";
+  return "lunch";
+}
+
 function applyPeriodFilter(data) {
   if (currentPeriod === "today") return data.filter(x => isToday(x.reservation_date));
   if (currentPeriod === "week") return data.filter(x => isInWeek(x.reservation_date));
@@ -174,10 +182,12 @@ function refreshManualReservationSlots() {
   mrTime.innerHTML = `<option value="">Seleziona prima data e turno</option>`;
 
   if (!date || !turno) return;
+
   if (isMonday(date)) {
     mrTime.innerHTML = `<option value="">Lunedì chiuso</option>`;
     return;
   }
+
   if (isSunday(date) && turno === "cena") {
     mrTime.innerHTML = `<option value="">Domenica sera non disponibile</option>`;
     return;
@@ -223,23 +233,69 @@ async function fetchBookingCalendarMap(fromISO, toISO) {
   return map;
 }
 
-function buildDailyCoverMap(reservations) {
-  const map = new Map();
+async function fetchBookingRulesUpTo(toISO) {
+  const { data, error } = await supabase
+    .from("booking_rules")
+    .select("*")
+    .lte("start_day", toISO)
+    .order("start_day", { ascending: true });
+
+  if (error) throw error;
+  return data || [];
+}
+
+function getRuleForDay(dayISO, rules) {
+  let selected = null;
+
+  for (const rule of rules) {
+    if (rule.start_day <= dayISO) selected = rule;
+    else break;
+  }
+
+  if (selected) {
+    return {
+      lunch: selected.lunch_max_covers,
+      dinner: selected.dinner_max_covers
+    };
+  }
+
+  const monthIndex = new Date(dayISO + "T00:00:00").getMonth();
+  const d = defaultMaxCoversForMonth(monthIndex);
+  return { lunch: d, dinner: d };
+}
+
+function getMaxCoversForReservation(reservation, calendarMap, rules) {
+  const service = detectService(reservation);
+  const override = calendarMap.get(reservation.reservation_date);
+  const base = getRuleForDay(reservation.reservation_date, rules);
+
+  if (service === "dinner") {
+    return override?.dinner_max_covers ?? base.dinner;
+  }
+
+  return override?.lunch_max_covers ?? base.lunch;
+}
+
+function buildDailyServiceMaps(reservations) {
+  const lunchMap = new Map();
+  const dinnerMap = new Map();
+
   reservations
     .filter(r => !r.hidden)
     .filter(r => r.status !== "cancelled")
     .forEach(r => {
       const key = r.reservation_date;
-      map.set(key, (map.get(key) || 0) + Number(r.people || 0));
-    });
-  return map;
-}
+      const service = detectService(r);
+      const people = Number(r.people || 0);
 
-function getMaxCoversForDay(dateStr, calendarMap) {
-  const override = calendarMap.get(dateStr);
-  if (override?.max_covers) return override.max_covers;
-  const d = new Date(dateStr + "T00:00:00");
-  return defaultMaxCoversForMonth(d.getMonth());
+      if (service === "dinner") {
+        dinnerMap.set(key, (dinnerMap.get(key) || 0) + people);
+      } else {
+        lunchMap.set(key, (lunchMap.get(key) || 0) + people);
+      }
+    });
+
+  return { lunchMap, dinnerMap };
 }
 
 function getWhatsappLink(phone, message) {
@@ -328,6 +384,7 @@ async function openTableAssign(reservation) {
   tablesModalGrid.innerHTML = (tables || []).map(t => {
     const checked = assignedNow.has(t.code);
     const disabled = (!t.is_open) || (occupiedSet.has(t.code) && !checked);
+
     return `
       <label class="table-check-item">
         <input type="checkbox" class="table-check" value="${escapeHtml(t.code)}" ${checked ? "checked" : ""} ${disabled ? "disabled" : ""}>
@@ -380,56 +437,61 @@ async function saveAssignedTables() {
   await loadReservations();
 }
 
-function buildReservationCard(r, dailyCoverMap, calendarMap) {
+function buildReservationCard(reservation, lunchMap, dinnerMap, calendarMap, rules) {
   let badgeClass = "badge-pending";
   let badgeText = "In attesa";
 
-  if (r.status === "confirmed") {
+  if (reservation.status === "confirmed") {
     badgeClass = "badge-confirmed";
     badgeText = "Confermata";
-  } else if (r.status === "arrived") {
+  } else if (reservation.status === "arrived") {
     badgeClass = "badge-confirmed";
     badgeText = "Arrivata";
   }
 
-  const dayCovers = dailyCoverMap.get(r.reservation_date) || 0;
-  const maxCovers = getMaxCoversForDay(r.reservation_date, calendarMap);
-  const time = String(r.reservation_time || "").slice(0, 5);
+  const service = detectService(reservation);
+  const dayCovers = service === "dinner"
+    ? (dinnerMap.get(reservation.reservation_date) || 0)
+    : (lunchMap.get(reservation.reservation_date) || 0);
+
+  const maxCovers = getMaxCoversForReservation(reservation, calendarMap, rules);
+  const time = String(reservation.reservation_time || "").slice(0, 5);
 
   return `
     <article class="reservation-card">
       <div class="reservation-top">
         <div>
-          <h3 class="reservation-name">${escapeHtml(r.customer_name)}</h3>
+          <h3 class="reservation-name">${escapeHtml(reservation.customer_name)}</h3>
 
           <div class="reservation-submeta">
             <span class="badge ${badgeClass}">${badgeText}</span>
             <span class="covers-pill">👥 ${dayCovers}/${maxCovers}</span>
-            <span class="covers-pill">🍽️ ${escapeHtml(r.people)} coperti</span>
-            ${r.assigned_table_code ? `<span class="covers-pill">🪑 ${escapeHtml(r.assigned_table_code)}</span>` : ""}
+            <span class="covers-pill">${service === "dinner" ? "🌙 Cena" : "☀️ Pranzo"}</span>
+            <span class="covers-pill">🍽️ ${escapeHtml(reservation.people)} coperti</span>
+            ${reservation.assigned_table_code ? `<span class="covers-pill">🪑 ${escapeHtml(reservation.assigned_table_code)}</span>` : ""}
           </div>
 
           <div class="reservation-meta">
-            <span>📅 ${escapeHtml(r.reservation_date)}</span>
+            <span>📅 ${escapeHtml(reservation.reservation_date)}</span>
             <span>🕒 ${escapeHtml(time)}</span>
-            <span>📞 ${escapeHtml(r.customer_phone || "-")}</span>
-            <span>🔖 ${escapeHtml(r.source || "web")}</span>
+            <span>📞 ${escapeHtml(reservation.customer_phone || "-")}</span>
+            <span>🔖 ${escapeHtml(reservation.source || "web")}</span>
           </div>
 
-          ${r.notes ? `<div class="mini-note">📝 ${escapeHtml(r.notes)}</div>` : ""}
+          ${reservation.notes ? `<div class="mini-note">📝 ${escapeHtml(reservation.notes)}</div>` : ""}
         </div>
       </div>
 
       <div class="reservation-actions">
-        <button class="btn btn-soft" data-action="tables" data-id="${escapeHtml(r.id)}">Assegna tavoli</button>
+        <button class="btn btn-soft" data-action="tables" data-id="${escapeHtml(reservation.id)}">Assegna tavoli</button>
 
-        ${r.status === "pending" ? `
-          <button class="btn btn-success" data-action="confirm" data-id="${escapeHtml(r.id)}">✓ Conferma</button>
-          <button class="btn btn-danger" data-action="reject" data-id="${escapeHtml(r.id)}">✕ Rifiuta</button>
+        ${reservation.status === "pending" ? `
+          <button class="btn btn-success" data-action="confirm" data-id="${escapeHtml(reservation.id)}">✓ Conferma</button>
+          <button class="btn btn-danger" data-action="reject" data-id="${escapeHtml(reservation.id)}">✕ Rifiuta</button>
         ` : ""}
 
-        ${r.status === "confirmed" ? `
-          <button class="btn btn-danger" data-action="reject" data-id="${escapeHtml(r.id)}">✕ Rifiuta</button>
+        ${reservation.status === "confirmed" ? `
+          <button class="btn btn-danger" data-action="reject" data-id="${escapeHtml(reservation.id)}">✕ Rifiuta</button>
         ` : ""}
       </div>
     </article>
@@ -464,12 +526,15 @@ async function loadReservations() {
   const allReservations = await fetchAllReservations();
   const visibleReservations = allReservations.filter(x => !x.hidden);
 
-  const dailyCoverMap = buildDailyCoverMap(visibleReservations);
+  const { lunchMap, dinnerMap } = buildDailyServiceMaps(visibleReservations);
   const dates = visibleReservations.map(x => x.reservation_date).sort();
 
   let calendarMap = new Map();
+  let rules = [];
+
   if (dates.length) {
     calendarMap = await fetchBookingCalendarMap(dates[0], dates[dates.length - 1]);
+    rules = await fetchBookingRulesUpTo(dates[dates.length - 1]);
   }
 
   pendingCount.textContent = visibleReservations.filter(x => x.status === "pending").length;
@@ -501,7 +566,7 @@ async function loadReservations() {
     return;
   }
 
-  reservationsList.innerHTML = data.map(r => buildReservationCard(r, dailyCoverMap, calendarMap)).join("");
+  reservationsList.innerHTML = data.map(r => buildReservationCard(r, lunchMap, dinnerMap, calendarMap, rules)).join("");
   attachCardActions(data);
 }
 
@@ -510,6 +575,7 @@ function cyclePeriod() {
   else if (currentPeriod === "today") currentPeriod = "week";
   else if (currentPeriod === "week") currentPeriod = "month";
   else currentPeriod = "all";
+
   loadReservations();
 }
 
@@ -547,6 +613,7 @@ async function saveManualReservation(e) {
     notes: fullNotes,
     status,
     source,
+    service: turno === "cena" ? "dinner" : "lunch",
     hidden: false
   };
 
