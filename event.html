@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eventi - Officine Mare</title>
+  <link rel="icon" href="assets/logo.png">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    .event-form-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px}
+    .event-form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .event-list{display:grid;gap:16px}
+    @media (max-width:900px){.event-form-grid,.event-form-grid-2{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="admin-shell">
+  <header class="admin-topbar">
+    <div class="topbar-left">
+      <button class="hamburger-btn" id="openDrawerBtn">☰</button>
+      <div class="brand"><img src="assets/logo.png" alt="Logo"><span>Ristorante</span></div>
+    </div>
+  </header>
+
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <aside class="drawer" id="drawer">
+    <div>
+      <div class="drawer-head">
+        <div class="drawer-title"><h2>Officine Mare</h2><p>Pannello di gestione</p></div>
+        <button class="drawer-close" id="closeDrawerBtn">✕</button>
+      </div>
+      <nav class="drawer-nav">
+        <a class="drawer-link" href="admin.html">📅 Prenotazioni</a>
+        <a class="drawer-link" href="tables.html">◻️ Tavoli</a>
+        <a class="drawer-link" href="menu.html">📖 Menu</a>
+        <a class="drawer-link" href="orders.html">🍽️ Ordini</a>
+        <a class="drawer-link" href="kitchen.html">👨‍🍳 Cucina</a>
+        <a class="drawer-link" href="calendar.html">🗓️ Gestisci calendario</a>
+        <a class="drawer-link active" href="event.html">🎉 Eventi</a>
+      </nav>
+    </div>
+    <div><button class="btn btn-soft" style="width:100%;" id="logoutBtn">Esci</button></div>
+  </aside>
+
+  <main class="admin-content">
+    <section class="page-header">
+      <h1>Eventi</h1>
+      <p>Crea e gestisci eventi visibili in homepage</p>
+    </section>
+
+    <section class="card" style="padding:24px;margin-bottom:22px;">
+      <div class="event-form-grid">
+        <input id="evTitle" placeholder="Titolo evento">
+        <input id="evStartDate" type="date">
+        <input id="evEndDate" type="date">
+      </div>
+
+      <div class="event-form-grid-2" style="margin-top:14px;">
+        <input id="evStartTime" type="time">
+        <input id="evEndTime" type="time">
+      </div>
+
+      <div style="margin-top:14px;">
+        <textarea id="evDescription" rows="5" placeholder="Descrizione evento"></textarea>
+      </div>
+
+      <div class="event-form-grid-2" style="margin-top:14px;">
+        <input id="evImageUrl" placeholder="URL immagine evento (opzionale)">
+        <select id="evActive">
+          <option value="true">Attivo</option>
+          <option value="false">Non attivo</option>
+        </select>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:18px;">
+        <button class="btn btn-primary" id="saveEventBtn">Salva evento</button>
+      </div>
+    </section>
+
+    <section id="eventsList" class="event-list"></section>
+  </main>
+</div>
+
+<script type="module" src="js/event.js"></script>
+</body>
+</html>
