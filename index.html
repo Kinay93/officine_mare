@@ -202,68 +202,74 @@
       margin-bottom:18px;
     }
 
-    .book-slider{
+    #eventCardsWrap{
       display:grid;
-      grid-template-columns:56px 1fr 56px;
-      gap:14px;
-      align-items:center;
+      grid-template-columns:repeat(3,1fr);
+      gap:16px;
     }
 
-    .book-nav{
-      height:52px;
-      width:52px;
-      border-radius:16px;
+    .event-card-mini{
+      position:relative;
+      overflow:hidden;
+      min-height:240px;
+      border-radius:22px;
       border:1px solid var(--border);
       background:#fff;
-      box-shadow:var(--shadow);
-      font-size:20px;
-      cursor:pointer;
-    }
-
-    .book-page{
-      border:1px solid var(--border);
-      border-radius:22px;
-      background:linear-gradient(180deg, #fff 0%, #FAF7F0 100%);
       box-shadow:0 10px 28px rgba(16,40,74,.08);
-      padding:20px;
-      min-height:260px;
-      display:grid;
-      grid-template-columns:260px 1fr;
-      gap:18px;
+      cursor:pointer;
+      transition:transform .18s ease, box-shadow .18s ease;
     }
 
-    .book-page img{
+    .event-card-mini:hover,
+    .event-card-mini.open{
+      transform:translateY(-2px);
+      box-shadow:0 16px 34px rgba(16,40,74,.12);
+    }
+
+    .event-card-cover{
+      height:120px;
       width:100%;
-      height:100%;
-      min-height:220px;
       object-fit:cover;
-      border-radius:16px;
-      border:1px solid var(--border);
+      display:block;
     }
 
-    .book-page h3{
-      margin:0 0 10px;
-      font-size:24px;
+    .event-card-body{
+      padding:16px;
     }
 
-    .event-meta{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:12px;
-    }
-
-    .event-pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 12px;
-      border-radius:999px;
-      background:#EEF6FF;
-      border:1px solid #D6E7FA;
-      color:#16365C;
-      font-size:13px;
+    .event-card-date{
+      font-size:12px;
       font-weight:800;
+      color:#345;
+      margin-bottom:8px;
+    }
+
+    .event-card-title{
+      font-size:18px;
+      font-weight:900;
+      color:var(--text);
+      margin-bottom:8px;
+    }
+
+    .event-card-preview{
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.5;
+    }
+
+    .event-card-full{
+      max-height:0;
+      overflow:hidden;
+      transition:max-height .22s ease;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.6;
+    }
+
+    .event-card-mini:hover .event-card-full,
+    .event-card-mini.open .event-card-full{
+      max-height:280px;
+      margin-top:12px;
     }
 
     .info-card{
@@ -374,8 +380,7 @@
       }
 
       .booking-grid-2,
-      .info-grid,
-      .book-page{
+      .info-grid{
         grid-template-columns:1fr;
       }
 
@@ -385,13 +390,8 @@
         padding:24px;
       }
 
-      .book-slider{
+      #eventCardsWrap{
         grid-template-columns:1fr;
-      }
-
-      .book-nav{
-        width:100%;
-        height:46px;
       }
     }
   </style>
@@ -417,22 +417,22 @@
       <form id="bookingForm">
         <div class="booking-grid-2">
           <div class="field">
-            <label>Nome *</label>
+            <label for="name">Nome *</label>
             <input id="name" required placeholder="Mario Rossi">
           </div>
           <div class="field">
-            <label>Telefono *</label>
+            <label for="phone">Telefono *</label>
             <input id="phone" required placeholder="+39 333 1234567">
           </div>
         </div>
 
         <div class="booking-grid-2">
           <div class="field">
-            <label>Email</label>
+            <label for="email">Email</label>
             <input id="email" type="email" placeholder="mario@email.com">
           </div>
           <div class="field">
-            <label>Persone *</label>
+            <label for="people">Persone *</label>
             <select id="people" required>
               <option value="">N°</option>
               <option>1</option><option>2</option><option>3</option><option>4</option>
@@ -444,11 +444,11 @@
 
         <div class="booking-grid-2">
           <div class="field">
-            <label>Data *</label>
+            <label for="date">Data *</label>
             <input id="date" type="date" required>
           </div>
           <div class="field">
-            <label>Turno *</label>
+            <label for="turno">Turno *</label>
             <select id="turno" required>
               <option value="">Seleziona turno</option>
               <option value="pranzo">Pranzo</option>
@@ -459,13 +459,13 @@
 
         <div class="booking-grid-2">
           <div class="field">
-            <label>Ora *</label>
+            <label for="time">Ora *</label>
             <select id="time" required>
               <option value="">Seleziona prima data e turno</option>
             </select>
           </div>
           <div class="field">
-            <label>Note</label>
+            <label for="notes">Note</label>
             <textarea id="notes" rows="4" placeholder="Allergie, richieste, preferenze..."></textarea>
           </div>
         </div>
@@ -476,7 +476,7 @@
         </div>
 
         <div class="day-menu-toggle">
-          <button type="button" class="btn btn-soft" onclick="toggleDayMenu()">Menù del giorno</button>
+          <button type="button" class="btn btn-soft" id="toggleDayMenuBtn">Menù del giorno</button>
         </div>
 
         <div id="dayMenuPanel" class="day-menu-panel">
@@ -491,29 +491,11 @@
       <div class="events-head">
         <div>
           <h3 style="margin:0;">Eventi</h3>
-          <p style="margin:8px 0 0;color:var(--muted);">Scopri gli eventi attivi del ristorante.</p>
+          <p style="margin:8px 0 0;color:var(--muted);">Scopri gli eventi del giorno, della settimana o del mese.</p>
         </div>
       </div>
 
-      <div class="book-slider">
-        <button class="book-nav" id="prevEventBtn" type="button">←</button>
-
-        <div class="book-page" id="eventPage">
-          <div>
-            <img id="eventImage" src="" alt="Evento">
-          </div>
-          <div>
-            <h3 id="eventTitle">Titolo evento</h3>
-            <div class="event-meta">
-              <span class="event-pill" id="eventDate">📅</span>
-              <span class="event-pill" id="eventTime">🕒</span>
-            </div>
-            <p id="eventDescription" style="color:var(--muted);line-height:1.6;"></p>
-          </div>
-        </div>
-
-        <button class="book-nav" id="nextEventBtn" type="button">→</button>
-      </div>
+      <div id="eventCardsWrap"></div>
     </section>
 
     <section class="info-card">
@@ -588,394 +570,6 @@
     </footer>
   </div>
 
-<script type="module">
-import supabase from "./js/supabase-client.js";
-import { getMenuDay } from "./js/menu.service.js";
-
-const form = document.getElementById("bookingForm");
-const statusBox = document.getElementById("bookingStatus");
-const dateEl = document.getElementById("date");
-const turnoEl = document.getElementById("turno");
-const timeEl = document.getElementById("time");
-
-const eventsSection = document.getElementById("eventsSection");
-const eventImage = document.getElementById("eventImage");
-const eventTitle = document.getElementById("eventTitle");
-const eventDate = document.getElementById("eventDate");
-const eventTime = document.getElementById("eventTime");
-const eventDescription = document.getElementById("eventDescription");
-
-let closedDaysSet = new Set();
-let eventsData = [];
-let currentEventIndex = 0;
-
-function pad(n){
-  return String(n).padStart(2, "0");
-}
-
-function todayISO(){
-  const d = new Date();
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-}
-
-function addDaysISO(days){
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-}
-
-function toMinutes(hhmm){
-  const [h, m] = hhmm.split(":").map(Number);
-  return h * 60 + m;
-}
-
-function fromMinutes(total){
-  const h = Math.floor(total / 60);
-  const m = total % 60;
-  return `${pad(h)}:${pad(m)}`;
-}
-
-function buildSlots(start, end, step){
-  const slots = [];
-  for(let t = toMinutes(start); t <= toMinutes(end); t += step){
-    slots.push(fromMinutes(t));
-  }
-  return slots;
-}
-
-const lunchSlots = buildSlots("12:30", "15:00", 10);
-const dinnerSlots = buildSlots("18:30", "23:00", 10);
-
-async function loadClosedDaysForNextYear(){
-  const fromISO = todayISO();
-  const toISO = addDaysISO(365);
-
-  const { data, error } = await supabase
-    .from("booking_calendar")
-    .select("day")
-    .gte("day", fromISO)
-    .lte("day", toISO)
-    .eq("is_closed", true);
-
-  if(error) throw error;
-  closedDaysSet = new Set((data || []).map(x => x.day));
-}
-
-function isMonday(dateStr){
-  if(!dateStr) return false;
-  const d = new Date(dateStr + "T00:00:00");
-  return d.getDay() === 1;
-}
-
-function isSunday(dateStr){
-  if(!dateStr) return false;
-  const d = new Date(dateStr + "T00:00:00");
-  return d.getDay() === 0;
-}
-
-function isBlockedDay(dateStr){
-  return closedDaysSet.has(dateStr);
-}
-
-function refreshSlots(){
-  const date = dateEl.value;
-  const turno = turnoEl.value;
-
-  timeEl.innerHTML = `<option value="">Seleziona prima data e turno</option>`;
-
-  if(!date || !turno) return;
-
-  if(isBlockedDay(date)){
-    timeEl.innerHTML = `<option value="">Giorno non prenotabile</option>`;
-    return;
-  }
-
-  if(isMonday(date)){
-    timeEl.innerHTML = `<option value="">Lunedì chiuso</option>`;
-    return;
-  }
-
-  if(isSunday(date) && turno === "cena"){
-    timeEl.innerHTML = `<option value="">Domenica sera non disponibile</option>`;
-    return;
-  }
-
-  const slots = turno === "pranzo" ? lunchSlots : dinnerSlots;
-  timeEl.innerHTML = `<option value="">Seleziona orario</option>` + slots.map(slot => `
-    <option value="${slot}">${slot}</option>
-  `).join("");
-}
-
-dateEl.addEventListener("change", () => {
-  if(dateEl.value && isBlockedDay(dateEl.value)){
-    statusBox.className = "booking-status bad";
-    statusBox.textContent = "Questo giorno è bloccato e non è prenotabile.";
-  } else {
-    statusBox.className = "booking-status";
-    statusBox.textContent = "";
-  }
-  refreshSlots();
-});
-
-turnoEl.addEventListener("change", refreshSlots);
-
-function normalizeSpaces(value){
-  return String(value || "").replace(/\s+/g, " ").trim();
-}
-
-function stripHtml(value){
-  return String(value || "").replace(/<[^>]*>/g, "");
-}
-
-function containsDangerousPattern(value){
-  const v = String(value || "").toLowerCase();
-  return (
-    v.includes("<script") ||
-    v.includes("</script") ||
-    v.includes("javascript:") ||
-    v.includes("data:text/html") ||
-    v.includes("onerror=") ||
-    v.includes("onload=") ||
-    v.includes("onclick=") ||
-    v.includes("onmouseover=") ||
-    v.includes("iframe") ||
-    v.includes("svg") ||
-    v.includes("document.cookie") ||
-    v.includes("window.location") ||
-    v.includes("alert(")
-  );
-}
-
-function sanitizeText(value, maxLen = 120){
-  let v = normalizeSpaces(value);
-  v = stripHtml(v);
-  v = v.slice(0, maxLen);
-  return v;
-}
-
-function validateName(value){
-  const v = sanitizeText(value, 80);
-  if(!v) return { ok:false, msg:"Inserisci il nome." };
-  if(containsDangerousPattern(v)) return { ok:false, msg:"Nome non valido." };
-  if(!/^[A-Za-zÀ-ÖØ-öø-ÿ'’.\- ]{2,80}$/.test(v)){
-    return { ok:false, msg:"Il nome contiene caratteri non validi." };
-  }
-  return { ok:true, value:v };
-}
-
-function validatePhone(value){
-  let v = normalizeSpaces(value).replace(/[^\d+ ]/g, "");
-  v = v.slice(0, 20);
-
-  if(!v) return { ok:false, msg:"Inserisci il telefono." };
-  if(containsDangerousPattern(v)) return { ok:false, msg:"Telefono non valido." };
-  if(!/^\+?[0-9 ]{6,20}$/.test(v)){
-    return { ok:false, msg:"Numero di telefono non valido." };
-  }
-
-  return { ok:true, value:v };
-}
-
-function validateEmail(value){
-  let v = normalizeSpaces(value).toLowerCase().slice(0, 120);
-
-  if(!v) return { ok:true, value:"" };
-  if(containsDangerousPattern(v)) return { ok:false, msg:"Email non valida." };
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)){
-    return { ok:false, msg:"Formato email non valido." };
-  }
-
-  return { ok:true, value:v };
-}
-
-function validateNotes(value){
-  let v = sanitizeText(value, 500);
-  if(containsDangerousPattern(v)){
-    return { ok:false, msg:"Le note contengono testo non consentito." };
-  }
-  return { ok:true, value:v };
-}
-
-function showError(msg){
-  statusBox.className = "booking-status bad";
-  statusBox.textContent = msg;
-}
-
-function showOk(msg){
-  statusBox.className = "booking-status ok";
-  statusBox.textContent = msg;
-}
-
-document.getElementById("notes").addEventListener("input", (e) => {
-  e.target.value = e.target.value.replace(/[<>]/g, "");
-});
-
-document.getElementById("name").addEventListener("input", (e) => {
-  e.target.value = e.target.value.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ'’.\- ]/g, "");
-});
-
-document.getElementById("phone").addEventListener("input", (e) => {
-  e.target.value = e.target.value.replace(/[^\d+ ]/g, "");
-});
-
-window.toggleDayMenu = async function(){
-  const panel = document.getElementById("dayMenuPanel");
-  const content = document.getElementById("dayMenuContent");
-  panel.classList.toggle("open");
-
-  if(panel.classList.contains("open")){
-    const data = await getMenuDay();
-    if(data?.image_url){
-      content.innerHTML = `<img src="${data.image_url}" alt="Menù del giorno">`;
-    }else if(data?.text){
-      content.textContent = data.text;
-    }else{
-      content.textContent = "Nessun menù del giorno disponibile.";
-    }
-  }
-};
-
-async function loadEvents(){
-  const fromISO = todayISO();
-  const toISO = addDaysISO(31);
-
-  const { data, error } = await supabase
-    .from("events")
-    .select("*")
-    .eq("is_active", true)
-    .gte("end_date", fromISO)
-    .lte("start_date", toISO)
-    .order("start_date", { ascending: true });
-
-  if(error){
-    console.warn("Eventi non caricati:", error.message);
-    return;
-  }
-
-  eventsData = data || [];
-
-  if(!eventsData.length){
-    eventsSection.classList.remove("show");
-    return;
-  }
-
-  eventsSection.classList.add("show");
-  currentEventIndex = 0;
-  renderEvent();
-}
-
-function renderEvent(){
-  if(!eventsData.length) return;
-  const ev = eventsData[currentEventIndex];
-
-  eventImage.src = ev.image_url || "assets/fondo.webp";
-  eventTitle.textContent = ev.title || "Evento";
-  eventDate.textContent = `📅 ${ev.start_date}${ev.end_date && ev.end_date !== ev.start_date ? " → " + ev.end_date : ""}`;
-  eventTime.textContent = `🕒 ${ev.start_time ? String(ev.start_time).slice(0,5) : "Orario da definire"}${ev.end_time ? " - " + String(ev.end_time).slice(0,5) : ""}`;
-  eventDescription.textContent = ev.description || "Dettagli evento disponibili a breve.";
-}
-
-document.getElementById("prevEventBtn").addEventListener("click", () => {
-  if(!eventsData.length) return;
-  currentEventIndex = (currentEventIndex - 1 + eventsData.length) % eventsData.length;
-  renderEvent();
-});
-
-document.getElementById("nextEventBtn").addEventListener("click", () => {
-  if(!eventsData.length) return;
-  currentEventIndex = (currentEventIndex + 1) % eventsData.length;
-  renderEvent();
-});
-
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  if(isBlockedDay(dateEl.value)){
-    showError("Questo giorno è bloccato e non è prenotabile.");
-    return;
-  }
-
-  if(isMonday(dateEl.value)){
-    showError("Il lunedì il ristorante è chiuso.");
-    return;
-  }
-
-  if(isSunday(dateEl.value) && turnoEl.value === "cena"){
-    showError("La domenica sera non è disponibile.");
-    return;
-  }
-
-  if(!timeEl.value){
-    showError("Seleziona un orario valido.");
-    return;
-  }
-
-  const nameCheck = validateName(document.getElementById("name").value);
-  if(!nameCheck.ok){
-    showError(nameCheck.msg);
-    return;
-  }
-
-  const phoneCheck = validatePhone(document.getElementById("phone").value);
-  if(!phoneCheck.ok){
-    showError(phoneCheck.msg);
-    return;
-  }
-
-  const emailCheck = validateEmail(document.getElementById("email").value);
-  if(!emailCheck.ok){
-    showError(emailCheck.msg);
-    return;
-  }
-
-  const notesCheck = validateNotes(document.getElementById("notes").value);
-  if(!notesCheck.ok){
-    showError(notesCheck.msg);
-    return;
-  }
-
-  const people = Number(document.getElementById("people").value || 0);
-  if(!people || people < 1 || people > 12){
-    showError("Numero persone non valido.");
-    return;
-  }
-
-  const safeNotes = [
-    "Turno: " + turnoEl.value,
-    notesCheck.value,
-    emailCheck.value ? "Email: " + emailCheck.value : ""
-  ].filter(Boolean).join(" | ");
-
-  const payload = {
-    customer_name: nameCheck.value,
-    customer_phone: phoneCheck.value,
-    reservation_date: dateEl.value,
-    reservation_time: timeEl.value,
-    people,
-    notes: safeNotes,
-    status: "pending",
-    source: "web",
-    hidden: false
-  };
-
-  try{
-    statusBox.className = "booking-status";
-    statusBox.textContent = "Invio in corso...";
-
-    const { error } = await supabase.from("reservations").insert([payload]);
-    if(error) throw error;
-
-    form.reset();
-    timeEl.innerHTML = `<option value="">Seleziona prima data e turno</option>`;
-    showOk("Prenotazione inviata con successo.");
-  }catch(err){
-    showError("Errore invio: " + (err?.message || err));
-  }
-});
-
-await loadClosedDaysForNextYear();
-await loadEvents();
-</script>
-
+<script type="module" src="js/index.js"></script>
 </body>
 </html>
