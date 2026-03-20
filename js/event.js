@@ -1,5 +1,22 @@
 import supabase from "./supabase-client.js";
 
+const drawer = document.getElementById("drawer");
+const drawerOverlay = document.getElementById("drawerOverlay");
+
+const eventForm = document.getElementById("eventForm");
+const eventTitle = document.getElementById("eventTitle");
+const eventDescription = document.getElementById("eventDescription");
+const eventStartDate = document.getElementById("eventStartDate");
+const eventEndDate = document.getElementById("eventEndDate");
+const eventStartTime = document.getElementById("eventStartTime");
+const eventImage = document.getElementById("eventImage");
+const eventActive = document.getElementById("eventActive");
+const resetEventBtn = document.getElementById("resetEventBtn");
+const imagePreviewWrap = document.getElementById("imagePreviewWrap");
+const imagePreview = document.getElementById("imagePreview");
+const eventsListWrap = document.getElementById("eventsListWrap");
+const eventStatusMsg = document.getElementById("eventStatusMsg");
+
 async function requireAuth() {
   const { data, error } = await supabase.auth.getSession();
   if (error || !data.session) {
@@ -9,18 +26,24 @@ async function requireAuth() {
 }
 
 function openDrawer() {
-  document.getElementById("drawer").classList.add("open");
-  document.getElementById("drawerOverlay").classList.add("open");
+  if (drawer) drawer.classList.add("open");
+  if (drawerOverlay) drawerOverlay.classList.add("open");
 }
 
 function closeDrawer() {
-  document.getElementById("drawer").classList.remove("open");
-  document.getElementById("drawerOverlay").classList.remove("open");
+  if (drawer) drawer.classList.remove("open");
+  if (drawerOverlay) drawerOverlay.classList.remove("open");
 }
 
 async function doLogout() {
   await supabase.auth.signOut();
   location.href = "login.html";
+}
+
+function setStatus(message, type = "") {
+  eventStatusMsg.textContent = message || "";
+  eventStatusMsg.className = "status-msg";
+  if (type) eventStatusMsg.classList.add(type);
 }
 
 function escapeHtml(value) {
@@ -32,71 +55,125 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function sanitizeText(value, maxLen = 500) {
+  return String(value || "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxLen);
+}
+
+function resetForm() {
+  eventForm.reset();
+  imagePreviewWrap.style.display = "none";
+  imagePreview.removeAttribute("src");
+  setStatus("");
+}
+
+function previewSelectedImage() {
+  const file = eventImage.files?.[0];
+  if (!file) {
+    imagePreviewWrap.style.display = "none";
+    imagePreview.removeAttribute("src");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    imagePreview.src = reader.result;
+    imagePreviewWrap.style.display = "block";
+  };
+  reader.readAsDataURL(file);
+}
+
+async function uploadEventImage(file) {
+  if (!file) return null;
+
+  if (file.size > 4 * 1024 * 1024) {
+    throw new Error("Immagine troppo grande. Massimo 4MB.");
+  }
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+  const fileName = `event_${Date.now()}_${safeName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("events")
+    .upload(fileName, file, {
+      cacheControl: "3600",
+      upsert: false
+    });
+
+  if (uploadError) throw uploadError;
+
+  const { data } = supabase.storage
+    .from("events")
+    .getPublicUrl(fileName);
+
+  return data.publicUrl;
+}
+
 async function loadEvents() {
   const { data, error } = await supabase
     .from("events")
     .select("*")
-    .order("start_date", { ascending: true });
+    .order("start_date", { ascending: false })
+    .order("created_at", { ascending: false });
 
-  if (error) throw error;
-
-  const box = document.getElementById("eventsList");
-
-  if (!(data || []).length) {
-    box.innerHTML = `<div class="empty-card">Nessun evento presente</div>`;
+  if (error) {
+    eventsListWrap.innerHTML = `<div class="empty-box">Errore caricamento eventi.</div>`;
     return;
   }
 
-  box.innerHTML = data.map(ev => `
-    <article class="reservation-card">
-      <div class="reservation-top">
-        <div>
-          <h3 class="reservation-name">${escapeHtml(ev.title)}</h3>
-          <div class="reservation-meta">
-            <span>📅 ${escapeHtml(ev.start_date)} ${ev.end_date && ev.end_date !== ev.start_date ? "→ " + escapeHtml(ev.end_date) : ""}</span>
-            <span>🕒 ${escapeHtml(ev.start_time || "-")} ${ev.end_time ? " - " + escapeHtml(ev.end_time) : ""}</span>
-            <span>${ev.is_active ? "✅ Attivo" : "⏸️ Non attivo"}</span>
-          </div>
-          ${ev.description ? `<div class="mini-note">${escapeHtml(ev.description)}</div>` : ""}
-          ${ev.image_url ? `<div class="mini-note">🖼️ ${escapeHtml(ev.image_url)}</div>` : ""}
+  const rows = data || [];
+
+  if (!rows.length) {
+    eventsListWrap.innerHTML = `<div class="empty-box">Nessun evento salvato.</div>`;
+    return;
+  }
+
+  eventsListWrap.innerHTML = rows.map(row => `
+    <article class="event-item">
+      <img
+        class="event-item-cover"
+        src="${row.image_url || "assets/fondo.webp"}"
+        alt="${escapeHtml(row.title || "Evento")}"
+      >
+      <div class="event-item-body">
+        <div class="event-item-date">
+          📅 ${escapeHtml(row.start_date || "")}${row.end_date && row.end_date !== row.start_date ? " → " + escapeHtml(row.end_date) : ""}
+          ${row.start_time ? " · 🕒 " + escapeHtml(String(row.start_time).slice(0, 5)) : ""}
         </div>
-        <div class="reservation-actions" style="margin-top:0;">
-          <button class="btn btn-soft toggle-event-btn" data-id="${ev.id}" data-active="${ev.is_active}">
-            ${ev.is_active ? "Disattiva" : "Attiva"}
-          </button>
-          <button class="btn btn-danger delete-event-btn" data-id="${ev.id}">Elimina</button>
+
+        <h4 class="event-item-title">${escapeHtml(row.title || "")}</h4>
+
+        <div class="event-item-desc">
+          ${escapeHtml(row.description || "")}
         </div>
+
+        <div class="event-item-meta">
+          <span class="event-pill">${row.is_active ? "✅ Attivo" : "⏸️ Non attivo"}</span>
+          ${row.image_url ? `<span class="event-pill">🖼️ Con foto</span>` : `<span class="event-pill">📝 Solo testo</span>`}
+        </div>
+      </div>
+
+      <div class="event-item-footer">
+        <button class="btn btn-danger btn-delete-event" data-id="${escapeHtml(row.id)}">Elimina</button>
       </div>
     </article>
   `).join("");
 
-  document.querySelectorAll(".toggle-event-btn").forEach(btn => {
+  document.querySelectorAll(".btn-delete-event").forEach(btn => {
     btn.addEventListener("click", async () => {
-      const { error: updErr } = await supabase
-        .from("events")
-        .update({ is_active: btn.dataset.active !== "true" })
-        .eq("id", btn.dataset.id);
+      const eventId = btn.dataset.id;
+      if (!confirm("Eliminare questo evento?")) return;
 
-      if (updErr) {
-        alert("Errore aggiornamento evento: " + updErr.message);
-        return;
-      }
-
-      await loadEvents();
-    });
-  });
-
-  document.querySelectorAll(".delete-event-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      if (!confirm("Eliminare l'evento?")) return;
-
-      const { error: delErr } = await supabase
+      const { error: deleteError } = await supabase
         .from("events")
         .delete()
-        .eq("id", btn.dataset.id);
+        .eq("id", eventId);
 
-      if (delErr) {
-        alert("Errore eliminazione evento: " + delErr.message);
+      if (deleteError) {
+        alert("Errore eliminazione evento: " + deleteError.message);
         return;
       }
 
@@ -105,56 +182,83 @@ async function loadEvents() {
   });
 }
 
-async function saveEvent() {
-  const title = document.getElementById("evTitle").value.trim();
-  const startDate = document.getElementById("evStartDate").value;
-  const endDate = document.getElementById("evEndDate").value;
-  const startTime = document.getElementById("evStartTime").value || null;
-  const endTime = document.getElementById("evEndTime").value || null;
-  const description = document.getElementById("evDescription").value.trim();
-  const imageUrl = document.getElementById("evImageUrl").value.trim() || null;
-  const isActive = document.getElementById("evActive").value === "true";
+async function saveEvent(e) {
+  e.preventDefault();
 
-  if (!title || !startDate || !endDate) {
-    alert("Titolo, data inizio e data fine sono obbligatori.");
+  const title = sanitizeText(eventTitle.value, 120);
+  const description = sanitizeText(eventDescription.value, 2000);
+  const startDate = eventStartDate.value;
+  const endDate = eventEndDate.value || startDate;
+  const startTime = eventStartTime.value || null;
+  const isActive = eventActive.value === "true";
+  const file = eventImage.files?.[0] || null;
+
+  if (!title) {
+    setStatus("Inserisci il titolo.", "bad");
     return;
   }
 
-  const { error } = await supabase
-    .from("events")
-    .insert([{
+  if (!description) {
+    setStatus("Inserisci la descrizione.", "bad");
+    return;
+  }
+
+  if (!startDate) {
+    setStatus("Inserisci la data di inizio.", "bad");
+    return;
+  }
+
+  if (endDate && endDate < startDate) {
+    setStatus("La data fine non può essere precedente alla data inizio.", "bad");
+    return;
+  }
+
+  setStatus("Salvataggio in corso...");
+
+  try {
+    let imageUrl = null;
+
+    if (file) {
+      imageUrl = await uploadEventImage(file);
+    }
+
+    const payload = {
       title,
+      description,
       start_date: startDate,
       end_date: endDate,
       start_time: startTime,
-      end_time: endTime,
-      description,
       image_url: imageUrl,
       is_active: isActive
-    }]);
+    };
 
-  if (error) {
-    alert("Errore salvataggio evento: " + error.message);
-    return;
+    const { error } = await supabase
+      .from("events")
+      .insert([payload]);
+
+    if (error) throw error;
+
+    setStatus("Evento salvato correttamente ✅", "ok");
+    resetForm();
+    await loadEvents();
+  } catch (err) {
+    console.error(err);
+    setStatus("Errore salvataggio evento: " + (err?.message || err), "bad");
   }
-
-  document.getElementById("evTitle").value = "";
-  document.getElementById("evStartDate").value = "";
-  document.getElementById("evEndDate").value = "";
-  document.getElementById("evStartTime").value = "";
-  document.getElementById("evEndTime").value = "";
-  document.getElementById("evDescription").value = "";
-  document.getElementById("evImageUrl").value = "";
-  document.getElementById("evActive").value = "true";
-
-  await loadEvents();
 }
 
-document.getElementById("openDrawerBtn").addEventListener("click", openDrawer);
-document.getElementById("closeDrawerBtn").addEventListener("click", closeDrawer);
-document.getElementById("drawerOverlay").addEventListener("click", closeDrawer);
-document.getElementById("logoutBtn").addEventListener("click", doLogout);
-document.getElementById("saveEventBtn").addEventListener("click", saveEvent);
+const openDrawerBtn = document.getElementById("openDrawerBtn");
+const closeDrawerBtn = document.getElementById("closeDrawerBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+
+if (openDrawerBtn) openDrawerBtn.addEventListener("click", openDrawer);
+if (closeDrawerBtn) closeDrawerBtn.addEventListener("click", closeDrawer);
+if (drawerOverlay) drawerOverlay.addEventListener("click", closeDrawer);
+if (logoutBtn) logoutBtn.addEventListener("click", doLogout);
+
+if (eventImage) eventImage.addEventListener("change", previewSelectedImage);
+if (resetEventBtn) resetEventBtn.addEventListener("click", resetForm);
+if (eventForm) eventForm.addEventListener("submit", saveEvent);
 
 await requireAuth();
 await loadEvents();
