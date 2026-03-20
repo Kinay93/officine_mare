@@ -298,6 +298,12 @@ function buildDailyServiceMaps(reservations) {
   return { lunchMap, dinnerMap };
 }
 
+function getServiceOccupancyClass(covers, maxCovers) {
+  if (covers >= maxCovers) return "full";
+  if (covers >= Math.floor(maxCovers * 0.75)) return "warn";
+  return "";
+}
+
 function getWhatsappLink(phone, message) {
   const cleanPhone = String(phone || "").replace(/[^\d]/g, "");
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
@@ -455,6 +461,7 @@ function buildReservationCard(reservation, lunchMap, dinnerMap, calendarMap, rul
     : (lunchMap.get(reservation.reservation_date) || 0);
 
   const maxCovers = getMaxCoversForReservation(reservation, calendarMap, rules);
+  const occupancyClass = getServiceOccupancyClass(dayCovers, maxCovers);
   const time = String(reservation.reservation_time || "").slice(0, 5);
 
   return `
@@ -465,7 +472,7 @@ function buildReservationCard(reservation, lunchMap, dinnerMap, calendarMap, rul
 
           <div class="reservation-submeta">
             <span class="badge ${badgeClass}">${badgeText}</span>
-            <span class="covers-pill">👥 ${dayCovers}/${maxCovers}</span>
+            <span class="covers-pill ${occupancyClass}">👥 ${dayCovers}/${maxCovers}</span>
             <span class="covers-pill">${service === "dinner" ? "🌙 Cena" : "☀️ Pranzo"}</span>
             <span class="covers-pill">🍽️ ${escapeHtml(reservation.people)} coperti</span>
             ${reservation.assigned_table_code ? `<span class="covers-pill">🪑 ${escapeHtml(reservation.assigned_table_code)}</span>` : ""}
