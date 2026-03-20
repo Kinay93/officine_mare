@@ -2,85 +2,302 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Gestione Eventi</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eventi - Officine Mare</title>
+  <link rel="icon" href="assets/logo.png">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
   <style>
-    body {
-      font-family: Arial;
-      background: #f5f7fa;
-      padding: 20px;
+    .page-grid{
+      display:grid;
+      grid-template-columns: 420px 1fr;
+      gap:24px;
+      align-items:start;
     }
 
-    .container {
-      max-width: 600px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    .event-form-card,
+    .event-list-card{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:28px;
+      box-shadow:0 18px 54px rgba(16,40,74,.08);
+      padding:24px;
     }
 
-    h2 {
-      margin-bottom: 20px;
+    .event-form-card h3,
+    .event-list-card h3{
+      margin:0 0 8px;
+      font-size:24px;
+      color:var(--text);
     }
 
-    .form-group {
-      margin-bottom: 15px;
+    .event-form-card p,
+    .event-list-card p{
+      margin:0 0 18px;
+      color:var(--muted);
     }
 
-    input, textarea {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+    .form-group{
+      margin-bottom:14px;
     }
 
-    button {
-      background: #0b3d91;
-      color: white;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      width: 100%;
+    .form-group label{
+      display:block;
+      margin-bottom:8px;
+      font-weight:800;
+      color:var(--text);
     }
 
-    button:hover {
-      background: #082c66;
+    .image-preview{
+      margin-top:12px;
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:10px;
+      background:var(--surface-soft);
+      display:none;
+    }
+
+    .image-preview img{
+      width:100%;
+      height:220px;
+      object-fit:cover;
+      border-radius:14px;
+      display:block;
+    }
+
+    .event-actions{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:18px;
+    }
+
+    .events-grid{
+      display:grid;
+      grid-template-columns:repeat(2, 1fr);
+      gap:18px;
+    }
+
+    .event-item{
+      border:1px solid var(--border);
+      border-radius:22px;
+      overflow:hidden;
+      background:#fff;
+      box-shadow:0 10px 24px rgba(16,40,74,.06);
+      display:flex;
+      flex-direction:column;
+    }
+
+    .event-item-cover{
+      width:100%;
+      height:180px;
+      object-fit:cover;
+      background:var(--surface-soft);
+    }
+
+    .event-item-body{
+      padding:16px;
+    }
+
+    .event-item-date{
+      font-size:12px;
+      font-weight:900;
+      color:#48617e;
+      margin-bottom:8px;
+    }
+
+    .event-item-title{
+      font-size:22px;
+      font-weight:900;
+      color:var(--text);
+      margin:0 0 10px;
+      line-height:1.1;
+    }
+
+    .event-item-desc{
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.6;
+      min-height:70px;
+    }
+
+    .event-item-meta{
+      margin-top:12px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .event-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:7px 10px;
+      border-radius:999px;
+      background:#EEF6FF;
+      border:1px solid #D7E6F8;
+      color:#16365C;
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .event-item-footer{
+      padding:0 16px 16px;
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .empty-box{
+      padding:18px;
+      border:1px dashed var(--border);
+      border-radius:18px;
+      color:var(--muted);
+      background:var(--surface-soft);
+    }
+
+    .status-msg{
+      margin-top:12px;
+      font-size:14px;
+      font-weight:700;
+    }
+
+    .status-msg.ok{
+      color:#138a5a;
+    }
+
+    .status-msg.bad{
+      color:#bf3d3d;
+    }
+
+    @media (max-width: 1024px){
+      .page-grid{
+        grid-template-columns:1fr;
+      }
+
+      .events-grid{
+        grid-template-columns:1fr;
+      }
     }
   </style>
 </head>
-
 <body>
+<div class="admin-shell">
 
-<div class="container">
-  <h2>Nuovo Evento</h2>
+  <header class="admin-topbar">
+    <div class="topbar-left">
+      <button class="hamburger-btn" id="openDrawerBtn">☰</button>
+      <div class="brand">
+        <img src="assets/logo.png" alt="Logo">
+        <span>Ristorante</span>
+      </div>
+    </div>
+  </header>
 
-  <div class="form-group">
-    <label>Titolo</label>
-    <input type="text" id="eventTitle" placeholder="Titolo evento">
-  </div>
+  <div class="drawer-overlay" id="drawerOverlay"></div>
 
-  <div class="form-group">
-    <label>Descrizione</label>
-    <textarea id="eventDescription" placeholder="Descrizione evento"></textarea>
-  </div>
+  <aside class="drawer" id="drawer">
+    <div>
+      <div class="drawer-head">
+        <div class="drawer-title">
+          <h2>Officine Mare</h2>
+          <p>Pannello di gestione</p>
+        </div>
+        <button class="drawer-close" id="closeDrawerBtn">✕</button>
+      </div>
 
-  <div class="form-group">
-    <label>Data</label>
-    <input type="date" id="eventDate">
-  </div>
+      <nav class="drawer-nav">
+        <a class="drawer-link" href="admin.html">📅 Prenotazioni</a>
+        <a class="drawer-link" href="tables.html">◻️ Tavoli</a>
+        <a class="drawer-link" href="menu.html">📖 Menu</a>
+        <a class="drawer-link" href="orders.html">🍽️ Ordini</a>
+        <a class="drawer-link" href="kitchen.html">👨‍🍳 Cucina</a>
+        <a class="drawer-link" href="calendar.html">🗓️ Gestisci calendario</a>
+        <a class="drawer-link active" href="event.html">🎉 Eventi</a>
+      </nav>
+    </div>
 
-  <div class="form-group">
-    <label>Immagine evento</label>
-    <input type="file" id="eventImage" accept="image/*">
-  </div>
+    <div>
+      <button class="btn btn-soft" style="width:100%;" id="logoutBtn">Esci</button>
+    </div>
+  </aside>
 
-  <button id="saveEventBtn">Salva evento</button>
+  <main class="admin-content">
+    <section class="page-header">
+      <h1>Eventi</h1>
+      <p>Crea e gestisci gli eventi da mostrare sul sito</p>
+    </section>
+
+    <section class="page-grid">
+      <div class="event-form-card">
+        <h3>Nuovo evento</h3>
+        <p>Carica una foto dal tuo dispositivo e salva l’evento.</p>
+
+        <form id="eventForm">
+          <div class="form-group">
+            <label for="eventTitle">Titolo *</label>
+            <input type="text" id="eventTitle" placeholder="Serata jazz sul mare" required>
+          </div>
+
+          <div class="form-group">
+            <label for="eventDescription">Descrizione *</label>
+            <textarea id="eventDescription" rows="6" placeholder="Descrizione completa dell’evento..." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="eventStartDate">Data inizio *</label>
+            <input type="date" id="eventStartDate" required>
+          </div>
+
+          <div class="form-group">
+            <label for="eventEndDate">Data fine</label>
+            <input type="date" id="eventEndDate">
+          </div>
+
+          <div class="form-group">
+            <label for="eventStartTime">Ora inizio</label>
+            <input type="time" id="eventStartTime">
+          </div>
+
+          <div class="form-group">
+            <label for="eventImage">Foto evento</label>
+            <input type="file" id="eventImage" accept="image/*">
+          </div>
+
+          <div class="image-preview" id="imagePreviewWrap">
+            <img id="imagePreview" alt="Preview evento">
+          </div>
+
+          <div class="form-group" style="margin-top:14px;">
+            <label for="eventActive">Stato</label>
+            <select id="eventActive">
+              <option value="true">Attivo</option>
+              <option value="false">Non attivo</option>
+            </select>
+          </div>
+
+          <div class="event-actions">
+            <button type="submit" class="btn btn-primary">Salva evento</button>
+            <button type="button" class="btn btn-soft" id="resetEventBtn">Pulisci</button>
+          </div>
+
+          <div id="eventStatusMsg" class="status-msg"></div>
+        </form>
+      </div>
+
+      <div class="event-list-card">
+        <h3>Eventi salvati</h3>
+        <p>Qui vedi gli eventi già presenti nel database.</p>
+
+        <div id="eventsListWrap" class="events-grid"></div>
+      </div>
+    </section>
+  </main>
 </div>
 
 <script type="module" src="js/event.js"></script>
-
 </body>
 </html>
