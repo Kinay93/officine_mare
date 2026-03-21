@@ -8,46 +8,217 @@
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/admin.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
   <style>
-    .calendar-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
-    .calendar-nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .calendar-title{font-size:22px;font-weight:800;color:var(--text);min-width:220px;text-align:center}
-    .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:12px}
-    .calendar-head{text-align:center;font-weight:800;color:var(--muted);padding:10px 0}
-    .calendar-day{background:#fff;border:1px solid var(--border);border-radius:18px;min-height:235px;padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
-    .calendar-day.empty{background:transparent;border:none;box-shadow:none}
-    .calendar-day.green{border-left:5px solid #35C98A}
-    .calendar-day.yellow{border-left:5px solid #F1B532}
-    .calendar-day.red{border-left:5px solid #F06A6A}
-    .calendar-day.gray{border-left:5px solid #94A3B8;background:#F8FAFD}
-    .calendar-day-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
-    .calendar-day-num{font-size:20px;font-weight:800;color:var(--text)}
-    .service-box{border:1px solid var(--border);border-radius:14px;padding:10px;background:#fafcff}
-    .service-title{font-weight:800;font-size:14px;margin-bottom:6px}
-    .service-meta{font-size:13px;color:var(--muted);display:grid;gap:4px}
-    .service-actions{display:grid;gap:8px;margin-top:8px}
-    .calendar-legend{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0 20px;color:var(--muted);font-size:14px}
-    .legend-dot{display:inline-block;width:12px;height:12px;border-radius:999px;margin-right:6px;vertical-align:middle}
-    @media (max-width:1100px){.calendar-grid{grid-template-columns:repeat(2,1fr)}.calendar-head{display:none}}
-    @media (max-width:700px){.calendar-grid{grid-template-columns:1fr}.calendar-title{text-align:left}}
+    .calendar-toolbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+
+    .calendar-toolbar-left,
+    .calendar-toolbar-right{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .calendar-title{
+      font-size:42px;
+      font-weight:900;
+      color:var(--text);
+      margin:0;
+      line-height:1;
+    }
+
+    .calendar-legend{
+      display:flex;
+      gap:18px;
+      flex-wrap:wrap;
+      margin:18px 0 20px;
+      color:var(--muted);
+      font-weight:700;
+    }
+
+    .legend-item{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .legend-dot{
+      width:16px;
+      height:16px;
+      border-radius:999px;
+      display:inline-block;
+    }
+
+    .dot-green{ background:#2EAE6B; }
+    .dot-yellow{ background:#D0A12B; }
+    .dot-red{ background:#C84A4A; }
+    .dot-gray{ background:#7C8798; }
+
+    .calendar-grid{
+      display:grid;
+      grid-template-columns:repeat(7, minmax(220px, 1fr));
+      gap:14px;
+      overflow-x:auto;
+      padding-bottom:8px;
+    }
+
+    .day-card{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:26px;
+      box-shadow:0 12px 30px rgba(16,40,74,.06);
+      padding:14px;
+      min-width:220px;
+      position:relative;
+    }
+
+    .day-card.day-available{
+      border-left:6px solid #2EAE6B;
+    }
+
+    .day-card.day-warning{
+      border-left:6px solid #D0A12B;
+    }
+
+    .day-card.day-full{
+      border-left:6px solid #C84A4A;
+    }
+
+    .day-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:8px;
+      margin-bottom:10px;
+    }
+
+    .day-number{
+      font-size:20px;
+      font-weight:900;
+      color:var(--text);
+      line-height:1;
+    }
+
+    .day-date-badge{
+      padding:8px 12px;
+      border-radius:999px;
+      background:#DFF5E8;
+      color:#127A54;
+      font-size:12px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+
+    .service-box{
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:12px;
+      margin-top:10px;
+      background:#FDFEFE;
+    }
+
+    .service-box.blocked{
+      background:#FFE9E9;
+      border-color:#F0B8B8;
+    }
+
+    .service-title{
+      font-size:16px;
+      font-weight:900;
+      color:var(--text);
+      margin:0 0 8px;
+    }
+
+    .service-meta{
+      display:grid;
+      gap:4px;
+      color:#61728B;
+      font-size:13px;
+      font-weight:700;
+      line-height:1.4;
+      margin-bottom:10px;
+    }
+
+    .service-actions{
+      display:grid;
+      gap:8px;
+    }
+
+    .service-actions .btn{
+      width:100%;
+      justify-content:center;
+      font-size:14px;
+      padding:10px 12px;
+    }
+
+    .calendar-status{
+      margin-top:16px;
+      font-size:14px;
+      font-weight:800;
+    }
+
+    .calendar-status.ok{ color:#138a5a; }
+    .calendar-status.bad{ color:#bf3d3d; }
+
+    @media (max-width: 1200px){
+      .calendar-grid{
+        grid-template-columns:repeat(7, minmax(200px, 1fr));
+      }
+
+      .day-card{
+        min-width:200px;
+      }
+    }
+
+    @media (max-width: 768px){
+      .calendar-title{
+        font-size:34px;
+      }
+
+      .calendar-grid{
+        grid-template-columns:1fr;
+        overflow:visible;
+      }
+
+      .day-card{
+        min-width:unset;
+      }
+    }
   </style>
 </head>
 <body>
 <div class="admin-shell">
+
   <header class="admin-topbar">
     <div class="topbar-left">
       <button class="hamburger-btn" id="openDrawerBtn">☰</button>
-      <div class="brand"><img src="assets/logo.png" alt="Logo"><span>Ristorante</span></div>
+      <div class="brand">
+        <img src="assets/logo.png" alt="Logo">
+        <span>Ristorante</span>
+      </div>
     </div>
   </header>
 
   <div class="drawer-overlay" id="drawerOverlay"></div>
+
   <aside class="drawer" id="drawer">
     <div>
       <div class="drawer-head">
-        <div class="drawer-title"><h2>Officine Mare</h2><p>Pannello di gestione</p></div>
+        <div class="drawer-title">
+          <h2>Officine Mare</h2>
+          <p>Pannello di gestione</p>
+        </div>
         <button class="drawer-close" id="closeDrawerBtn">✕</button>
       </div>
+
       <nav class="drawer-nav">
         <a class="drawer-link" href="admin.html">📅 Prenotazioni</a>
         <a class="drawer-link" href="tables.html">◻️ Tavoli</a>
@@ -58,44 +229,39 @@
         <a class="drawer-link" href="event.html">🎉 Eventi</a>
       </nav>
     </div>
-    <div><button class="btn btn-soft" style="width:100%;" id="logoutBtn">Esci</button></div>
+
+    <div>
+      <button class="btn btn-soft" style="width:100%;" id="logoutBtn">Esci</button>
+    </div>
   </aside>
 
   <main class="admin-content">
     <section class="page-header">
       <h1>Gestisci calendario</h1>
-      <p>Capienza pranzo/cena, blocchi per singolo servizio, regole da una data in avanti</p>
+      <p>Blocca i servizi e imposta la capienza pranzo/cena da una data in avanti</p>
     </section>
 
-    <section class="card" style="padding:24px;">
-      <div class="calendar-toolbar">
-        <div class="calendar-nav">
-          <button class="btn btn-soft" id="prevMonthBtn">← Mese precedente</button>
-          <div class="calendar-title" id="calendarTitle">Mese</div>
-          <button class="btn btn-soft" id="nextMonthBtn">Mese successivo →</button>
-        </div>
-        <div class="calendar-nav">
-          <button class="btn btn-soft" id="todayBtn">Oggi</button>
-        </div>
+    <section class="calendar-toolbar">
+      <div class="calendar-toolbar-left">
+        <h2 class="calendar-title" id="calendarMonthTitle">Calendario</h2>
       </div>
 
-      <div class="calendar-legend">
-        <span><span class="legend-dot" style="background:#35C98A;"></span>Disponibile</span>
-        <span><span class="legend-dot" style="background:#F1B532;"></span>Quasi pieno</span>
-        <span><span class="legend-dot" style="background:#F06A6A;"></span>Pieno</span>
-        <span><span class="legend-dot" style="background:#94A3B8;"></span>Servizio bloccato</span>
-      </div>
-
-      <div class="calendar-grid" id="calendarGrid">
-        <div class="calendar-head">Lunedì</div>
-        <div class="calendar-head">Martedì</div>
-        <div class="calendar-head">Mercoledì</div>
-        <div class="calendar-head">Giovedì</div>
-        <div class="calendar-head">Venerdì</div>
-        <div class="calendar-head">Sabato</div>
-        <div class="calendar-head">Domenica</div>
+      <div class="calendar-toolbar-right">
+        <button class="btn btn-soft" id="prevMonthBtn">← Mese precedente</button>
+        <button class="btn btn-soft" id="todayBtn">Oggi</button>
+        <button class="btn btn-soft" id="nextMonthBtn">Mese successivo →</button>
       </div>
     </section>
+
+    <section class="calendar-legend">
+      <div class="legend-item"><span class="legend-dot dot-green"></span> Disponibile</div>
+      <div class="legend-item"><span class="legend-dot dot-yellow"></span> Quasi pieno</div>
+      <div class="legend-item"><span class="legend-dot dot-red"></span> Pieno</div>
+      <div class="legend-item"><span class="legend-dot dot-gray"></span> Servizio bloccato</div>
+    </section>
+
+    <section id="calendarGrid" class="calendar-grid"></section>
+    <div id="calendarStatus" class="calendar-status"></div>
   </main>
 </div>
 
