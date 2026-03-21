@@ -162,7 +162,6 @@ async function fetchMonthData(firstISO, lastISO) {
     supabase
       .from("booking_rules")
       .select("*")
-      .lte("start_day", lastISO)
       .order("start_day", { ascending: true })
   ]);
 
@@ -206,10 +205,9 @@ function renderMonth(days, reservationsMap, calendarMap, rules) {
 
         <section class="service-box ${lunchBlocked ? "blocked" : ""}">
           <h3 class="service-title">Pranzo</h3>
-          <div class="service-meta">
-            <div>🗓 Prenotazioni: <strong>${dayData.lunchReservations}</strong></div>
-            <div>👥 Coperti: <strong>${dayData.lunchCovers}/${caps.lunch}</strong></div>
-            <div>🔒 Stato: <strong>${lunchBlocked ? "Bloccato" : "Aperto"}</strong></div>
+          <div class="service-meta-row">
+            <span class="service-meta-pill">🗓 ${dayData.lunchReservations}</span>
+            <span class="service-meta-pill">👥 ${dayData.lunchCovers}/${caps.lunch}</span>
           </div>
           <div class="service-actions">
             <button class="btn ${lunchBlocked ? "btn-danger" : "btn-soft"} btn-toggle-block"
@@ -218,6 +216,7 @@ function renderMonth(days, reservationsMap, calendarMap, rules) {
               data-blocked="${lunchBlocked}">
               ${lunchBlocked ? "Sblocca" : "Blocca"}
             </button>
+
             <button class="btn btn-soft btn-change-capacity"
               data-day="${iso}"
               data-service="lunch"
@@ -229,10 +228,9 @@ function renderMonth(days, reservationsMap, calendarMap, rules) {
 
         <section class="service-box ${dinnerBlocked ? "blocked" : ""}">
           <h3 class="service-title">Cena</h3>
-          <div class="service-meta">
-            <div>🗓 Prenotazioni: <strong>${dayData.dinnerReservations}</strong></div>
-            <div>👥 Coperti: <strong>${dayData.dinnerCovers}/${caps.dinner}</strong></div>
-            <div>🔒 Stato: <strong>${dinnerBlocked ? "Bloccato" : "Aperto"}</strong></div>
+          <div class="service-meta-row">
+            <span class="service-meta-pill">🗓 ${dayData.dinnerReservations}</span>
+            <span class="service-meta-pill">👥 ${dayData.dinnerCovers}/${caps.dinner}</span>
           </div>
           <div class="service-actions">
             <button class="btn ${dinnerBlocked ? "btn-danger" : "btn-soft"} btn-toggle-block"
@@ -241,6 +239,7 @@ function renderMonth(days, reservationsMap, calendarMap, rules) {
               data-blocked="${dinnerBlocked}">
               ${dinnerBlocked ? "Sblocca" : "Blocca"}
             </button>
+
             <button class="btn btn-soft btn-change-capacity"
               data-day="${iso}"
               data-service="dinner"
@@ -297,7 +296,7 @@ async function toggleBlock(dayISO, service, blocked) {
 
     if (error) throw error;
 
-    await loadCalendar();
+    await loadCalendar(true);
     setStatus("Servizio aggiornato ✅", "ok");
   } catch (err) {
     console.error(err);
@@ -305,17 +304,6 @@ async function toggleBlock(dayISO, service, blocked) {
   } finally {
     busy = false;
   }
-}
-
-async function getRulesUntil(dayISO) {
-  const { data, error } = await supabase
-    .from("booking_rules")
-    .select("*")
-    .lte("start_day", dayISO)
-    .order("start_day", { ascending: true });
-
-  if (error) throw error;
-  return data || [];
 }
 
 async function changeCapacityFromDay(dayISO, service, currentValue) {
@@ -338,33 +326,36 @@ async function changeCapacityFromDay(dayISO, service, currentValue) {
   try {
     setStatus("Aggiornamento capienza in corso...");
 
-    const { data: existingRule, error: existingRuleError } = await supabase
+    const { data: allRules, error: rulesError } = await supabase
+      .from("booking_rules")
+      .select("*")
+      .order("start_day", { ascending: true });
+
+    if (rulesError) throw rulesError;
+
+    const currentCaps = getRuleForDay(dayISO, allRules || []);
+
+    const { data: sameDayRule, error: sameDayRuleError } = await supabase
       .from("booking_rules")
       .select("*")
       .eq("start_day", dayISO)
       .maybeSingle();
 
-    if (existingRuleError) throw existingRuleError;
+    if (sameDayRuleError) throw sameDayRuleError;
 
-    if (existingRule) {
-      const patch = {};
+    if (sameDayRule) {
+      const patch = service === "lunch"
+        ? { lunch_max_covers: newValue }
+        : { dinner_max_covers: newValue };
 
-      if (service === "lunch") {
-        patch.lunch_max_covers = newValue;
-      } else {
-        patch.dinner_max_covers = newValue;
-      }
-
-      const { error: updateError } = await supabase
+      const { error: updateSameDayError } = await supabase
         .from("booking_rules")
         .update(patch)
-        .eq("id", existingRule.id);
+        .eq("id", sameDayRule.id);
 
-      if (updateError) throw updateError;
+      if (updateSameDayError) throw updateSameDayError;
     } else {
-      const currentCaps = getRuleForDay(dayISO, await getRulesUntil(dayISO));
-
-      const payload = {
+      const insertPayload = {
         start_day: dayISO,
         lunch_max_covers: service === "lunch" ? newValue : currentCaps.lunch,
         dinner_max_covers: service === "dinner" ? newValue : currentCaps.dinner
@@ -372,13 +363,24 @@ async function changeCapacityFromDay(dayISO, service, currentValue) {
 
       const { error: insertError } = await supabase
         .from("booking_rules")
-        .insert([payload]);
+        .insert([insertPayload]);
 
       if (insertError) throw insertError;
     }
 
-    await loadCalendar();
-    setStatus("Capienza aggiornata da quel giorno in avanti ✅", "ok");
+    const futurePatch = service === "lunch"
+      ? { lunch_max_covers: newValue }
+      : { dinner_max_covers: newValue };
+
+    const { error: updateFutureError } = await supabase
+      .from("booking_rules")
+      .update(futurePatch)
+      .gt("start_day", dayISO);
+
+    if (updateFutureError) throw updateFutureError;
+
+    await loadCalendar(true);
+    setStatus("Capienza aggiornata per questo giorno e i successivi ✅", "ok");
   } catch (err) {
     console.error(err);
     setStatus("Errore aggiornamento capienza: " + (err?.message || err), "bad");
@@ -409,7 +411,7 @@ function bindCalendarActions() {
   });
 }
 
-async function loadCalendar() {
+async function loadCalendar(withFlash = false) {
   const { first, last } = monthBounds(currentMonthDate);
   const firstISO = toISODate(first);
   const lastISO = toISODate(last);
@@ -426,6 +428,13 @@ async function loadCalendar() {
     const reservationsMap = groupReservationsByDay(reservations);
     const calendarMap = buildCalendarMap(calendarRows);
     renderMonth(days, reservationsMap, calendarMap, rules);
+
+    if (withFlash) {
+      calendarGrid.style.opacity = "0.65";
+      setTimeout(() => {
+        calendarGrid.style.opacity = "1";
+      }, 180);
+    }
   } catch (err) {
     console.error(err);
     setStatus("Errore caricamento calendario: " + (err?.message || err), "bad");
