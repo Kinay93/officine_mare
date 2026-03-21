@@ -3,9 +3,10 @@ import supabase from "./supabase-client.js";
 const drawer = document.getElementById("drawer");
 const drawerOverlay = document.getElementById("drawerOverlay");
 const calendarGrid = document.getElementById("calendarGrid");
-const calendarTitle = document.getElementById("calendarTitle");
+const calendarMonthTitle = document.getElementById("calendarMonthTitle");
+const calendarStatus = document.getElementById("calendarStatus");
 
-let currentDate = new Date();
+let currentMonthDate = new Date();
 
 async function requireAuth() {
   const { data, error } = await supabase.auth.getSession();
@@ -16,13 +17,13 @@ async function requireAuth() {
 }
 
 function openDrawer() {
-  drawer.classList.add("open");
-  drawerOverlay.classList.add("open");
+  if (drawer) drawer.classList.add("open");
+  if (drawerOverlay) drawerOverlay.classList.add("open");
 }
 
 function closeDrawer() {
-  drawer.classList.remove("open");
-  drawerOverlay.classList.remove("open");
+  if (drawer) drawer.classList.remove("open");
+  if (drawerOverlay) drawerOverlay.classList.remove("open");
 }
 
 async function doLogout() {
@@ -30,371 +31,427 @@ async function doLogout() {
   location.href = "login.html";
 }
 
+function setStatus(message, type = "") {
+  calendarStatus.textContent = message || "";
+  calendarStatus.className = "calendar-status";
+  if (type) calendarStatus.classList.add(type);
+}
+
 function pad(n) {
   return String(n).padStart(2, "0");
 }
 
-function toISO(d) {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+function toISODate(date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-function getMonthName(date) {
-  return date.toLocaleDateString("it-IT", { month: "long", year: "numeric" });
+function monthTitle(date) {
+  return date.toLocaleDateString("it-IT", {
+    month: "long",
+    year: "numeric"
+  });
 }
 
-function getSeasonDefault(monthIndex) {
+function monthBounds(date) {
+  const first = new Date(date.getFullYear(), date.getMonth(), 1);
+  const last = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  return { first, last };
+}
+
+function monthDefaultCap(monthIndex) {
   return [4, 5, 6, 7, 8].includes(monthIndex) ? 60 : 40;
 }
 
-async function getReservationsForMonth(year, monthIndex) {
-  const start = `${year}-${pad(monthIndex + 1)}-01`;
-  const endDate = new Date(year, monthIndex + 1, 0);
-  const end = `${year}-${pad(monthIndex + 1)}-${pad(endDate.getDate())}`;
-
-  const { data, error } = await supabase
-    .from("reservations")
-    .select("reservation_date, people, status, service, notes")
-    .gte("reservation_date", start)
-    .lte("reservation_date", end);
-
-  if (error) throw error;
-  return data || [];
-}
-
-async function getCalendarOverridesForMonth(year, monthIndex) {
-  const start = `${year}-${pad(monthIndex + 1)}-01`;
-  const endDate = new Date(year, monthIndex + 1, 0);
-  const end = `${year}-${pad(monthIndex + 1)}-${pad(endDate.getDate())}`;
-
-  const { data, error } = await supabase
-    .from("booking_calendar")
-    .select("*")
-    .gte("day", start)
-    .lte("day", end);
-
-  if (error) throw error;
-  return data || [];
-}
-
-async function getRulesUpToMonthEnd(year, monthIndex) {
-  const endDate = new Date(year, monthIndex + 1, 0);
-  const end = `${year}-${pad(monthIndex + 1)}-${pad(endDate.getDate())}`;
-
-  const { data, error } = await supabase
-    .from("booking_rules")
-    .select("*")
-    .lte("start_day", end)
-    .order("start_day", { ascending: true });
-
-  if (error) throw error;
-  return data || [];
-}
-
-function detectService(r) {
-  if (r.service === "lunch" || r.service === "dinner") return r.service;
-  const notes = String(r.notes || "").toLowerCase();
-  if (notes.includes("turno: pranzo")) return "lunch";
-  if (notes.includes("turno: cena")) return "dinner";
-  return "lunch";
-}
-
-function buildServiceMaps(reservations) {
-  const lunchCovers = new Map();
-  const dinnerCovers = new Map();
-  const lunchCount = new Map();
-  const dinnerCount = new Map();
-
-  reservations
-    .filter(r => r.status !== "cancelled")
-    .forEach(r => {
-      const day = r.reservation_date;
-      const service = detectService(r);
-      const people = Number(r.people || 0);
-
-      if (service === "dinner") {
-        dinnerCovers.set(day, (dinnerCovers.get(day) || 0) + people);
-        dinnerCount.set(day, (dinnerCount.get(day) || 0) + 1);
-      } else {
-        lunchCovers.set(day, (lunchCovers.get(day) || 0) + people);
-        lunchCount.set(day, (lunchCount.get(day) || 0) + 1);
-      }
-    });
-
-  return { lunchCovers, dinnerCovers, lunchCount, dinnerCount };
-}
-
-function buildOverrideMap(overrides) {
-  const map = new Map();
-  overrides.forEach(o => map.set(o.day, o));
-  return map;
-}
-
-function buildRulesArray(rules) {
-  return [...rules].sort((a, b) => a.start_day.localeCompare(b.start_day));
-}
-
-function getRuleForDay(dayISO, rulesArray, monthIndex) {
+function getRuleForDay(dayISO, rules) {
   let selected = null;
-  for (const rule of rulesArray) {
+
+  for (const rule of rules) {
     if (rule.start_day <= dayISO) selected = rule;
     else break;
   }
 
   if (selected) {
     return {
-      lunchMax: selected.lunch_max_covers,
-      dinnerMax: selected.dinner_max_covers
+      lunch: Number(selected.lunch_max_covers || 0),
+      dinner: Number(selected.dinner_max_covers || 0)
     };
   }
 
-  const d = getSeasonDefault(monthIndex);
-  return { lunchMax: d, dinnerMax: d };
+  const monthIndex = new Date(dayISO + "T00:00:00").getMonth();
+  const base = monthDefaultCap(monthIndex);
+
+  return { lunch: base, dinner: base };
 }
 
-function getDayServiceState(dayISO, rulesArray, overrideMap, monthIndex) {
-  const base = getRuleForDay(dayISO, rulesArray, monthIndex);
-  const override = overrideMap.get(dayISO);
+function serviceBadgeClass(covers, max, blocked) {
+  if (blocked) return "blocked";
+  if (covers >= max) return "full";
+  if (covers >= Math.floor(max * 0.75)) return "warning";
+  return "available";
+}
+
+function dayBadgeClass(lunchState, dinnerState) {
+  const all = [lunchState, dinnerState];
+
+  if (all.some(x => x === "full")) return "day-full";
+  if (all.some(x => x === "warning")) return "day-warning";
+  return "day-available";
+}
+
+async function fetchMonthData(firstISO, lastISO) {
+  const [
+    reservationsRes,
+    calendarRes,
+    rulesRes
+  ] = await Promise.all([
+    supabase
+      .from("reservations")
+      .select("*")
+      .gte("reservation_date", firstISO)
+      .lte("reservation_date", lastISO),
+    supabase
+      .from("booking_calendar")
+      .select("*")
+      .gte("day", firstISO)
+      .lte("day", lastISO),
+    supabase
+      .from("booking_rules")
+      .select("*")
+      .lte("start_day", lastISO)
+      .order("start_day", { ascending: true })
+  ]);
+
+  if (reservationsRes.error) throw reservationsRes.error;
+  if (calendarRes.error) throw calendarRes.error;
+  if (rulesRes.error) throw rulesRes.error;
 
   return {
-    lunchMax: override?.lunch_max_covers ?? base.lunchMax,
-    dinnerMax: override?.dinner_max_covers ?? base.dinnerMax,
-    lunchClosed: override?.lunch_closed ?? false,
-    dinnerClosed: override?.dinner_closed ?? false,
-    note: override?.note ?? null
+    reservations: reservationsRes.data || [],
+    calendarRows: calendarRes.data || [],
+    rules: rulesRes.data || []
   };
 }
 
-async function upsertCalendarDay(day, patch, monthIndex) {
-  const { data: existing, error: readError } = await supabase
+function detectService(reservation) {
+  if (reservation.service === "lunch" || reservation.service === "dinner") {
+    return reservation.service;
+  }
+
+  const notes = String(reservation.notes || "").toLowerCase();
+  if (notes.includes("turno: cena")) return "dinner";
+  return "lunch";
+}
+
+function groupReservationsByDay(reservations) {
+  const map = new Map();
+
+  for (const row of reservations) {
+    if (row.status === "cancelled" || row.hidden) continue;
+
+    const day = row.reservation_date;
+    if (!map.has(day)) {
+      map.set(day, {
+        lunchReservations: 0,
+        dinnerReservations: 0,
+        lunchCovers: 0,
+        dinnerCovers: 0
+      });
+    }
+
+    const service = detectService(row);
+    const cur = map.get(day);
+
+    if (service === "dinner") {
+      cur.dinnerReservations += 1;
+      cur.dinnerCovers += Number(row.people || 0);
+    } else {
+      cur.lunchReservations += 1;
+      cur.lunchCovers += Number(row.people || 0);
+    }
+  }
+
+  return map;
+}
+
+function buildCalendarMap(rows) {
+  const map = new Map();
+  rows.forEach(row => map.set(row.day, row));
+  return map;
+}
+
+function renderMonth(days, reservationsMap, calendarMap, rules) {
+  calendarGrid.innerHTML = days.map(day => {
+    const iso = toISODate(day);
+    const dayData = reservationsMap.get(iso) || {
+      lunchReservations: 0,
+      dinnerReservations: 0,
+      lunchCovers: 0,
+      dinnerCovers: 0
+    };
+
+    const overrides = calendarMap.get(iso);
+    const rule = getRuleForDay(iso, rules);
+
+    const lunchMax = Number(overrides?.lunch_max_covers ?? rule.lunch);
+    const dinnerMax = Number(overrides?.dinner_max_covers ?? rule.dinner);
+
+    const lunchBlocked = !!overrides?.lunch_closed;
+    const dinnerBlocked = !!overrides?.dinner_closed;
+
+    const lunchState = serviceBadgeClass(dayData.lunchCovers, lunchMax, lunchBlocked);
+    const dinnerState = serviceBadgeClass(dayData.dinnerCovers, dinnerMax, dinnerBlocked);
+    const cardClass = dayBadgeClass(lunchState, dinnerState);
+
+    return `
+      <article class="day-card ${cardClass}">
+        <div class="day-top">
+          <div class="day-number">${day.getDate()}</div>
+          <div class="day-date-badge">${iso}</div>
+        </div>
+
+        <section class="service-box ${lunchBlocked ? "blocked" : ""}">
+          <h3 class="service-title">Pranzo</h3>
+          <div class="service-meta">
+            <div>🗓 Prenotazioni: <strong>${dayData.lunchReservations}</strong></div>
+            <div>👥 Coperti: <strong>${dayData.lunchCovers}/${lunchMax}</strong></div>
+            <div>🔒 Stato: <strong>${lunchBlocked ? "Bloccato" : "Aperto"}</strong></div>
+          </div>
+
+          <div class="service-actions">
+            <button class="btn ${lunchBlocked ? "btn-danger" : "btn-soft"} btn-toggle-block"
+              data-day="${iso}"
+              data-service="lunch"
+              data-blocked="${lunchBlocked}">
+              ${lunchBlocked ? "Sblocca" : "Blocca"}
+            </button>
+
+            <button class="btn btn-soft btn-change-capacity"
+              data-day="${iso}"
+              data-service="lunch"
+              data-current="${lunchMax}">
+              Capienza
+            </button>
+          </div>
+        </section>
+
+        <section class="service-box ${dinnerBlocked ? "blocked" : ""}">
+          <h3 class="service-title">Cena</h3>
+          <div class="service-meta">
+            <div>🗓 Prenotazioni: <strong>${dayData.dinnerReservations}</strong></div>
+            <div>👥 Coperti: <strong>${dayData.dinnerCovers}/${dinnerMax}</strong></div>
+            <div>🔒 Stato: <strong>${dinnerBlocked ? "Bloccato" : "Aperto"}</strong></div>
+          </div>
+
+          <div class="service-actions">
+            <button class="btn ${dinnerBlocked ? "btn-danger" : "btn-soft"} btn-toggle-block"
+              data-day="${iso}"
+              data-service="dinner"
+              data-blocked="${dinnerBlocked}">
+              ${dinnerBlocked ? "Sblocca" : "Blocca"}
+            </button>
+
+            <button class="btn btn-soft btn-change-capacity"
+              data-day="${iso}"
+              data-service="dinner"
+              data-current="${dinnerMax}">
+              Capienza
+            </button>
+          </div>
+        </section>
+      </article>
+    `;
+  }).join("");
+
+  bindCalendarActions();
+}
+
+async function ensureCalendarRow(dayISO) {
+  const { data, error } = await supabase
     .from("booking_calendar")
-    .select("day")
-    .eq("day", day)
+    .select("*")
+    .eq("day", dayISO)
     .maybeSingle();
 
-  if (readError) throw readError;
+  if (error) throw error;
+  if (data) return data;
 
-  if (existing) {
+  const monthIndex = new Date(dayISO + "T00:00:00").getMonth();
+  const base = monthDefaultCap(monthIndex);
+
+  const insertPayload = {
+    day: dayISO,
+    lunch_closed: false,
+    dinner_closed: false,
+    lunch_max_covers: base,
+    dinner_max_covers: base
+  };
+
+  const { data: inserted, error: insertError } = await supabase
+    .from("booking_calendar")
+    .insert([insertPayload])
+    .select()
+    .single();
+
+  if (insertError) throw insertError;
+  return inserted;
+}
+
+async function toggleBlock(dayISO, service, currentBlocked) {
+  setStatus("Aggiornamento in corso...");
+
+  try {
+    await ensureCalendarRow(dayISO);
+
+    const patch = service === "lunch"
+      ? { lunch_closed: !currentBlocked }
+      : { dinner_closed: !currentBlocked };
+
     const { error } = await supabase
       .from("booking_calendar")
       .update(patch)
-      .eq("day", day);
+      .eq("day", dayISO);
 
     if (error) throw error;
-  } else {
-    const defaultCap = getSeasonDefault(monthIndex);
-    const payload = {
-      day,
-      lunch_max_covers: defaultCap,
-      dinner_max_covers: defaultCap,
-      lunch_closed: false,
-      dinner_closed: false,
-      ...patch
-    };
 
-    const { error } = await supabase
-      .from("booking_calendar")
-      .insert([payload]);
-
-    if (error) throw error;
+    setStatus("Servizio aggiornato ✅", "ok");
+    await loadCalendar();
+  } catch (err) {
+    console.error(err);
+    setStatus("Errore aggiornamento servizio: " + (err?.message || err), "bad");
   }
 }
 
-async function toggleServiceClosed(day, service, currentValue, monthIndex) {
-  const patch = service === "lunch"
-    ? { lunch_closed: !currentValue }
-    : { dinner_closed: !currentValue };
-
-  await upsertCalendarDay(day, patch, monthIndex);
-  await renderCalendar();
-}
-
-async function changeCapacityFromDay(day, service, currentValue) {
-  const value = prompt(
-    `Nuova capienza ${service === "lunch" ? "pranzo" : "cena"} da ${day} in avanti:`,
+async function changeCapacityFromDay(dayISO, service, currentValue) {
+  const input = prompt(
+    `Nuova capienza ${service === "lunch" ? "pranzo" : "cena"} da ${dayISO} in avanti:`,
     String(currentValue)
   );
 
-  if (!value) return;
+  if (input === null) return;
 
-  const num = Number(value);
-  if (!Number.isFinite(num) || num < 1 || num > 500) {
-    alert("Valore non valido.");
+  const newValue = Number(input);
+  if (!Number.isInteger(newValue) || newValue <= 0) {
+    setStatus("Inserisci una capienza valida.", "bad");
     return;
   }
 
-  const payload = service === "lunch"
-    ? { start_day: day, lunch_max_covers: num, dinner_max_covers: currentValue }
-    : { start_day: day, lunch_max_covers: currentValue, dinner_max_covers: num };
+  setStatus("Aggiornamento capienza in corso...");
 
-  const { error } = await supabase
-    .from("booking_rules")
-    .insert([payload]);
+  try {
+    const payload = service === "lunch"
+      ? { start_day: dayISO, lunch_max_covers: newValue, dinner_max_covers: null }
+      : { start_day: dayISO, lunch_max_covers: null, dinner_max_covers: newValue };
 
-  if (error) {
-    alert("Errore salvataggio regola: " + error.message);
-    return;
+    const { data: existingRule, error: existingRuleError } = await supabase
+      .from("booking_rules")
+      .select("*")
+      .eq("start_day", dayISO)
+      .maybeSingle();
+
+    if (existingRuleError) throw existingRuleError;
+
+    if (existingRule) {
+      const patch = {};
+
+      if (service === "lunch") {
+        patch.lunch_max_covers = newValue;
+      } else {
+        patch.dinner_max_covers = newValue;
+      }
+
+      const { error: updateError } = await supabase
+        .from("booking_rules")
+        .update(patch)
+        .eq("id", existingRule.id);
+
+      if (updateError) throw updateError;
+    } else {
+      const baseMonth = new Date(dayISO + "T00:00:00").getMonth();
+      const baseDefault = monthDefaultCap(baseMonth);
+
+      const insertRule = {
+        start_day: dayISO,
+        lunch_max_covers: service === "lunch" ? newValue : baseDefault,
+        dinner_max_covers: service === "dinner" ? newValue : baseDefault
+      };
+
+      const { error: insertError } = await supabase
+        .from("booking_rules")
+        .insert([insertRule]);
+
+      if (insertError) throw insertError;
+    }
+
+    setStatus("Capienza aggiornata da quel giorno in avanti ✅", "ok");
+    await loadCalendar();
+  } catch (err) {
+    console.error(err);
+    setStatus("Errore aggiornamento capienza: " + (err?.message || err), "bad");
   }
-
-  await renderCalendar();
 }
 
-function getServiceClass(covers, max, closed) {
-  if (closed) return "gray";
-  if (covers >= max) return "red";
-  if (covers >= Math.floor(max * 0.75)) return "yellow";
-  return "green";
-}
-
-function mergeClasses(a, b) {
-  if (a === "gray" || b === "gray") return "gray";
-  if (a === "red" || b === "red") return "red";
-  if (a === "yellow" || b === "yellow") return "yellow";
-  return "green";
-}
-
-async function renderCalendar() {
-  const year = currentDate.getFullYear();
-  const monthIndex = currentDate.getMonth();
-
-  calendarTitle.textContent = getMonthName(currentDate);
-
-  const [reservations, overrides, rules] = await Promise.all([
-    getReservationsForMonth(year, monthIndex),
-    getCalendarOverridesForMonth(year, monthIndex),
-    getRulesUpToMonthEnd(year, monthIndex)
-  ]);
-
-  const { lunchCovers, dinnerCovers, lunchCount, dinnerCount } = buildServiceMaps(reservations);
-  const overrideMap = buildOverrideMap(overrides);
-  const rulesArray = buildRulesArray(rules);
-
-  const firstDay = new Date(year, monthIndex, 1);
-  const lastDay = new Date(year, monthIndex + 1, 0);
-
-  let firstWeekday = firstDay.getDay();
-  firstWeekday = firstWeekday === 0 ? 7 : firstWeekday;
-
-  const blanks = firstWeekday - 1;
-  const daysInMonth = lastDay.getDate();
-
-  const headerHtml = `
-    <div class="calendar-head">Lunedì</div>
-    <div class="calendar-head">Martedì</div>
-    <div class="calendar-head">Mercoledì</div>
-    <div class="calendar-head">Giovedì</div>
-    <div class="calendar-head">Venerdì</div>
-    <div class="calendar-head">Sabato</div>
-    <div class="calendar-head">Domenica</div>
-  `;
-
-  let bodyHtml = "";
-
-  for (let i = 0; i < blanks; i++) {
-    bodyHtml += `<div class="calendar-day empty"></div>`;
-  }
-
-  for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
-    const dayDate = new Date(year, monthIndex, dayNum);
-    const dayISO = toISO(dayDate);
-
-    const state = getDayServiceState(dayISO, rulesArray, overrideMap, monthIndex);
-
-    const lCovers = lunchCovers.get(dayISO) || 0;
-    const dCovers = dinnerCovers.get(dayISO) || 0;
-    const lCount = lunchCount.get(dayISO) || 0;
-    const dCount = dinnerCount.get(dayISO) || 0;
-
-    const lClass = getServiceClass(lCovers, state.lunchMax, state.lunchClosed);
-    const dClass = getServiceClass(dCovers, state.dinnerMax, state.dinnerClosed);
-    const dayClass = mergeClasses(lClass, dClass);
-
-    bodyHtml += `
-      <div class="calendar-day ${dayClass}">
-        <div class="calendar-day-top">
-          <div class="calendar-day-num">${dayNum}</div>
-          <span class="badge badge-confirmed">${dayISO}</span>
-        </div>
-
-        <div class="service-box">
-          <div class="service-title">Pranzo</div>
-          <div class="service-meta">
-            <div>📅 Prenotazioni: <strong>${lCount}</strong></div>
-            <div>👥 Coperti: <strong>${lCovers}/${state.lunchMax}</strong></div>
-            <div>🔒 Stato: <strong>${state.lunchClosed ? "Bloccato" : "Aperto"}</strong></div>
-          </div>
-          <div class="service-actions">
-            <button class="btn btn-soft" data-action="toggle-service" data-day="${dayISO}" data-service="lunch" data-current="${state.lunchClosed}" data-month="${monthIndex}">
-              ${state.lunchClosed ? "Riapri pranzo" : "Blocca pranzo"}
-            </button>
-            <button class="btn btn-soft" data-action="capacity-service" data-day="${dayISO}" data-service="lunch" data-current="${state.lunchMax}">
-              Capienza pranzo da qui in avanti
-            </button>
-          </div>
-        </div>
-
-        <div class="service-box">
-          <div class="service-title">Cena</div>
-          <div class="service-meta">
-            <div>📅 Prenotazioni: <strong>${dCount}</strong></div>
-            <div>👥 Coperti: <strong>${dCovers}/${state.dinnerMax}</strong></div>
-            <div>🔒 Stato: <strong>${state.dinnerClosed ? "Bloccato" : "Aperto"}</strong></div>
-          </div>
-          <div class="service-actions">
-            <button class="btn btn-soft" data-action="toggle-service" data-day="${dayISO}" data-service="dinner" data-current="${state.dinnerClosed}" data-month="${monthIndex}">
-              ${state.dinnerClosed ? "Riapri cena" : "Blocca cena"}
-            </button>
-            <button class="btn btn-soft" data-action="capacity-service" data-day="${dayISO}" data-service="dinner" data-current="${state.dinnerMax}">
-              Capienza cena da qui in avanti
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  calendarGrid.innerHTML = headerHtml + bodyHtml;
-
-  calendarGrid.querySelectorAll("[data-action='toggle-service']").forEach(btn => {
+function bindCalendarActions() {
+  document.querySelectorAll(".btn-toggle-block").forEach(btn => {
     btn.addEventListener("click", async () => {
-      await toggleServiceClosed(
-        btn.dataset.day,
-        btn.dataset.service,
-        btn.dataset.current === "true",
-        Number(btn.dataset.month)
-      );
+      const day = btn.dataset.day;
+      const service = btn.dataset.service;
+      const blocked = btn.dataset.blocked === "true";
+      await toggleBlock(day, service, blocked);
     });
   });
 
-  calendarGrid.querySelectorAll("[data-action='capacity-service']").forEach(btn => {
+  document.querySelectorAll(".btn-change-capacity").forEach(btn => {
     btn.addEventListener("click", async () => {
-      await changeCapacityFromDay(
-        btn.dataset.day,
-        btn.dataset.service,
-        Number(btn.dataset.current)
-      );
+      const day = btn.dataset.day;
+      const service = btn.dataset.service;
+      const current = Number(btn.dataset.current || 0);
+      await changeCapacityFromDay(day, service, current);
     });
   });
 }
 
-document.getElementById("openDrawerBtn").addEventListener("click", openDrawer);
-document.getElementById("closeDrawerBtn").addEventListener("click", closeDrawer);
-drawerOverlay.addEventListener("click", closeDrawer);
-document.getElementById("logoutBtn").addEventListener("click", doLogout);
+async function loadCalendar() {
+  const { first, last } = monthBounds(currentMonthDate);
+  const firstISO = toISODate(first);
+  const lastISO = toISODate(last);
 
-document.getElementById("prevMonthBtn").addEventListener("click", async () => {
-  currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-  await renderCalendar();
+  calendarMonthTitle.textContent = monthTitle(currentMonthDate);
+
+  const days = [];
+  for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) {
+    days.push(new Date(d));
+  }
+
+  try {
+    const { reservations, calendarRows, rules } = await fetchMonthData(firstISO, lastISO);
+    const reservationsMap = groupReservationsByDay(reservations);
+    const calendarMap = buildCalendarMap(calendarRows);
+    renderMonth(days, reservationsMap, calendarMap, rules);
+  } catch (err) {
+    console.error(err);
+    setStatus("Errore caricamento calendario: " + (err?.message || err), "bad");
+  }
+}
+
+document.getElementById("prevMonthBtn")?.addEventListener("click", async () => {
+  currentMonthDate = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth() - 1, 1);
+  await loadCalendar();
 });
 
-document.getElementById("nextMonthBtn").addEventListener("click", async () => {
-  currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
-  await renderCalendar();
+document.getElementById("nextMonthBtn")?.addEventListener("click", async () => {
+  currentMonthDate = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth() + 1, 1);
+  await loadCalendar();
 });
 
-document.getElementById("todayBtn").addEventListener("click", async () => {
-  currentDate = new Date();
-  await renderCalendar();
+document.getElementById("todayBtn")?.addEventListener("click", async () => {
+  currentMonthDate = new Date();
+  await loadCalendar();
 });
+
+document.getElementById("openDrawerBtn")?.addEventListener("click", openDrawer);
+document.getElementById("closeDrawerBtn")?.addEventListener("click", closeDrawer);
+drawerOverlay?.addEventListener("click", closeDrawer);
+document.getElementById("logoutBtn")?.addEventListener("click", doLogout);
 
 await requireAuth();
-await renderCalendar();
+await loadCalendar();
