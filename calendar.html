@@ -13,10 +13,10 @@
     .calendar-toolbar{
       display:flex;
       justify-content:space-between;
-      align-items:center;
+      align-items:flex-start;
       gap:12px;
       flex-wrap:wrap;
-      margin-bottom:16px;
+      margin-bottom:14px;
     }
 
     .calendar-toolbar-left,
@@ -27,8 +27,14 @@
       flex-wrap:wrap;
     }
 
+    .calendar-toolbar-left{
+      flex-direction:column;
+      align-items:flex-start;
+      gap:10px;
+    }
+
     .calendar-title{
-      font-size:38px;
+      font-size:36px;
       font-weight:900;
       color:var(--text);
       margin:0;
@@ -36,11 +42,31 @@
       text-transform:capitalize;
     }
 
+    .calendar-helper{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .helper-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#fff;
+      color:#53657F;
+      font-size:12px;
+      font-weight:800;
+      box-shadow:0 8px 20px rgba(16,40,74,.04);
+    }
+
     .calendar-legend{
       display:flex;
       gap:16px;
       flex-wrap:wrap;
-      margin:14px 0 18px;
+      margin:10px 0 16px;
       color:var(--muted);
       font-weight:700;
     }
@@ -65,8 +91,8 @@
 
     .calendar-grid{
       display:grid;
-      grid-template-columns:repeat(7, minmax(210px, 1fr));
-      gap:14px;
+      grid-template-columns:repeat(7, minmax(195px, 1fr));
+      gap:12px;
       overflow-x:auto;
       padding-bottom:8px;
     }
@@ -74,10 +100,10 @@
     .day-card{
       background:#fff;
       border:1px solid var(--border);
-      border-radius:24px;
-      box-shadow:0 10px 26px rgba(16,40,74,.06);
-      padding:12px;
-      min-width:210px;
+      border-radius:22px;
+      box-shadow:0 10px 24px rgba(16,40,74,.06);
+      padding:10px;
+      min-width:195px;
       position:relative;
     }
 
@@ -101,7 +127,7 @@
     }
 
     .day-date-badge{
-      padding:7px 10px;
+      padding:6px 10px;
       border-radius:999px;
       background:#DFF5E8;
       color:#127A54;
@@ -154,15 +180,33 @@
 
     .service-actions{
       display:grid;
+      grid-template-columns:1fr 1fr;
       gap:8px;
     }
 
-    .service-actions .btn{
+    .icon-btn{
       width:100%;
+      min-height:42px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:#fff;
+      display:flex;
+      align-items:center;
       justify-content:center;
-      font-size:13px;
-      padding:9px 10px;
-      min-height:auto;
+      font-size:18px;
+      font-weight:900;
+      cursor:pointer;
+      transition:.15s ease;
+    }
+
+    .icon-btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 8px 16px rgba(16,40,74,.08);
+    }
+
+    .icon-btn.blocked{
+      background:#FFE3E3;
+      border-color:#E6A9A9;
     }
 
     .calendar-status{
@@ -176,17 +220,17 @@
 
     @media (max-width: 1200px){
       .calendar-grid{
-        grid-template-columns:repeat(7, minmax(190px, 1fr));
+        grid-template-columns:repeat(7, minmax(180px, 1fr));
       }
 
       .day-card{
-        min-width:190px;
+        min-width:180px;
       }
     }
 
     @media (max-width: 768px){
       .calendar-title{
-        font-size:32px;
+        font-size:30px;
       }
 
       .calendar-grid{
@@ -255,6 +299,12 @@
     <section class="calendar-toolbar">
       <div class="calendar-toolbar-left">
         <h2 class="calendar-title" id="calendarMonthTitle">Calendario</h2>
+
+        <div class="calendar-helper">
+          <span class="helper-pill">🔒 blocca / sblocca servizio</span>
+          <span class="helper-pill">👥 cambia capienza da quel giorno in avanti</span>
+          <span class="helper-pill">🗓 prenotazioni / coperti</span>
+        </div>
       </div>
 
       <div class="calendar-toolbar-right">
