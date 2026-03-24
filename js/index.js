@@ -548,7 +548,7 @@ form?.addEventListener("submit", async (e) => {
     statusBox.className = "booking-status";
     statusBox.textContent = "Invio in corso...";
 
-    const { data: insertedReservation, error } = await supabase
+    const { data: insertedData, error } = await supabase
       .from("reservations")
       .insert([payload])
       .select()
@@ -556,10 +556,14 @@ form?.addEventListener("submit", async (e) => {
 
     if (error) throw error;
 
+    console.log("Prenotazione salvata:", insertedData);
+
     try {
-      await supabase.functions.invoke("notify-booking", {
+      console.log("Invio richiesta mail...");
+
+      const { data: mailData, error: mailError } = await supabase.functions.invoke("notify-booking", {
         body: {
-          reservation_id: insertedReservation?.id || null,
+          reservation_id: insertedData?.id || null,
           customer_name: payload.customer_name,
           customer_phone: payload.customer_phone,
           reservation_date: payload.reservation_date,
@@ -569,8 +573,14 @@ form?.addEventListener("submit", async (e) => {
           notes: payload.notes || ""
         }
       });
+
+      console.log("Risposta mail:", mailData);
+
+      if (mailError) {
+        console.error("Errore mail:", mailError);
+      }
     } catch (mailErr) {
-      console.warn("Mail non inviata:", mailErr);
+      console.error("Errore invoke:", mailErr);
     }
 
     form.reset();
