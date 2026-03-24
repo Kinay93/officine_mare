@@ -136,13 +136,13 @@ function getServiceState(dateStr, turno) {
   if (turno === "cena") {
     return {
       closed: !!row.dinner_closed,
-      max: Number(row.dinner_max_covers ?? base.dinner)
+      max: Number(base.dinner)
     };
   }
 
   return {
     closed: !!row.lunch_closed,
-    max: Number(row.lunch_max_covers ?? base.lunch)
+    max: Number(base.lunch)
   };
 }
 
@@ -421,46 +421,48 @@ async function loadEvents() {
   const eventsData = data || [];
 
   if (!eventsData.length) {
-    eventsSection.classList.remove("show");
-    eventCardsWrap.innerHTML = "";
+    eventsSection?.classList.remove("show");
+    if (eventCardsWrap) eventCardsWrap.innerHTML = "";
     return;
   }
 
-  eventsSection.classList.add("show");
+  eventsSection?.classList.add("show");
 
-  eventCardsWrap.innerHTML = eventsData.map((ev, index) => `
-    <article class="event-card-mini" data-event-index="${index}">
-      <img
-        class="event-card-cover"
-        src="${ev.image_url || "assets/fondo.webp"}"
-        alt="${escapeHtml(ev.title || "Evento")}"
-      >
-      <div class="event-card-body">
-        <div class="event-card-date">
-          📅 ${escapeHtml(ev.start_date)}${ev.end_date && ev.end_date !== ev.start_date ? " → " + escapeHtml(ev.end_date) : ""}
-          ${ev.start_time ? " · 🕒 " + escapeHtml(String(ev.start_time).slice(0, 5)) : ""}
+  if (eventCardsWrap) {
+    eventCardsWrap.innerHTML = eventsData.map((ev, index) => `
+      <article class="event-card-mini" data-event-index="${index}">
+        <img
+          class="event-card-cover"
+          src="${ev.image_url || "assets/fondo.webp"}"
+          alt="${escapeHtml(ev.title || "Evento")}"
+        >
+        <div class="event-card-body">
+          <div class="event-card-date">
+            📅 ${escapeHtml(ev.start_date)}${ev.end_date && ev.end_date !== ev.start_date ? " → " + escapeHtml(ev.end_date) : ""}
+            ${ev.start_time ? " · 🕒 " + escapeHtml(String(ev.start_time).slice(0, 5)) : ""}
+          </div>
+          <div class="event-card-title">${escapeHtml(ev.title || "Evento")}</div>
+          <div class="event-card-preview">
+            ${escapeHtml((ev.description || "Dettagli evento disponibili a breve.").slice(0, 90))}
+            ${(ev.description || "").length > 90 ? "..." : ""}
+          </div>
+          <div class="event-card-full">
+            ${escapeHtml(ev.description || "Dettagli evento disponibili a breve.")}
+          </div>
         </div>
-        <div class="event-card-title">${escapeHtml(ev.title || "Evento")}</div>
-        <div class="event-card-preview">
-          ${escapeHtml((ev.description || "Dettagli evento disponibili a breve.").slice(0, 90))}
-          ${(ev.description || "").length > 90 ? "..." : ""}
-        </div>
-        <div class="event-card-full">
-          ${escapeHtml(ev.description || "Dettagli evento disponibili a breve.")}
-        </div>
-      </div>
-    </article>
-  `).join("");
+      </article>
+    `).join("");
 
-  document.querySelectorAll(".event-card-mini").forEach(card => {
-    card.addEventListener("click", () => {
-      card.classList.toggle("open");
+    document.querySelectorAll(".event-card-mini").forEach(card => {
+      card.addEventListener("click", () => {
+        card.classList.toggle("open");
+      });
+
+      card.addEventListener("touchstart", () => {
+        card.classList.toggle("open");
+      }, { passive: true });
     });
-
-    card.addEventListener("touchstart", () => {
-      card.classList.toggle("open");
-    }, { passive: true });
-  });
+  }
 }
 
 form?.addEventListener("submit", async (e) => {
@@ -546,8 +548,30 @@ form?.addEventListener("submit", async (e) => {
     statusBox.className = "booking-status";
     statusBox.textContent = "Invio in corso...";
 
-    const { error } = await supabase.from("reservations").insert([payload]);
+    const { data: insertedReservation, error } = await supabase
+      .from("reservations")
+      .insert([payload])
+      .select()
+      .single();
+
     if (error) throw error;
+
+    try {
+      await supabase.functions.invoke("notify-booking", {
+        body: {
+          reservation_id: insertedReservation?.id || null,
+          customer_name: payload.customer_name,
+          customer_phone: payload.customer_phone,
+          reservation_date: payload.reservation_date,
+          reservation_time: payload.reservation_time,
+          people: payload.people,
+          service: payload.service,
+          notes: payload.notes || ""
+        }
+      });
+    } catch (mailErr) {
+      console.warn("Mail non inviata:", mailErr);
+    }
 
     form.reset();
     timeEl.innerHTML = `<option value="">Seleziona prima data e turno</option>`;
