@@ -50,8 +50,8 @@ function buildSlots(start, end, step) {
   return slots;
 }
 
-const lunchSlots = buildSlots("12:30", "15:00", 10);
-const dinnerSlots = buildSlots("18:30", "23:00", 10);
+const lunchSlots = buildSlots("12:30", "15:00", 15);
+const dinnerSlots = buildSlots("18:30", "23:00", 15);
 
 function defaultMaxCoversForMonth(monthIndex) {
   return [4, 5, 6, 7, 8].includes(monthIndex) ? 60 : 40;
