@@ -53,96 +53,71 @@ function buildSlots(start, end, step) {
 const lunchSlots = buildSlots("12:30", "15:00", 10);
 const dinnerSlots = buildSlots("18:30", "23:00", 10);
 
+
 function normalizeDateToISO(value) {
   if (!value) return "";
 
-  const raw = String(value).trim().toLowerCase();
+  const rawOriginal = String(value).trim();
+  const raw = rawOriginal.toLowerCase();
 
+  // già ISO
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
     return raw;
   }
 
-  const slashMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (slashMatch) {
-    const dd = pad(Number(slashMatch[1]));
-    const mm = pad(Number(slashMatch[2]));
-    const yyyy = slashMatch[3];
+  // dd/mm/yyyy
+  let m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) {
+    const dd = pad(Number(m[1]));
+    const mm = pad(Number(m[2]));
+    const yyyy = m[3];
     return `${yyyy}-${mm}-${dd}`;
   }
 
-  const dashMatch = raw.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
-  if (dashMatch) {
-    const dd = pad(Number(dashMatch[1]));
-    const mm = pad(Number(dashMatch[2]));
-    const yyyy = dashMatch[3];
+  // dd-mm-yyyy
+  m = raw.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (m) {
+    const dd = pad(Number(m[1]));
+    const mm = pad(Number(m[2]));
+    const yyyy = m[3];
     return `${yyyy}-${mm}-${dd}`;
   }
 
   const monthMap = {
-    gen: "01",
-    gennaio: "01",
-    feb: "02",
-    febbraio: "02",
-    mar: "03",
-    marzo: "03",
-    apr: "04",
-    aprile: "04",
-    mag: "05",
-    maggio: "05",
-    giu: "06",
-    giugno: "06",
-    lug: "07",
-    luglio: "07",
-    ago: "08",
-    agosto: "08",
-    set: "09",
-    sett: "09",
-    settembre: "09",
-    ott: "10",
-    ottobre: "10",
-    nov: "11",
-    novembre: "11",
-    dic: "12",
-    dicembre: "12",
-    Gen: "01",
-    Gennaio: "01",
-    Feb: "02",
-    Febbraio: "02",
-    Mar: "03",
-    Marzo: "03",
-    Apr: "04",
-    Aprile: "04",
-    Mag: "05",
-    Maggio: "05",
-    Giu: "06",
-    Giugno: "06",
-    Lug: "07",
-    Luglio: "07",
-    Ago: "08",
-    Agosto: "08",
-    Set: "09",
-    Sett: "09",
-    Settembre: "09",
-    Ott: "10",
-    Ottobre: "10",
-    Nov: "11",
-    Novembre: "11",
-    Dic: "12",
-    Dicembre: "12"
+    gen: "01", gennaio: "01", jan: "01", january: "01",
+    feb: "02", febbraio: "02", february: "02",
+    mar: "03", marzo: "03", march: "03",
+    apr: "04", aprile: "04", april: "04",
+    mag: "05", maggio: "05", may: "05",
+    giu: "06", giugno: "06", jun: "06", june: "06",
+    lug: "07", luglio: "07", jul: "07", july: "07",
+    ago: "08", agosto: "08", aug: "08", august: "08",
+    set: "09", sett: "09", settembre: "09", sep: "09", sept: "09", september: "09",
+    ott: "10", ottobre: "10", oct: "10", october: "10",
+    nov: "11", novembre: "11", november: "11",
+    dic: "12", dicembre: "12", dec: "12", december: "12"
   };
 
-  const textMatch = raw.match(/^(\d{1,2})\s+([a-zà-ù]+)\s+(\d{4})$/i);
-  if (textMatch) {
-    const dd = pad(Number(textMatch[1]));
-    const mm = monthMap[textMatch[2]];
-    const yyyy = textMatch[3];
-
-    if (mm) {
-      return `${yyyy}-${mm}-${dd}`;
-    }
+  // formato "2 apr 2026" / "2 aprile 2026"
+  m = raw.match(/^(\d{1,2})\s+([a-zà-ù]+)\s+(\d{4})$/i);
+  if (m) {
+    const dd = pad(Number(m[1]));
+    const mm = monthMap[m[2]];
+    const yyyy = m[3];
+    if (mm) return `${yyyy}-${mm}-${dd}`;
   }
 
-  const parsed = new Date(value);
+  // formato "apr 2 2026" / "april 2 2026"
+  m = raw.match(/^([a-zà-ù]+)\s+(\d{1,2}),?\s+(\d{4})$/i);
+  if (m) {
+    const mm = monthMap[m[1]];
+    const dd = pad(Number(m[2]));
+    const yyyy = m[3];
+    if (mm) return `${yyyy}-${mm}-${dd}`;
+  }
+
+  // ultimo tentativo con Date nativa
+  const parsed = new Date(rawOriginal);
   if (!Number.isNaN(parsed.getTime())) {
     return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}`;
   }
@@ -453,7 +428,7 @@ dateEl?.addEventListener("change", async () => {
   } else {
     statusBox.className = "booking-status";
     statusBox.textContent = "";
-  }
+  }7
 
   await refreshSlots();
 });
