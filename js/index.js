@@ -58,9 +58,9 @@ function normalizeDateToISO(value) {
   if (!value) return "";
 
   const rawOriginal = String(value).trim();
-  const raw = rawOriginal.toLowerCase();
+  const raw = rawOriginal.toLowerCase().replace(/\s+/g, " "); // normalizza spazi multipli
 
-  // già ISO
+  // già ISO yyyy-mm-dd
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
     return raw;
   }
@@ -68,19 +68,13 @@ function normalizeDateToISO(value) {
   // dd/mm/yyyy
   let m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (m) {
-    const dd = pad(Number(m[1]));
-    const mm = pad(Number(m[2]));
-    const yyyy = m[3];
-    return `${yyyy}-${mm}-${dd}`;
+    return `${m[3]}-${pad(Number(m[2]))}-${pad(Number(m[1]))}`;
   }
 
-  // dd-mm-yyyy
+  // dd-mm-yyyy (ma non yyyy-mm-dd già catturato sopra)
   m = raw.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
   if (m) {
-    const dd = pad(Number(m[1]));
-    const mm = pad(Number(m[2]));
-    const yyyy = m[3];
-    return `${yyyy}-${mm}-${dd}`;
+    return `${m[3]}-${pad(Number(m[2]))}-${pad(Number(m[1]))}`;
   }
 
   const monthMap = {
@@ -98,33 +92,34 @@ function normalizeDateToISO(value) {
     dic: "12", dicembre: "12", dec: "12", december: "12"
   };
 
-  // formato "2 apr 2026" / "2 aprile 2026"
-  m = raw.match(/^(\d{1,2})\s+([a-zà-ù]+)\s+(\d{4})$/i);
+  // "2 apr 2026" / "2 aprile 2026" — formato iPhone italiano
+  m = raw.match(/^(\d{1,2})\s+([a-zà-ù]+)\.?\s+(\d{4})$/i);
   if (m) {
     const dd = pad(Number(m[1]));
-    const mm = monthMap[m[2]];
+    const mm = monthMap[m[2].replace(/\.$/, "")]; // rimuove eventuale punto finale "apr."
     const yyyy = m[3];
     if (mm) return `${yyyy}-${mm}-${dd}`;
   }
 
-  // formato "apr 2 2026" / "april 2 2026"
-  m = raw.match(/^([a-zà-ù]+)\s+(\d{1,2}),?\s+(\d{4})$/i);
+  // "apr 2, 2026" / "april 2 2026" — formato iPhone inglese
+  m = raw.match(/^([a-zà-ù]+)\.?\s+(\d{1,2}),?\s+(\d{4})$/i);
   if (m) {
-    const mm = monthMap[m[1]];
+    const mm = monthMap[m[1].replace(/\.$/, "")];
     const dd = pad(Number(m[2]));
     const yyyy = m[3];
     if (mm) return `${yyyy}-${mm}-${dd}`;
   }
 
-  // ultimo tentativo con Date nativa
+  // fallback: usa Date ma estrai i componenti locali, non UTC (bug Safari con fuso orario)
   const parsed = new Date(rawOriginal);
   if (!Number.isNaN(parsed.getTime())) {
+    // getFullYear/Month/Date usa il fuso locale, evitando lo shift di ±1 giorno di Safari
     return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}`;
   }
 
+  console.warn("normalizeDateToISO: formato non riconosciuto →", JSON.stringify(rawOriginal));
   return "";
 }
-
 function defaultMaxCoversForMonth(monthIndex) {
   return [4, 5, 6, 7, 8].includes(monthIndex) ? 60 : 40;
 }
