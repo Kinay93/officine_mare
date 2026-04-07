@@ -53,12 +53,11 @@ function buildSlots(start, end, step) {
 const lunchSlots = buildSlots("12:30", "15:00", 10);
 const dinnerSlots = buildSlots("18:30", "23:00", 10);
 
-
 function normalizeDateToISO(value) {
   if (!value) return "";
 
   const rawOriginal = String(value).trim();
-  const raw = rawOriginal.toLowerCase().replace(/\s+/g, " "); // normalizza spazi multipli
+  const raw = rawOriginal.toLowerCase().replace(/\s+/g, " ");
 
   // già ISO yyyy-mm-dd
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
@@ -71,7 +70,7 @@ function normalizeDateToISO(value) {
     return `${m[3]}-${pad(Number(m[2]))}-${pad(Number(m[1]))}`;
   }
 
-  // dd-mm-yyyy (ma non yyyy-mm-dd già catturato sopra)
+  // dd-mm-yyyy
   m = raw.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
   if (m) {
     return `${m[3]}-${pad(Number(m[2]))}-${pad(Number(m[1]))}`;
@@ -96,7 +95,7 @@ function normalizeDateToISO(value) {
   m = raw.match(/^(\d{1,2})\s+([a-zà-ù]+)\.?\s+(\d{4})$/i);
   if (m) {
     const dd = pad(Number(m[1]));
-    const mm = monthMap[m[2].replace(/\.$/, "")]; // rimuove eventuale punto finale "apr."
+    const mm = monthMap[m[2].replace(/\.$/, "")];
     const yyyy = m[3];
     if (mm) return `${yyyy}-${mm}-${dd}`;
   }
@@ -110,16 +109,16 @@ function normalizeDateToISO(value) {
     if (mm) return `${yyyy}-${mm}-${dd}`;
   }
 
-  // fallback: usa Date ma estrai i componenti locali, non UTC (bug Safari con fuso orario)
+  // fallback con Date nativa (usa componenti locali per evitare shift Safari)
   const parsed = new Date(rawOriginal);
   if (!Number.isNaN(parsed.getTime())) {
-    // getFullYear/Month/Date usa il fuso locale, evitando lo shift di ±1 giorno di Safari
     return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}`;
   }
 
   console.warn("normalizeDateToISO: formato non riconosciuto →", JSON.stringify(rawOriginal));
   return "";
 }
+
 function defaultMaxCoversForMonth(monthIndex) {
   return [4, 5, 6, 7, 8].includes(monthIndex) ? 60 : 40;
 }
@@ -339,7 +338,7 @@ function validateName(value) {
   const v = sanitizeText(value, 80);
   if (!v) return { ok: false, msg: "Inserisci il nome." };
   if (containsDangerousPattern(v)) return { ok: false, msg: "Nome non valido." };
-  if (!/^[A-Za-zÀ-ÖØ-öø-ÿ'’.\- ]{2,80}$/.test(v)) {
+  if (!/^[A-Za-zÀ-ÖØ-öø-ÿ''.\- ]{2,80}$/.test(v)) {
     return { ok: false, msg: "Il nome contiene caratteri non validi." };
   }
   return { ok: true, value: v };
@@ -402,7 +401,7 @@ document.getElementById("notes")?.addEventListener("input", (e) => {
 });
 
 document.getElementById("name")?.addEventListener("input", (e) => {
-  e.target.value = e.target.value.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ'’.\- ]/g, "");
+  e.target.value = e.target.value.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ''.\- ]/g, "");
 });
 
 document.getElementById("phone")?.addEventListener("input", (e) => {
@@ -423,7 +422,7 @@ dateEl?.addEventListener("change", async () => {
   } else {
     statusBox.className = "booking-status";
     statusBox.textContent = "";
-  }7
+  }
 
   await refreshSlots();
 });
@@ -628,22 +627,20 @@ form?.addEventListener("submit", async (e) => {
     statusBox.className = "booking-status";
     statusBox.textContent = "Invio in corso...";
 
-    const { data: insertedData, error } = await supabase
+    const { error } = await supabase
       .from("reservations")
-      .insert([payload])
-      .select()
-      .single();
+      .insert([payload]);
 
     if (error) throw error;
 
-    console.log("Prenotazione salvata:", insertedData);
+    console.log("Prenotazione salvata");
 
     try {
       console.log("Invio richiesta mail...");
 
       const { data: mailData, error: mailError } = await supabase.functions.invoke("notify-booking", {
         body: {
-          reservation_id: insertedData?.id || null,
+          reservation_id: null,
           customer_name: payload.customer_name,
           customer_phone: payload.customer_phone,
           reservation_date: payload.reservation_date,
