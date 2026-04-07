@@ -103,7 +103,32 @@ function normalizeDateToISO(value) {
     nov: "11",
     novembre: "11",
     dic: "12",
-    dicembre: "12"
+    dicembre: "12",
+    Gen: "01",
+    Gennaio: "01",
+    Feb: "02",
+    Febbraio: "02",
+    Mar: "03",
+    Marzo: "03",
+    Apr: "04",
+    Aprile: "04",
+    Mag: "05",
+    Maggio: "05",
+    Giu: "06",
+    Giugno: "06",
+    Lug: "07",
+    Luglio: "07",
+    Ago: "08",
+    Agosto: "08",
+    Set: "09",
+    Sett: "09",
+    Settembre: "09",
+    Ott: "10",
+    Ottobre: "10",
+    Nov: "11",
+    Novembre: "11",
+    Dic: "12",
+    Dicembre: "12"
   };
 
   const textMatch = raw.match(/^(\d{1,2})\s+([a-zà-ù]+)\s+(\d{4})$/i);
