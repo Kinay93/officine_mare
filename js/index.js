@@ -50,8 +50,80 @@ function buildSlots(start, end, step) {
   return slots;
 }
 
-const lunchSlots = buildSlots("12:30", "15:00", 15);
-const dinnerSlots = buildSlots("18:30", "23:00", 15);
+const lunchSlots = buildSlots("12:30", "15:00", 10);
+const dinnerSlots = buildSlots("18:30", "23:00", 10);
+
+function normalizeDateToISO(value) {
+  if (!value) return "";
+
+  const raw = String(value).trim().toLowerCase();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return raw;
+  }
+
+  const slashMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (slashMatch) {
+    const dd = pad(Number(slashMatch[1]));
+    const mm = pad(Number(slashMatch[2]));
+    const yyyy = slashMatch[3];
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  const dashMatch = raw.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (dashMatch) {
+    const dd = pad(Number(dashMatch[1]));
+    const mm = pad(Number(dashMatch[2]));
+    const yyyy = dashMatch[3];
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  const monthMap = {
+    gen: "01",
+    gennaio: "01",
+    feb: "02",
+    febbraio: "02",
+    mar: "03",
+    marzo: "03",
+    apr: "04",
+    aprile: "04",
+    mag: "05",
+    maggio: "05",
+    giu: "06",
+    giugno: "06",
+    lug: "07",
+    luglio: "07",
+    ago: "08",
+    agosto: "08",
+    set: "09",
+    sett: "09",
+    settembre: "09",
+    ott: "10",
+    ottobre: "10",
+    nov: "11",
+    novembre: "11",
+    dic: "12",
+    dicembre: "12"
+  };
+
+  const textMatch = raw.match(/^(\d{1,2})\s+([a-zà-ù]+)\s+(\d{4})$/i);
+  if (textMatch) {
+    const dd = pad(Number(textMatch[1]));
+    const mm = monthMap[textMatch[2]];
+    const yyyy = textMatch[3];
+
+    if (mm) {
+      return `${yyyy}-${mm}-${dd}`;
+    }
+  }
+
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime())) {
+    return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}`;
+  }
+
+  return "";
+}
 
 function defaultMaxCoversForMonth(monthIndex) {
   return [4, 5, 6, 7, 8].includes(monthIndex) ? 60 : 40;
@@ -204,24 +276,24 @@ async function isBlockedOrFull(dateStr, turno) {
 }
 
 async function refreshSlots() {
-  const date = dateEl.value;
+  const normalizedDate = normalizeDateToISO(dateEl.value);
   const turno = turnoEl.value;
 
   timeEl.innerHTML = `<option value="">Seleziona prima data e turno</option>`;
 
-  if (!date || !turno) return;
+  if (!normalizedDate || !turno) return;
 
-  if (isMonday(date)) {
+  if (isMonday(normalizedDate)) {
     timeEl.innerHTML = `<option value="">Lunedì chiuso</option>`;
     return;
   }
 
-  if (isSunday(date) && turno === "cena") {
+  if (isSunday(normalizedDate) && turno === "cena") {
     timeEl.innerHTML = `<option value="">Domenica sera non disponibile</option>`;
     return;
   }
 
-  const state = await isBlockedOrFull(date, turno);
+  const state = await isBlockedOrFull(normalizedDate, turno);
 
   if (state.blocked) {
     timeEl.innerHTML = `<option value="">${state.reason}</option>`;
@@ -343,8 +415,10 @@ document.getElementById("phone")?.addEventListener("input", (e) => {
 });
 
 dateEl?.addEventListener("change", async () => {
-  if (dateEl.value && turnoEl.value) {
-    const state = await isBlockedOrFull(dateEl.value, turnoEl.value);
+  const normalizedDate = normalizeDateToISO(dateEl.value);
+
+  if (normalizedDate && turnoEl.value) {
+    const state = await isBlockedOrFull(normalizedDate, turnoEl.value);
     if (state.blocked) {
       showError(state.reason);
     } else {
@@ -355,12 +429,15 @@ dateEl?.addEventListener("change", async () => {
     statusBox.className = "booking-status";
     statusBox.textContent = "";
   }
+
   await refreshSlots();
 });
 
 turnoEl?.addEventListener("change", async () => {
-  if (dateEl.value && turnoEl.value) {
-    const state = await isBlockedOrFull(dateEl.value, turnoEl.value);
+  const normalizedDate = normalizeDateToISO(dateEl.value);
+
+  if (normalizedDate && turnoEl.value) {
+    const state = await isBlockedOrFull(normalizedDate, turnoEl.value);
     if (state.blocked) {
       showError(state.reason);
     } else {
@@ -371,6 +448,7 @@ turnoEl?.addEventListener("change", async () => {
     statusBox.className = "booking-status";
     statusBox.textContent = "";
   }
+
   await refreshSlots();
 });
 
@@ -468,17 +546,24 @@ async function loadEvents() {
 form?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  if (isMonday(dateEl.value)) {
+  const normalizedDate = normalizeDateToISO(dateEl.value);
+
+  if (!normalizedDate) {
+    showError("Data non valida.");
+    return;
+  }
+
+  if (isMonday(normalizedDate)) {
     showError("Il lunedì il ristorante è chiuso.");
     return;
   }
 
-  if (isSunday(dateEl.value) && turnoEl.value === "cena") {
+  if (isSunday(normalizedDate) && turnoEl.value === "cena") {
     showError("La domenica sera non è disponibile.");
     return;
   }
 
-  const serviceState = await isBlockedOrFull(dateEl.value, turnoEl.value);
+  const serviceState = await isBlockedOrFull(normalizedDate, turnoEl.value);
   if (serviceState.blocked) {
     showError(serviceState.reason);
     return;
@@ -534,7 +619,7 @@ form?.addEventListener("submit", async (e) => {
   const payload = {
     customer_name: nameCheck.value,
     customer_phone: phoneCheck.value,
-    reservation_date: dateEl.value,
+    reservation_date: normalizedDate,
     reservation_time: timeEl.value,
     people,
     notes: safeNotes,
